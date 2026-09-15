@@ -3,7 +3,7 @@
 เอกสารนี้สรุปปัญหาทั้งหมดที่พบใน `use-case.png` เวอร์ชัน WIP ปัจจุบัน พร้อมวิธีแก้ที่แนะนำ ใช้เป็นแนวทางตอนวาดใหม่
 อ้างอิงข้อมูลจาก `00-project-docs/biz-requirement.md`
 
-> เกี่ยวเนื่องกับ [`biz-flow-fix-notes.md`](biz-flow-fix-notes.md) (ปัญหาใน `biz-flow-to-be.png`/`biz-flow-rel-use-case.png`) — แก้ไฟล์นี้ (use case diagram) ให้เสร็จก่อน แล้วค่อยไปไล่แก้ biz-flow ตาม เพราะ biz-flow-fix-notes อ้างอิงชื่อ/เลข UC เวอร์ชันใหม่จากที่นี่
+> เกี่ยวเนื่องกับ [`02-biz-flow-fix-notes.md`](02-biz-flow-fix-notes.md) (ปัญหาใน `biz-flow-to-be.png`/`biz-flow-rel-use-case.png`) — แก้ไฟล์นี้ (use case diagram) ให้เสร็จก่อน แล้วค่อยไปไล่แก้ biz-flow ตาม เพราะ biz-flow-fix-notes อ้างอิงชื่อ/เลข UC เวอร์ชันใหม่จากที่นี่
 
 ## รายชื่อ UC ปัจจุบัน (ก่อนแก้) — ไว้เทียบให้เห็นภาพ
 
