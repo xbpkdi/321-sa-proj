@@ -6,7 +6,11 @@
 **ขอบเขตเฟส 1:** Rakuten Ichiba + Rakuten RMS + RSL เท่านั้น (Yahoo!/Amazon/Mercari อยู่นอกขอบเขต)
 **เป้าหมาย 3 ระบบอัตโนมัติหลัก:** Auto Label Printing, Auto Reorder, Unit Cost Calculator
 
-## ไฟล์ทั้งหมด
+## 🚨 เริ่มที่นี่ก่อน
+
+[0-URGENT-do-now.md](0-URGENT-do-now.md) — รวมทุกอย่างที่ต้องทำตอนนี้ (เรียงตามความสำคัญ) อัปเดตล่าสุดจากทุกบทสนทนา/เอกสาร ใช้ไฟล์นี้เป็นจุดเช็คแรกทุกครั้งที่เปิดงาน
+
+## ไฟล์ทั้งหมด (เช็กลิสต์รายหัวข้อของรายงาน)
 
 1. [01-chapter1-introduction.md](01-chapter1-introduction.md) — บทที่ 1 ที่มาและความสำคัญ (1.1–1.7)
 2. [02-chapter2-business-process.md](02-chapter2-business-process.md) — Business Process / Use Case Diagram / CRUD (2.1–2.12)
@@ -28,5 +32,5 @@
 
 - `todo-ref/` = เช็กลิสต์ชุดเก่าที่อิงจาก `sa-ref.pdf` (ตัวอย่างรายงาน KU Job) เก็บไว้เป็น reference โครงสร้าง/รูปแบบการเขียนเท่านั้น ไม่ต้องทำตามเนื้อหา
 - `todo/` (ไฟล์นี้) = เช็กลิสต์ของจริงที่ใช้ทำงานสำหรับโปรเจกต์ Colorado/Rakuten
-- ปัญหา/จุดที่ต้องแก้ที่เจอระหว่างทำงาน บันทึกแยกไว้ที่ [`../00-project-docs/issues-checklist.md`](../00-project-docs/issues-checklist.md) (ไม่ใช่ to-do รายหัวข้อ)
+- ปัญหา/จุดที่ต้องแก้ที่เจอระหว่างทำงาน บันทึกแยกไว้ที่ [`issues-checklist.md`](issues-checklist.md) (ไม่ใช่ to-do รายหัวข้อ)
 - ประเมินความพร้อมของข้อมูลเทียบกับ format ทั้งเล่ม (หัวข้อไหนพร้อมเขียน/หัวข้อไหนยังติด blocker) ดูที่ [`../00-project-docs/overview.md`](../00-project-docs/overview.md)

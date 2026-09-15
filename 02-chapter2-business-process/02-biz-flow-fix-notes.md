@@ -1,7 +1,7 @@
 # แนวทางแก้ไข `biz-flow-to-be.png` และ `biz-flow-rel-use-case.png`
 
 เอกสารนี้สรุปปัญหาที่พบในไดอะแกรม Business Process ใหม่ (To-Be) และไดอะแกรมที่โยง BP กับ Use Case
-เกี่ยวเนื่องกับ [`use-case-diagram-fix-notes.md`](use-case-diagram-fix-notes.md) — แนะนำแก้ use case diagram ให้เสร็จก่อน แล้วค่อยไล่แก้ไฟล์นี้ เพราะการแก้หลายจุดในนี้ต้องอิงชื่อ/เลข UC เวอร์ชันใหม่
+เกี่ยวเนื่องกับ [`01-use-case-diagram-fix-notes.md`](01-use-case-diagram-fix-notes.md) — แนะนำแก้ use case diagram ให้เสร็จก่อน แล้วค่อยไล่แก้ไฟล์นี้ เพราะการแก้หลายจุดในนี้ต้องอิงชื่อ/เลข UC เวอร์ชันใหม่
 
 ---
 
@@ -68,7 +68,7 @@ Process box หมายเลข **8** และ **9** ทั้งคู่เ
 - [ ] ตัดสินใจว่า UC "อัพเดทสถานะการจัดส่ง" ควรเปลี่ยนชื่อให้ตรง process หรือต้องเพิ่ม process ใหม่แยก (ปัญหาที่ 1)
 - [ ] แก้ข้อความ process 8 กับ 9 ให้ไม่ซ้ำกัน และให้ตรงกับผู้รับที่ถูกต้อง (Marketplace vs ลูกค้า) (ปัญหาที่ 2)
 - [ ] แก้ป้าย UC "12. จับคู่ order กับ RSL" → "12. จับคู่ SKU" ให้ตรงกับ `use-case.png` (ปัญหาที่ 3)
-- [ ] หลังแก้ `use-case.png` เสร็จ (ดู [`use-case-diagram-fix-notes.md`](use-case-diagram-fix-notes.md)) ให้กลับมาไล่เช็คป้าย UC ทุกอันใน `biz-flow-rel-use-case.png` อีกรอบว่าเลข/ชื่อยังตรงกับเวอร์ชันใหม่หรือไม่ (โดยเฉพาะ UC ที่ย้ายไป actor "ระบบ/Scheduler")
+- [ ] หลังแก้ `use-case.png` เสร็จ (ดู [`01-use-case-diagram-fix-notes.md`](01-use-case-diagram-fix-notes.md)) ให้กลับมาไล่เช็คป้าย UC ทุกอันใน `biz-flow-rel-use-case.png` อีกรอบว่าเลข/ชื่อยังตรงกับเวอร์ชันใหม่หรือไม่ (โดยเฉพาะ UC ที่ย้ายไป actor "ระบบ/Scheduler")
 - [ ] เช็คว่า process ทุกกล่องที่มีเนื้อหาซ้ำ/คล้ายกันมากถูกรวมหรือแยกอย่างมีเหตุผล ไม่ใช่ copy-paste เหลือค้าง
 
 ## หลังแก้เสร็จ

@@ -7,8 +7,9 @@
 
 ปัญหา #1 และ #2 เกี่ยวโยงกัน (biz-flow อ้างอิงชื่อ/เลข UC จาก use-case diagram) ต้องแก้ตามลำดับนี้ ห้ามสลับ:
 
-1. **แก้ปัญหา #1 ก่อน** — วาด `use-case.png` ใหม่ตาม [`use-case-diagram-fix-notes.md`](../02-chapter2-business-process/use-case-diagram-fix-notes.md) ให้จบ (แยก actor manual/automatic, เพิ่ม UC ที่ขาด, แก้ชื่อซ้ำ/ยาวเกินไป, ตัดสินใจเรื่อง actor RSL) — ไฟล์นี้เป็นฐานอ้างอิงชื่อ/เลข UC ให้ไฟล์อื่นตาม
-2. **แก้ปัญหา #2 ต่อ** — วาด `biz-flow-to-be.png` / `biz-flow-rel-use-case.png` ใหม่ตาม [`biz-flow-fix-notes.md`](../02-chapter2-business-process/biz-flow-fix-notes.md) โดยใช้ชื่อ/เลข UC เวอร์ชันใหม่จากข้อ 1 (แก้ label "f"→"Marketplace", แก้ชื่อ UC ให้ตรง process, เคลียร์ process ซ้ำ, เคลียร์เลข UC ที่ชนกัน)
+0. **อยากอ่านฉบับเข้าใจง่ายก่อน** → [`00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md) (มีรูปเปรียบเทียบก่อน/หลัง สรุปสั้นๆ)
+1. **แก้ปัญหา #1 ก่อน** — วาด `use-case.png` ใหม่ตาม [`01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md) ให้จบ (แยก actor manual/automatic, เพิ่ม UC ที่ขาด, แก้ชื่อซ้ำ/ยาวเกินไป, ตัดสินใจเรื่อง actor RSL) — ไฟล์นี้เป็นฐานอ้างอิงชื่อ/เลข UC ให้ไฟล์อื่นตาม
+2. **แก้ปัญหา #2 ต่อ** — วาด `biz-flow-to-be.png` / `biz-flow-rel-use-case.png` ใหม่ตาม [`02-biz-flow-fix-notes.md`](../02-chapter2-business-process/02-biz-flow-fix-notes.md) โดยใช้ชื่อ/เลข UC เวอร์ชันใหม่จากข้อ 1 (แก้ label "f"→"Marketplace", แก้ชื่อ UC ให้ตรง process, เคลียร์ process ซ้ำ, เคลียร์เลข UC ที่ชนกัน)
 3. **อัปเดต `crud-table-to-be.png`** (2.12) ให้ครอบคลุม UC ที่เพิ่ม/แก้ไขใหม่ทั้งหมดจากข้อ 1–2
 4. **ทำตารางจับคู่ BP ↔ UC** (2.7 — ยังไม่เคยทำ) ให้ตรงกับเวอร์ชันสุดท้ายของข้อ 1–2
 5. **กลับมาติ๊ก resolve ที่ไฟล์นี้** ทั้งข้อ 1 และ 2 พร้อมสรุปว่าแก้อะไรไปบ้างในช่อง "วิธีแก้"
@@ -30,8 +31,8 @@
 
 ### 1. use-case.png ยังเป็น WIP — มีปัญหาหลายจุดต้องแก้ก่อนสรุปเป็นเวอร์ชันจริง
 - [ ] พบเมื่อ: 2026-09-15
-- **ไฟล์/หัวข้อที่เกี่ยวข้อง:** `02-chapter2-business-process/use-case.png`, todo ข้อ 2.7/2.8/2.11
-- **รายละเอียดปัญหา:** พบทั้งหมด 5 ประเด็น รายละเอียดเต็ม + วิธีแก้แต่ละข้อดูที่ [`02-chapter2-business-process/use-case-diagram-fix-notes.md`](../02-chapter2-business-process/use-case-diagram-fix-notes.md) สรุปหัวข้อ:
+- **ไฟล์/หัวข้อที่เกี่ยวข้อง:** `02-chapter2-business-process/img/use-case.png`, todo ข้อ 2.7/2.8/2.11
+- **รายละเอียดปัญหา:** พบทั้งหมด 5 ประเด็น รายละเอียดเต็ม + วิธีแก้แต่ละข้อดูที่ [`02-chapter2-business-process/01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md) (หรืออ่านฉบับง่าย: [`00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md)) สรุปหัวข้อ:
   1. Actor ผิด — UC ที่ควรเป็น automatic (คำนวณ cost, พิมพ์ label, auto reorder) ถูกผูกกับ actor "เจ้าของ" เหมือนเป็น manual ทั้งหมด
   2. UC ขาดหาย 2 ตัวเทียบกับ Action list ใน biz-requirement.md ข้อ 8 (รับออเดอร์ใหม่จาก Rakuten RMS, ตัดสต๊อกเมื่อออเดอร์ถูกประมวลผล)
   3. ชื่อ UC ซ้ำกันข้าม actor โดยไม่ชัดทิศทาง ("อัพเดทสถานะการจัดส่ง" อยู่ทั้งใน เจ้าของ และ Marketplace)
@@ -44,8 +45,8 @@
 
 ### 2. biz-flow-to-be.png / biz-flow-rel-use-case.png — ชื่อ UC ไม่ตรงกับ process, มีเลข/ชื่อ UC ชนกัน
 - [ ] พบเมื่อ: 2026-09-15
-- **ไฟล์/หัวข้อที่เกี่ยวข้อง:** `02-chapter2-business-process/biz-flow-to-be.png`, `02-chapter2-business-process/biz-flow-rel-use-case.png`, todo ข้อ 2.4/2.6/2.7
-- **รายละเอียดปัญหา:** พบ 4 ประเด็น รายละเอียดเต็ม + วิธีแก้ดูที่ [`02-chapter2-business-process/biz-flow-fix-notes.md`](../02-chapter2-business-process/biz-flow-fix-notes.md) สรุปหัวข้อ:
+- **ไฟล์/หัวข้อที่เกี่ยวข้อง:** `02-chapter2-business-process/img/biz-flow-to-be.png`, `02-chapter2-business-process/img/biz-flow-rel-use-case.png`, todo ข้อ 2.4/2.6/2.7
+- **รายละเอียดปัญหา:** พบ 4 ประเด็น รายละเอียดเต็ม + วิธีแก้ดูที่ [`02-chapter2-business-process/02-biz-flow-fix-notes.md`](../02-chapter2-business-process/02-biz-flow-fix-notes.md) สรุปหัวข้อ:
   1. ชื่อ UC "อัพเดทสถานะการจัดส่ง" ครอบ process ที่เนื้อหาจริงเป็น "Update จำนวนสินค้าใน Marketplace" — คนละเรื่องกัน (สถานะจัดส่ง ≠ จำนวนสต๊อก) ผิดเกณฑ์ rubric ข้อ 13 ที่ชื่อ UC ต้องตรงกับ Business Process
   2. Process box 2 กล่อง (เลข 8 กับ 9) มีข้อความเหมือนกันเป๊ะ "ส่งเลขติดตามการจัดส่งให้ Marketplace" แต่ถูกครอบด้วยคนละ UC (UC9 กับ UC15) และคำว่า "Marketplace" ในกล่องก็ไม่ตรงกับชื่อ UC ที่บอกว่าส่งให้ "ลูกค้า"
   3. มี UC "จับคู่ Order กับ RSL" ปรากฏ 2 เลข (UC4 และ UC12) ครอบคนละ process กัน — ขัดแย้งกับ `use-case.png` ที่ระบุว่า UC12 ชื่อ "จับคู่ SKU"

@@ -1,7 +1,7 @@
 # Summary — ทำได้จริงมั้ยตอนนี้ + Flow เชื่อม Rakuten แบบเห็นภาพ + คอมเม้นอาจารย์เรื่อง Human-in-the-Loop
 
 **วันที่:** 2026-09-15
-**อ้างอิง:** `biz-requirement.md`, `issues-checklist.md`, `use-case-diagram-fix-notes.md`, `biz-flow-fix-notes.md`, `overview.md`
+**อ้างอิง:** `biz-requirement.md`, `issues-checklist.md`, `01-use-case-diagram-fix-notes.md`, `02-biz-flow-fix-notes.md`, `overview.md`
 
 ---
 
@@ -24,8 +24,8 @@
 | 4 | เช็คสต๊อกในบริษัท + สต๊อกใน RSL | ระบบ (auto) | ✅ Auto เต็ม | ✅ เช็คแล้ว — RSL (ญี่ปุ่น) มี API sync สต๊อกจริง แต่ **[ยังไม่ชัด]** ว่าเป็น RSL เดียวกับที่ biz-requirement.md พูดถึงหรือเปล่า (มี RSL ชื่อซ้ำกัน 2 ระบบ ดูหัวข้อ 1.5) |
 | 5 | จับคู่เลข RSL กับ order_id, จัดฟอร์แมต label, พิมพ์ label | ระบบ (auto) | ✅ Auto เต็ม (ความเสี่ยงต่ำ แก้ไขย้อนหลังได้) | **[ไม่รู้]** เชื่อมเครื่องพิมพ์จริงยังไง (driver/network printer) หรือแค่ generate PDF ให้คนพิมพ์เอง |
 | 6 | Delivery รับสินค้า → ส่งลูกค้า → ส่งเลขติดตามกลับ | Delivery (ภายนอก) | — | — |
-| 7 | ระบบส่งเลขติดตามให้ลูกค้า + อัพเดทสถานะกลับ Rakuten RMS | ระบบ (auto) | ✅ Auto เต็ม | ดูปัญหา process ซ้ำใน `biz-flow-fix-notes.md` ปัญหาที่ 2 |
-| 8 | ตัดสต๊อกเมื่อออเดอร์ถูกประมวลผล | ระบบ (auto) | ✅ Auto เต็ม | ยังไม่มี UC นี้ใน diagram (ดู `use-case-diagram-fix-notes.md` ปัญหาที่ 2) |
+| 7 | ระบบส่งเลขติดตามให้ลูกค้า + อัพเดทสถานะกลับ Rakuten RMS | ระบบ (auto) | ✅ Auto เต็ม | ดูปัญหา process ซ้ำใน `02-biz-flow-fix-notes.md` ปัญหาที่ 2 |
+| 8 | ตัดสต๊อกเมื่อออเดอร์ถูกประมวลผล | ระบบ (auto) | ✅ Auto เต็ม | ยังไม่มี UC นี้ใน diagram (ดู `01-use-case-diagram-fix-notes.md` ปัญหาที่ 2) |
 | 9 | ติดตามสต๊อกในบริษัท+RSL แบบต่อเนื่อง (background job) | ระบบ (auto) | ✅ Auto เต็ม | **[ไม่รู้]** รันทุกกี่ชั่วโมงถึงจะเหมาะ ต้องถามเจ้าของธุรกิจ |
 | 10 | สต๊อกต่ำกว่า threshold → คำนวณต้นทุนต่อหน่วย → ประเมินความคุ้มค่า | ระบบ (auto) | ✅ Auto เต็ม (แค่คำนวณ ไม่ commit เงิน) | — |
 | 11 | **ระบบเสนอคำแนะนำ reorder (draft)** | ระบบ (auto) | ✅ Auto เตรียมข้อมูล | — |
@@ -96,7 +96,7 @@
 | **2. Auto + Notify (override ได้)** | ผลกระทบต่ำ-กลาง แต่ควรให้เจ้าของเห็น | อัพเดทสถานะ/ส่งเลขติดตามให้ลูกค้า | ทำอัตโนมัติ แต่ขึ้น dashboard ให้เห็น + เจ้าของหยุด/แก้ไขได้ทุกเมื่อ (ตรงกับที่ biz-requirement.md ข้อ 5 ระบุไว้แล้ว) |
 | **3. Auto-draft + Human Approve (บังคับ)** | มีผลกระทบทางการเงิน/ความสัมพันธ์กับคู่ค้า | **Reorder — สั่งซื้อสินค้าเติม stock** | ระบบเตรียม/คำนวณให้ทั้งหมด แต่ **ต้องรอเจ้าของกดอนุมัติก่อนเสมอ** ถึงจะส่ง order จริงไปหา supplier |
 
-**ผลต่อ use-case.png ที่กำลังจะแก้:** ข้อเสนอเดิมใน [`use-case-diagram-fix-notes.md`](../02-chapter2-business-process/use-case-diagram-fix-notes.md) ปัญหาที่ 1 (ย้าย UC5/UC6/UC7 ไป actor "ระบบ" ทั้งหมด) **ต้องปรับสำหรับ UC7 (reorder) โดยเฉพาะ** — ห้ามให้ actor "ระบบ" เป็นคนตัดสินใจส่ง order เอง ต้องคงจุดอนุมัติของ "เจ้าของ" ไว้เสมอ (มีอยู่แล้วในชื่อ UC13 "ตัดสินใจการสั่งซื้อสินค้ามาเติม Stock จากการคำนวณ Cost ที่ระบบคำนวณให้" — เป็นตัวอย่าง human-in-the-loop ที่ถูกต้องอยู่แล้ว) ส่วน UC5 (คำนวณ cost) และ UC6 (พิมพ์ label) ยังคงเสนอให้เป็น actor "ระบบ" แบบ auto เต็มได้ตามเดิม เพราะเป็นระดับ 1 ความเสี่ยงต่ำ
+**ผลต่อ use-case.png ที่กำลังจะแก้:** ข้อเสนอเดิมใน [`01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md) ปัญหาที่ 1 (ย้าย UC5/UC6/UC7 ไป actor "ระบบ" ทั้งหมด) **ต้องปรับสำหรับ UC7 (reorder) โดยเฉพาะ** — ห้ามให้ actor "ระบบ" เป็นคนตัดสินใจส่ง order เอง ต้องคงจุดอนุมัติของ "เจ้าของ" ไว้เสมอ (มีอยู่แล้วในชื่อ UC13 "ตัดสินใจการสั่งซื้อสินค้ามาเติม Stock จากการคำนวณ Cost ที่ระบบคำนวณให้" — เป็นตัวอย่าง human-in-the-loop ที่ถูกต้องอยู่แล้ว) ส่วน UC5 (คำนวณ cost) และ UC6 (พิมพ์ label) ยังคงเสนอให้เป็น actor "ระบบ" แบบ auto เต็มได้ตามเดิม เพราะเป็นระดับ 1 ความเสี่ยงต่ำ
 
 ---
 
@@ -118,5 +118,5 @@
 - [ ] ยืนยันกับเจ้าของธุรกิจว่า "RSL" ที่ใช้อยู่คือ Rakuten Super Logistics **ฝั่งญี่ปุ่น** (ผูกกับ Rakuten Ichiba) หรือฝั่งสหรัฐฯ (อดีต Webgistix) — มีชื่อซ้ำกัน 2 ระบบ คนละ API กัน (ดูหัวข้อ 1.5) แล้วค่อยเช็ค API สเปคของตัวที่ใช้จริง
 - [ ] ถามเจ้าของธุรกิจว่า supplier รับออเดอร์ทางไหน (อีเมล/ระบบ/อื่นๆ) เพื่อประเมินว่า auto reorder ทำได้จริงระดับไหน
 - [ ] ตัดสินใจว่า "พิมพ์ label" จะเชื่อมเครื่องพิมพ์จริงยังไง หรือแค่ generate PDF ให้คนพิมพ์เอง
-- [ ] ปรับ `use-case.png` ตามโมเดล 3 ระดับในหัวข้อ 2 (โดยเฉพาะคง human approval ไว้ที่ UC reorder) — อัปเดต [`use-case-diagram-fix-notes.md`](../02-chapter2-business-process/use-case-diagram-fix-notes.md) ปัญหาที่ 1 ให้ตรงกับข้อสรุปนี้ตอนแก้จริง
+- [ ] ปรับ `use-case.png` ตามโมเดล 3 ระดับในหัวข้อ 2 (โดยเฉพาะคง human approval ไว้ที่ UC reorder) — อัปเดต [`01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md) ปัญหาที่ 1 ให้ตรงกับข้อสรุปนี้ตอนแก้จริง (หรืออ่านฉบับง่ายที่ [`00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md))
 - [ ] เอาโมเดล 3 ระดับ auto นี้ไปคุยกับอาจารย์รอบหน้าเพื่อ confirm ว่าตรงกับที่อาจารย์ต้องการหรือไม่ ก่อนลงมือวาด diagram เวอร์ชันสุดท้าย
