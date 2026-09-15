@@ -14,11 +14,11 @@
 
 ### 2. งาน Use Case Diagram — ทำตามลำดับนี้ (ห้ามสลับ)
 
-> ⚠️ **เพิ่งเจอเพิ่ม (2026-09-15):** เรามีแค่ `use-case.png` ซึ่งควรจะเป็นเวอร์ชัน **2.11 "ที่ปรับปรุงแล้ว"** แต่ **2.8 "ก่อนปรับปรุง" (ร่างแรกจาก Business Process ตรงๆ ก่อนเช็ค CRUD) ยังไม่เคยทำเลย** — ต้องทำ 2.8 ก่อน ถึงจะรู้ว่า 2.11 "เพิ่ม/แก้" อะไรไปบ้างจากร่างแรก (ตามที่ rubric ข้อ 16 ต้องการ)
+> ⚠️ **อัปเดต 2026-09-15:** เปลี่ยนมาใช้คำว่า **As-Is / To-be** (ตรงกับ tab ใน CRUD Table sheet ของทีม) แทน "ก่อนปรับปรุง/ปรับปรุงแล้ว" — และเจอว่า CRUD Table sheet มี UC list ของทั้ง 2 เวอร์ชันอยู่แล้ว (15 UC ต่อเวอร์ชัน) ไม่ต้องคิดเอง แค่แปลงเป็นรูป diagram ตามที่อธิบายไว้ใน `00-how-to-fix-simple.md`
 
-- [ ] **อยากอ่านฉบับเข้าใจง่ายก่อนเริ่ม** → [`02-chapter2-business-process/00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md) (มีรูปเปรียบเทียบก่อน/หลัง เหมาะให้เพื่อนที่เพิ่งเข้ามาอ่าน)
-- [ ] **ขั้น 0 — ทำ `use-case-before.png` (2.8 ก่อนปรับปรุง)** — ไล่ดู `biz-flow-to-be.png` ทีละ process แล้วแปลงเป็น use case ตรงๆ ยังไม่ต้องคิดเรื่อง manual/automatic หรือ human-in-the-loop (ทำแบบง่ายที่สุดก่อน จะสั้นกว่า 20 UC ที่มีตอนนี้)
-- [ ] **ขั้น 1 — แก้ `use-case.png` ให้เป็น 2.11 "ที่ปรับปรุงแล้ว" เวอร์ชันสมบูรณ์** ตาม [`02-chapter2-business-process/01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md):
+- [ ] **อยากอ่านฉบับเข้าใจง่ายก่อนเริ่ม** → [`02-chapter2-business-process/00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md) (มี UC list + actor ที่แนะนำ + รูปเปรียบเทียบครบ ใช้ไฟล์นี้เป็นหลัก)
+- [ ] **ขั้น 0 — ทำ `use-case-as-is.png` (2.8 As-Is)** — เอา 15 UC จาก CRUD Table sheet tab "As-Is" มาวาดเป็น diagram ตรงๆ (มี UC list พร้อม actor ที่แนะนำแล้วใน how-to-fix-simple.md)
+- [ ] **ขั้น 1 — แก้ `use-case.png` ให้เป็น `use-case-to-be.png` (2.11 To-be)** — เอา 15 UC จาก CRUD Table sheet tab "To-be" มาแทนชุด 20 UC เดิมทั้งหมด (ดูรายละเอียดใน [`00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md) เป็นหลัก หรือเหตุผลประกอบที่ [`01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md)):
   - แยก actor manual vs automatic **แบบ human-in-the-loop** (ห้ามย้าย UC7 reorder ไป auto เต็ม — ต้องมีจุดเจ้าของอนุมัติเสมอ ดู `summary.md` หัวข้อ 2)
   - เพิ่ม UC ที่ขาด 2 ตัว (รับออเดอร์ใหม่จาก Rakuten RMS, ตัดสต๊อกสินค้า)
   - แก้ชื่อ UC ที่ซ้ำ/ยาวเกินไป (UC2 "อัพเดทสถานะการจัดส่ง", UC13)
