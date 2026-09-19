@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="9nYQw2yMJA62JoybOAxG">
+    <mxGraphModel dx="2270" dy="1438" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="swimlane;startSize=40;" value="กระบวนการทำงานของ Colorado" vertex="1">
+          <mxGeometry height="910" width="330" x="270" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="3" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="4" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="5" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="6" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="8" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="10" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFF2CC;strokeColor=#D6B656;" value="&lt;div&gt;เจ้าของ&lt;/div&gt;(Admin)" vertex="1">
+          <mxGeometry height="120" width="60" x="110" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="12" edge="1" parent="1" source="11" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;strokeColor=default;endArrow=none;endFill=0;" target="16">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="-725" as="sourcePoint" />
+            <mxPoint x="320" y="-945" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="13" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#E1D5E7;strokeColor=#9673A6;" value="Marketplace" vertex="1">
+          <mxGeometry height="120" width="60" x="680" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="14" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#6C8EBF;" value="&lt;div&gt;Supplier&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="60" x="680" y="535" as="geometry" />
+        </mxCell>
+        <mxCell id="15" edge="1" parent="1" source="16" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=20;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;jumpStyle=arc;jumpSize=12;" target="13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="1A) ตรวจสอบ Order แบบ manual" vertex="1">
+          <mxGeometry height="60" width="150" x="360" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="3A) จับคู่ Order กับเลข RSL" vertex="1">
+          <mxGeometry height="50" width="150" x="360" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="18" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="4A)&amp;nbsp;คำนวณ Cost ในการสั่งสินค้าเติม stock เอง" vertex="1">
+          <mxGeometry height="60" width="150" x="360" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="19" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="2A) ตรวจสอบของสินค้าใน stock + RSL" vertex="1">
+          <mxGeometry height="50" width="160" x="360" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="8A) พิมพ์ใบปะสินค้า" vertex="1">
+          <mxGeometry height="50" width="150" x="360" y="855" as="geometry" />
+        </mxCell>
+        <mxCell id="21" edge="1" parent="1" source="22" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=20;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;jumpStyle=arc;jumpSize=12;" target="14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="9A) สั่งสินค้าจาก Supplier เติมเข้า stock" vertex="1">
+          <mxGeometry height="60" width="150" x="360" y="945" as="geometry" />
+        </mxCell>
+        <mxCell id="24" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="6A) จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (บริษัทขนส่งที่เจ้าของติดต่อเอง)" vertex="1">
+          <mxGeometry height="60" width="150" x="360" y="665" as="geometry" />
+        </mxCell>
+        <mxCell id="25" edge="1" parent="1" source="27" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=20;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;jumpStyle=arc;jumpSize=12;" target="13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="27" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="7A) ส่งเลขติดตามสินค้าให้ลูกค้าผ่าน Marketplace" vertex="1">
+          <mxGeometry height="70" width="150" x="360" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="28" edge="1" parent="1" source="29" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=20;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;jumpStyle=arc;jumpSize=12;" target="13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="29" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="5A)&amp;nbsp;ยกเลิก Order" vertex="1">
+          <mxGeometry height="60" width="150" x="360" y="585" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
