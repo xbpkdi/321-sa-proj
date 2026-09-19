@@ -1,48 +1,77 @@
 # บทที่ 2 (ตอนที่ 1) — Business Process / Use Case Diagram / CRUD
 
-ไฟล์งานที่มีอยู่แล้วอยู่ใน `02-chapter2-business-process/` (โฟลเดอร์เก็บไฟล์ ไม่ใช่ไฟล์ todo นี้)
+ไฟล์งานอยู่ใน `02-chapter2-business-process/` (โฟลเดอร์เก็บไฟล์ ไม่ใช่ไฟล์ todo นี้)
 
-- [x] 2.1 Business Process เดิม (As-Is) — มีไฟล์ `biz-flow-as-is.png` แล้ว (สายงาน Order/Stock/Shipping/Cost × Marketplace/Super Admin/Supplier/Delivery)
-- [ ] 2.2 คำอธิบาย Business Process เดิม — ยังไม่เขียน (ต้องอธิบายทุกขั้นตอนจากรูป as-is ว่าใครทำอะไร ได้ผลอะไร)
-- [ ] 2.3 ปัญหาของ Business Process เดิม — ยังไม่เขียน (สรุปจาก biz-requirement.md ข้อ 2.1–2.3: พิมพ์ label มือ, เช็คสต๊อกข้ามคลังมือ, reorder ด้วยความรู้สึก, คำนวณต้นทุนยาก)
-- [ ] 2.4 Business Process ใหม่ (To-Be) — มีไฟล์ `biz-flow-to-be.png` แต่ **มีปัญหาต้องแก้** (label swimlane พิมพ์ผิด "f") ดู [`02-biz-flow-fix-notes.md`](../02-chapter2-business-process/02-biz-flow-fix-notes.md) (หรืออ่านฉบับง่าย: [`00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md))
-- [ ] 2.5 คำอธิบาย Business Process ใหม่ — ยังไม่เขียน (ต้องระบุว่า process ใด manual/automatic และ process ใดแก้ปัญหาข้อใน 2.3)
-- [ ] 2.6 Business Process ที่สัมพันธ์กับ Use Case — มีไฟล์ `biz-flow-rel-use-case.png` แต่ **มีปัญหาต้องแก้** (ชื่อ UC ไม่ตรง process, เลข UC ชนกัน) ดู [`02-chapter2-business-process/02-biz-flow-fix-notes.md`](../02-chapter2-business-process/02-biz-flow-fix-notes.md)
-- [ ] 2.7 ตารางจับคู่ระหว่าง Business Process และ Use Case Diagram — ยังไม่ทำ (ตาราง BP ↔ UC ทุกตัวต้องมาจาก BP)
-- [ ] 2.8 Use Case Diagram ก่อนปรับปรุง — ยังไม่แยกทำ (ปัจจุบันมีแต่เวอร์ชัน WIP ใน `use-case.png`)
-- [x] 2.9 CRUD Table ก่อนปรับปรุง — มีไฟล์ `crud-table-as-is.png` แล้ว
-- [ ] 2.10 คำอธิบาย CRUD Table ก่อนปรับปรุง — ยังไม่เขียน (ชี้ว่ายังขาด UC อะไรจากการวิเคราะห์)
-- [ ] 2.11 Use Case ที่ปรับปรุงแล้ว — มีไฟล์ `use-case.png` แต่ **ยังเป็น WIP** (20 UC: เจ้าของ 15, Delivery 2, Marketplace 2, Supplier 1) ต้องตรวจทาน/สรุปให้เป็นเวอร์ชันสุดท้าย ดู [`01-use-case-diagram-fix-notes.md`](../02-chapter2-business-process/01-use-case-diagram-fix-notes.md) (หรืออ่านฉบับง่าย: [`00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md))
-- [x] 2.12 CRUD Table ที่ทบทวนแล้ว — มีไฟล์ `crud-table-to-be.png` แล้ว (ต้องเช็คว่าครอบคลุม 20 UC ที่ปรับปรุงในข้อ 2.11 ครบหรือยัง)
+**เนื้อหาข้อความ/ตารางทั้งหมด (2.1–2.12) เขียนไว้พร้อมวางในเล่มแล้วที่ [`03-chapter2-content-draft.md`](../02-chapter2-business-process/03-chapter2-content-draft.md)** — ไฟล์นี้เป็นแค่ tracker สรุปสถานะ
 
-## รายชื่อ Use Case ปัจจุบันใน `use-case.png` (WIP — ใช้ตรวจทานสำหรับ 2.7/2.8/2.11)
+## โครงสร้างโฟลเดอร์รูป
 
-**Actor: เจ้าของ (Owner/Super Admin)**
-1. เข้าสู่ระบบ
-2. อัพเดทสถานะการจัดส่ง
-3. เช็คสินค้าใน stock
-4. จับคู่ Order กับ RSL
-5. ระบบคำนวณ Cost ในการสั่งสินค้าเติม stock
-6. พิมพ์ใบปะสินค้า
-7. สั่งสินค้าจาก Supplier เติมเข้า stock
-8. จัดส่งสินค้าให้ลูกค้าผ่าน Delivery
-9. ส่งเลขติดตามสินค้าให้ลูกค้า
-10. ยกเลิก Order
-11. ตั้งกฎ SKU
-12. จับคู่ SKU
-13. ตัดสินใจการสั่งซื้อสินค้ามาเติม Stock จากการคำนวณ Cost ที่ระบบคำนวณให้
-14. จัด Format ใบปะสินค้า
-15. ติดตามการจัดส่งให้ลูกค้า
+- `img/final/` — ชุดรูปล่าสุดที่ใช้ส่งจริง ตั้งชื่อไฟล์ตามเลขหัวข้อใน sa-ref.pdf (หน้า 4–23) เรียงลำดับตามนั้น
+- `img/old/` — รูปต้นฉบับ/เวอร์ชันก่อนแก้ทั้งหมด เก็บไว้อ้างอิงเฉยๆ ไม่ต้องใช้ส่ง
 
-**Actor: Delivery**
-1. รับสินค้าจากร้านเพื่อมาส่งต่อให้ลูกค้าปลายทาง
-2. ส่งเลขติดตามสินค้ากลับไปให้ร้าน
+| ไฟล์ใน `img/final/` | ใช้กับหัวข้อ | อ้างอิง sa-ref.pdf |
+|---|---|---|
+| `2.1-business-process-as-is.png` | 2.1 Business Process เดิม (As-Is) | รูปที่ 2-1 (หน้า 4) |
+| `2.3-business-process-pain-points.png` | ภาพประกอบ 2.3 ปัญหาของ Business Process เดิม | ไม่มีรูปนี้ตรงๆ ใน sa-ref แต่ช่วยอธิบายข้อ 2.3 (หน้า 6) |
+| `2.4-business-process-to-be.png` | 2.4 Business Process ใหม่ (To-Be) | รูปที่ 2-2 (หน้า 7) |
+| `2.6-business-process-rel-use-case.png` | 2.6 Business Process ที่สัมพันธ์กับ Use Case | รูปที่ 2-3 (หน้า 10) |
+| `2.8-use-case-diagram-as-is.png` | 2.8 Use Case Diagram ก่อนปรับปรุง | รูปที่ 2-4 (หน้า 12) |
+| `2.9-crud-table-as-is.png` | 2.9 CRUD Table ก่อนปรับปรุง (rebuild เป็นสไตล์ sa-ref แล้ว, เนื้อหาเดิมทุกแถว) | ตารางที่ 2-2/2-3 (หน้า 13–14) |
+| `2.11-use-case-diagram-to-be.png` | 2.11 Use Case ที่ปรับปรุงแล้ว | รูปที่ 2-5 (หน้า 21) |
+| `2.12-crud-table-to-be.png` | 2.12 CRUD Table ที่ทบทวนแล้ว (แก้ไข+เพิ่ม D แล้ว) | ตารางที่ 2-4/2-5 (หน้า 22–23) |
 
-**Actor: Marketplace**
-1. สั่งสินค้า
-2. อัพเดทสถานะการจัดส่ง
+## สถานะรายหัวข้อ (2.1–2.12) — ครบทุกข้อแล้ว
 
-**Actor: Supplier**
-1. จัดส่งสินค้าให้ร้าน
+- [x] 2.1 Business Process เดิม — รูปพร้อม เส้น/สีแก้เรียบร้อย
+- [x] 2.2 คำอธิบาย Business Process เดิม — เขียนแล้วใน `03-chapter2-content-draft.md` (2.2.1–2.2.12)
+- [x] 2.3 ปัญหาของ Business Process เดิม — เขียนแล้ว 4 ข้อ พร้อมรูปประกอบ
+- [x] 2.4 Business Process ใหม่ — รูปพร้อม มี lane ระบบ (System) แล้ว
+- [x] 2.5 คำอธิบาย Business Process ใหม่ — เขียนแล้วเป็นตาราง manual/automatic + โยงกับปัญหาข้อ 2.3 ที่แก้ได้
+- [x] 2.6 Business Process ที่สัมพันธ์กับ Use Case — รูปพร้อม มีวงรีประ+tag UC ครบ
+- [x] 2.7 ตารางจับคู่ BP ↔ Use Case — เขียนแล้ว 16 แถว
+- [x] 2.8 Use Case Diagram ก่อนปรับปรุง — แยกทำสำเร็จ (เดิมเป็น WIP รวมกับ To-Be)
+- [x] 2.9 CRUD Table ก่อนปรับปรุง — rebuild เป็นสไตล์ sa-ref แล้ว (เนื้อหาเดิมทุกแถว คัดลอกจากชีตตรงๆ ไม่เพิ่ม/ลด) พร้อม map เลข UC (1A–9A) ให้แต่ละแถว และมีหมายเหตุชี้ชัดว่ายังไม่มี Use Case ใดมีสิทธิ์ Delete ข้อมูลเก่า (จงใจไม่เพิ่ม Delete UC ปลอมเข้าไปในตารางนี้ เพราะ As-Is ต้องบันทึกสภาพจริงของระบบเดิม ไม่ใช่เสนอทางแก้ — ทางแก้ไปอยู่ที่ 2.12/`10A` แทน)
+- [x] 2.10 คำอธิบาย CRUD Table ก่อนปรับปรุง — เขียนแล้ว 4 ข้อ ชี้ว่าขาด use case อะไรบ้าง
+- [x] 2.11 Use Case ที่ปรับปรุงแล้ว — 17 UC (เพิ่ม 10A ลบข้อมูลเก่ารอบนี้), มี actor ระบบ (System), ลบ `<<include>>` ผิด, มีเงื่อนไขอนุมัติ 5A→6A
+- [x] 2.12 CRUD Table ที่ทบทวนแล้ว — แก้ครบ 20 แถว เพิ่ม 2A/9A/5S/7S/10A ที่ขาด + เพิ่ม `D` (Delete) ตามที่อาจารย์แนะนำ
 
-> ⚠️ ต้องตรวจทานว่า Use Case ไหนควรเป็น manual (เจ้าของกดเอง) vs automatic (ระบบทำเอง เช่น Auto Label Printing / Auto Reorder / Unit Cost Calculator ตาม biz-requirement.md ข้อ 5) — ของ WIP ตอนนี้ผูกทุกอย่างไว้ที่ actor "เจ้าของ" เหมือนเป็น manual หมด อาจต้องแยก use case ที่เป็น system-triggered ออกจาก use case ที่ actor เป็นคนกด
+## สิ่งที่ยังต้องทำเอง (ไม่ใช่งานเอกสาร)
+
+1. **อัปเดตชีต Google Sheets จริง** (`321-SA-proj-sheets`, แท็บ "To-be") ให้ตรงกับ `2.12-crud-table-to-be.png` — ตอนนี้ตารางในรูปสร้างจากไฟล์นี้แยกต่างหาก ชีตต้นฉบับยังเป็นเวอร์ชันเก่าอยู่ (15 แถว ไม่มี D)
+2. **แก้ไฟล์ `.drawio.xml` ต้นฉบับของเพื่อน** (`SA Project - UseCase-To-Be usecase.drawio.xml`) ให้ตรงกับเวอร์ชัน (fixed) — ตอนนี้แก้เฉพาะไฟล์ (fixed) เท่านั้น เพื่อนอาจต้องเปิดไฟล์ (fixed) แทนไฟล์เดิมตอนทำงานต่อ
+3. cross-check ว่า UC "10A) ลบข้อมูลเก่าที่ไม่ใช้แล้ว" ควรมี Use Case Description ฉบับเต็ม (2.13.x ตาม sa-ref) ด้วยหรือไม่ เพราะเป็น UC ที่เพิ่งเพิ่มเข้ามาล่าสุด ยังไม่เคยมีการออกแบบละเอียด (input/output, flow ทีละขั้น)
+
+## หมายเหตุสำคัญที่พบระหว่างทำ
+
+- **ไฟล์ `.drawio.xml` ของ Use Case (ทั้งต้นฉบับและ fixed) เคยหายไปจากโฟลเดอร์โปรเจกต์** ไปอยู่ใน macOS Trash (ไม่ทราบสาเหตุ ไม่ใช่การกระทำจาก session นี้) — กู้คืนกลับมาแล้วครบ แต่ควรระวังอย่าให้เหตุการณ์นี้เกิดซ้ำ (เช่น เช็คว่าโปรแกรม drawio desktop หรือ Finder sync ตัวไหนที่ลบไฟล์ไปโดยไม่ตั้งใจ)
+- พบโน้ตของทีมที่เขียนไว้ในชีต Google Sheets เอง (แท็บ As-Is แถวที่ 20, ไฮไลต์เหลือง): "อย่าลืมแก้เพิ่ม Delete ตามที่พิมพ์ใน Discord เพิ่ม delete ข้อมูลบางอย่างได้ เช่น order เก่าๆ ที่เรียบร้อยแล้ว" — นำมาใช้เป็นเหตุผลออกแบบ UC 10A ในข้อ 2.12 ด้านบนแล้ว
+
+## รายชื่อ Use Case ล่าสุด (17 ตัว, มาจาก `2.11-use-case-diagram-to-be.png`)
+
+**Actor: เจ้าของ / Super Admin (10 UC, สาย A)**
+1. 1A) เข้าสู่ระบบ
+2. 2A) ตรวจสอบคำสั่งซื้อ
+3. 3A) ตั้งกฎ SKU
+4. 4A) ดึง Order เข้าระบบ
+5. 5A) ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock (คุ้มค่าไหม)
+6. 6A) สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier
+7. 7A) ยกเลิก Order
+8. 8A) จัดส่งสินค้าให้ลูกค้าผ่าน Delivery
+9. 9A) พิมพ์ใบปะสินค้า
+10. 10A) ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น/Cost/Label/Reorder)
+
+**Actor: ระบบ (System) (7 UC, สาย S)**
+1. 1S) จับคู่ Order กับเลข RSL
+2. 2S) จับคู่กฎ SKU
+3. 3S) ตรวจสอบของสินค้าใน stock + RSL
+4. 4S) คำนวณ Cost ในการสั่งสินค้าเติม stock
+5. 5S) ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace
+6. 6S) จัดรูปแบบใบปะสินค้า
+7. 7S) ตัดสต๊อกสินค้า
+
+**Actor: Marketplace** — ส่งคำสั่งซื้อ, รับเลขติดตามสินค้า
+**Actor: Supplier** — รับคำสั่งซื้อ, จัดส่งสินค้าให้ร้าน
+**Actor: Delivery** — รับสินค้าไปส่งลูกค้า, ส่งเลข Tracking กลับ
+**Actor: RSL** — ให้ข้อมูลจับคู่เลข RSL
+
+> เหตุผลที่แยก actor "ระบบ (System)" ออกจาก "เจ้าของ": use case สาย S เป็นขั้นตอนที่ระบบทำอัตโนมัติ (auto label printing, auto reorder cost calculation, auto stock cut) ตาม biz-requirement.md ข้อ 5 — ไม่ใช่ Admin กดเอง จึงต้องมี actor แยก ไม่ผูกกับ "เจ้าของ" ทั้งหมดเหมือน WIP เดิม

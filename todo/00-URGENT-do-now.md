@@ -12,24 +12,13 @@
 - [ ] **ถามว่า supplier รับออเดอร์ทางไหน** (อีเมล/ระบบ/โทร) — กระทบว่า Auto Reorder จะ "ส่งเอง" ได้จริงหรือแค่ "ร่างให้แล้วคนส่งเอง"
 - [ ] **ถามรอบสต๊อกที่เหมาะสม** — ติดตามสต๊อกต่อเนื่อง (background job) ควรรันถี่แค่ไหน (ทุกกี่ชั่วโมง)
 
-### 2. งาน Use Case Diagram — ทำตามลำดับนี้ (ห้ามสลับ)
+### 2. งาน Use Case Diagram — ✅ เสร็จแล้วทั้งหมด (2026-09-17)
 
-> ⚠️ **อัปเดต 2026-09-15 (ล่าสุด):** ยึดสไตล์การวาด/เลขกำกับ UC ของ `sa-ref.pdf` (2.8/2.11) เป็นต้นแบบ — ใช้ตัวอักษรกำกับ actor: **M**=เจ้าของ/Admin, **S**=ระบบ, **D**=Delivery, **P**=Supplier, **R**=Marketplace เลขกำกับแบบ `1M)`, `2S)` ฯลฯ (CRUD Table sheet ของทีมเป็นแค่ตัวอย่าง ไม่ใช่แหล่งข้อมูลสุดท้ายแล้ว)
+ทุกขั้น (0–5) เสร็จแล้ว รูป+เนื้อหาล่าสุดอยู่ที่ `02-chapter2-business-process/img/final/` — ดูสถานะละเอียดและ use case list ล่าสุดที่ [`todo/02-chapter2-business-process.md`](02-chapter2-business-process.md) และเนื้อหาฉบับเต็มพร้อมวางในเล่มที่ [`02-chapter2-business-process/03-chapter2-content-draft.md`](../02-chapter2-business-process/03-chapter2-content-draft.md)
 
-- [ ] **อยากอ่านฉบับเข้าใจง่ายก่อนเริ่ม** → [`02-chapter2-business-process/00-how-to-fix-simple.md`](../02-chapter2-business-process/00-how-to-fix-simple.md) (มี UC list + actor + รูปเปรียบเทียบ As-Is/To-be ครบ ใช้ไฟล์นี้เป็นหลัก)
-- [ ] **ขั้น 0 — ทำ `use-case-as-is.png` (2.8)** — 3 actor (M, R, P) 13 UC ไม่มี "ระบบ"/"Delivery" ยัง — ดูรายละเอียดใน how-to-fix-simple.md
-- [ ] **ขั้น 1 — แก้ `use-case.png` ให้เป็น `use-case-to-be.png` (2.11)** — ลบ 20 UC เดิมทิ้ง แทนด้วย 5 actor (M, S, D, R, P) 16 UC:
-  - เพิ่ม actor "S" (ระบบ) และ "D" (Delivery) ใหม่
-  - `4M) อนุมัติคำสั่งซื้อเพิ่มสต๊อก` ต้องเป็นของเจ้าของ/Admin เสมอ **แบบ human-in-the-loop** (ห้ามให้ `7S` ข้ามไปทำเอง — ดู `summary.md` หัวข้อ 2)
-  - เพิ่ม `1M) เข้าสู่ระบบ` ที่ตกหล่นไปตอนร่างแรก (แพทเทิร์นเดียวกับ sa-ref ที่เพิ่ม "0A" login)
-- [ ] **ขั้น 2 — แก้ `biz-flow-to-be.png` + `biz-flow-rel-use-case.png`** ตาม [`02-chapter2-business-process/02-biz-flow-fix-notes.md`](../02-chapter2-business-process/02-biz-flow-fix-notes.md) โดยใช้เลข UC เวอร์ชันใหม่ (M/S/D/R/P) จากขั้น 1:
-  - แก้ label swimlane "f" → "Marketplace"
-  - แก้ชื่อ UC ให้ตรงกับ process จริง
-  - เคลียร์ process ที่ข้อความซ้ำกัน (กล่อง 8 กับ 9)
-  - เคลียร์เลข UC ที่ชนกัน ("จับคู่ Order กับ RSL")
-- [ ] **ขั้น 3 — อัปเดต `crud-table-to-be.png`** ให้ครอบคลุม UC ชุดใหม่ทั้งหมด
-- [ ] **ขั้น 4 — ทำตารางจับคู่ BP ↔ UC (2.7)** ที่ยังไม่เคยทำเลย
-- [ ] **ขั้น 5 — กลับมาติ๊ก resolve** ที่ `todo/issues-checklist.md` ปัญหา #1 และ #2 พร้อมสรุปว่าแก้อะไรไปบ้าง
+งานที่ยังเหลือ (ไม่ใช่งานเอกสารแล้ว):
+- [ ] อัปเดตชีต Google Sheets จริง (`321-SA-proj-sheets` แท็บ "To-be") ให้ตรงกับ CRUD table ที่แก้แล้ว (`2.12-crud-table-to-be.png`)
+- [ ] แก้ไฟล์ `.drawio.xml` ต้นฉบับของเพื่อนให้ตรงกับเวอร์ชัน (fixed)
 
 ---
 
