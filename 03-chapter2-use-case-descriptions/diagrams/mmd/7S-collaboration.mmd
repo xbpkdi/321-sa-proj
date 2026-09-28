@@ -1,0 +1,19 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    FiveS["TrackingNotifyController (5S)"]
+    SDC["StockDeductionController<br/>+onTrackingNotified()<br/>+calculateAvailableQty()"]
+    StockRepo["StockRepository<br/>+getStockAndOrderInfo()<br/>+deductInHouseStock()<br/>+deductRslStock()"]
+    OrderRepo["OrderRepository<br/>+markStockDeductedAndCompleted()<br/>+markPendingSync()"]
+    DB["DBConnector<br/>+executeQuery()"]
+    MP(["Marketplace"])
+
+    FiveS -->|"1: onTrackingNotified(orderId)"| SDC
+    SDC -->|"2: getStockAndOrderInfo(orderId)"| StockRepo
+    StockRepo -->|"3: executeQuery(Q7S.1)"| DB
+    SDC -->|"4: deductInHouseStock()/deductRslStock()"| StockRepo
+    StockRepo -->|"5: executeQuery(Q7S.2/Q7S.3)"| DB
+    SDC -->|"5.1: calculateAvailableQty() [Q7S.4]"| SDC
+    SDC -->|"6: updateStockQty(sku, availableQty)"| MP
+    MP -->|"7: return ackResult"| SDC
+    SDC -->|"8: markStockDeductedAndCompleted(orderId)"| OrderRepo
+    OrderRepo -->|"9: executeQuery(Q7S.5)"| DB

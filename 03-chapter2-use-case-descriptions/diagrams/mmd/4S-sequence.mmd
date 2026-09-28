@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :CostCalculatorScreen
+    participant CCC as :CostCalculatorController
+    participant CostRepo as :ProductCostRepository
+    participant LogRepo as :CostLogRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: selectProduct() or clickCalculateCost()
+    Screen->>CCC: loadCostComponents(sku)
+    CCC->>CostRepo: getCostComponents(sku)
+    CostRepo->>DB: executeQuery(Q5.1)
+    DB-->>CostRepo: return costComponents
+    CostRepo-->>CCC: return costComponents
+    CCC-->>Screen: displayCostForm(costComponents)
+
+    Admin->>Screen: submitCostForm(costData)
+    Screen->>CCC: calculateUnitCost(costData)
+    CCC->>CCC: validateNotEmptyOrNegative(costData)
+    alt empty or negative value
+        CCC-->>Screen: showError("กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง")
+    else valid data
+        alt no recent exchange rate
+            CCC-->>Screen: showWarning("ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง")
+        end
+        CCC->>CCC: computeUnitCost(costData)
+        Note right of CCC: Q5.2 Unit Cost =<br/>((purchase_price × exchange_rate) + intl_freight + duty_fee)<br/>/ order_qty + marketplace_fee + domestic_shipping + rsl_charge
+        CCC->>LogRepo: saveCostLog(sku, unitCost)
+        LogRepo->>DB: executeQuery(Q5.3)
+        DB-->>LogRepo: return logId
+        LogRepo-->>CCC: return logId
+        CCC-->>Screen: displayUnitCostResult(unitCost)
+    end

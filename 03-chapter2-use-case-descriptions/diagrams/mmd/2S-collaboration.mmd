@@ -1,0 +1,17 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Sched(["Scheduler"])
+    SMC["SkuMatchController<br/>+processPendingSkuMatch()"]
+    SkuRepo["SkuRuleRepository<br/>+findRuleByChannelSku()"]
+    OrderRepo["OrderRepository<br/>+getOrdersByStatus()<br/>+bindSkuRuleAndUpdateStatus()<br/>+setManualReview()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Sched -->|"1: processPendingSkuMatch()"| SMC
+    SMC -->|"2: getOrdersByStatus()"| OrderRepo
+    SMC -->|"3: findRuleByChannelSku(channelSku, salesChannel)"| SkuRepo
+    SkuRepo -->|"4: executeQuery(Q2S.1)"| DB
+    DB -->|"5: return ruleResult"| SkuRepo
+    SkuRepo -->|"6: return ruleResult"| SMC
+    SMC -->|"7: bindSkuRuleAndUpdateStatus(orderId, rule)"| OrderRepo
+    OrderRepo -->|"8: executeQuery(Q2S.2)"| DB
+    SMC -->|"9: showSummary()"| Sched

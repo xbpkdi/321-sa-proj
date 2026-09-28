@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :RslMatchScreen
+    participant RMC as :RslMatchController
+    participant RslRepo as :RslRepository
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: openUnmatchedOrderList()
+    Screen-->>Admin: displayOrderList()
+    Admin->>Screen: selectOrder() then clickMatchWithRsl()
+    Screen->>RMC: matchOrderWithRsl(orderId, sku, variation)
+    RMC->>RslRepo: findRslBySkuAndVariation(sku, variation)
+    RslRepo->>DB: executeQuery(Q4.1)
+    DB-->>RslRepo: return rslResults
+    RslRepo-->>RMC: return rslResults
+    alt no matching SKU found
+        RMC-->>Screen: showError("ไม่พบสินค้านี้ในระบบ RSL")
+        RMC->>OrderRepo: setManualReview(orderId)
+    else multiple matches found
+        RMC-->>Screen: showMultipleMatches(rslResults)
+    else single match found
+        RMC->>OrderRepo: saveRslMatch(orderId, rslReferenceId)
+        OrderRepo->>DB: executeQuery(Q4.2)
+        DB-->>OrderRepo: return updateResult
+        RMC-->>Screen: showSuccess("จับคู่ Order กับ RSL สำเร็จ")
+        RMC->>RMC: proceedToUseCase6S(orderId)
+    end

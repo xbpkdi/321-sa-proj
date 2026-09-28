@@ -1,0 +1,9 @@
+/* Fix for a mermaid-cli/mermaid.js rendering bug: the yellow Note background
+   rect is sized using the default note font-size, but at that size long
+   multi-line Note text overflows the rect on both edges. Shrinking the text
+   slightly gives enough margin for it to render fully inside the box.
+   Used for all UC diagrams with formula "Note right of ..." blocks (4S, 5A, 7S).
+   Usage: mmdc -C diagrams/note-fix.css -i <file>.mmd -o <file>.png ... */
+.noteText, .noteText tspan {
+  font-size: 13px !important;
+}

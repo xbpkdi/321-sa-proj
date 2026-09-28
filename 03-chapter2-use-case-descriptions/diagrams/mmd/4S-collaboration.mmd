@@ -1,0 +1,19 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["CostCalculatorScreen<br/>+selectProduct()<br/>+submitCostForm()"]
+    CCC["CostCalculatorController<br/>+loadCostComponents()<br/>+calculateUnitCost()<br/>+computeUnitCost()"]
+    CostRepo["ProductCostRepository<br/>+getCostComponents()"]
+    LogRepo["CostLogRepository<br/>+saveCostLog()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Admin -->|"1: selectProduct()"| Screen
+    Screen -->|"2: loadCostComponents(sku)"| CCC
+    CCC -->|"3: getCostComponents(sku)"| CostRepo
+    CostRepo -->|"4: executeQuery(Q5.1)"| DB
+    Admin -->|"5: submitCostForm(costData)"| Screen
+    Screen -->|"6: calculateUnitCost(costData)"| CCC
+    CCC -->|"6.1: computeUnitCost() [Q5.2]"| CCC
+    CCC -->|"7: saveCostLog(sku, unitCost)"| LogRepo
+    LogRepo -->|"8: executeQuery(Q5.3)"| DB
+    CCC -->|"9: displayUnitCostResult()"| Screen

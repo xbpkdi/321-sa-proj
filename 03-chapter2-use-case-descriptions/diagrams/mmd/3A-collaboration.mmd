@@ -1,0 +1,21 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["ProductScreen<br/>+openProductList()<br/>+clickAddOrEditProduct()<br/>+submitProductForm()"]
+    PC["ProductController<br/>+saveProduct()<br/>+validateNotEmpty()<br/>+validatePositiveInteger()"]
+    ProdRepo["ProductRepository<br/>+checkSkuExists()<br/>+upsertProduct()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Admin -->|"1: openProductList()"| Screen
+    Admin -->|"2: submitProductForm(productData)"| Screen
+    Screen -->|"3: saveProduct(productData)"| PC
+    PC -->|"4: checkSkuExists(sku)"| ProdRepo
+    ProdRepo -->|"5: executeQuery()"| DB
+    DB -->|"6: return exists"| ProdRepo
+    ProdRepo -->|"7: return exists"| PC
+    PC -->|"8: upsertProduct(productData)"| ProdRepo
+    ProdRepo -->|"9: executeQuery(Q13.1)"| DB
+    DB -->|"10: return productId"| ProdRepo
+    ProdRepo -->|"11: return productId"| PC
+    PC -->|"12: showSuccess()"| Screen
+    PC -->|"13: retryUseCase2S(sku) [ถ้ามาจาก 2S]"| PC

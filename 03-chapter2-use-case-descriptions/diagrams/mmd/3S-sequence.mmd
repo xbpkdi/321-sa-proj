@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :StockCheckScreen
+    participant SCC as :StockCheckController
+    participant StockRepo as :StockRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: selectProduct(sku)
+    Screen->>SCC: checkStock(sku)
+    SCC->>StockRepo: getStockBySku(sku)
+    StockRepo->>DB: executeQuery(Q3.1)
+    DB-->>StockRepo: return stockData
+    StockRepo-->>SCC: return stockData
+    alt SKU not found
+        SCC-->>Screen: showError("ไม่พบข้อมูลสินค้านี้ในระบบ")
+    else stock data found
+        SCC->>SCC: calculateTotalQty(inHouseQty, rslQty)
+        SCC->>SCC: compareWithReorderThreshold(totalQty)
+        alt totalQty <= reorderThreshold
+            SCC-->>Screen: showStatus("สต๊อกต่ำกว่าเกณฑ์")
+            SCC->>SCC: proceedToUseCase4S(sku)
+        else totalQty > reorderThreshold
+            SCC-->>Screen: showStatus("สต๊อกปกติ")
+            SCC->>SCC: proceedToUseCase1S(sku)
+        end
+    end

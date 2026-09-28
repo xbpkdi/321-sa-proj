@@ -1,0 +1,22 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["ReorderDecisionScreen<br/>+openPendingDecisionList()<br/>+selectOrder()<br/>+clickApprove()<br/>+clickReject()"]
+    RDC["ReorderDecisionController<br/>+loadDecisionData()<br/>+calculateExpectedMargin()<br/>+submitDecision()"]
+    OrderRepo["OrderRepository<br/>+getOrdersByStatus()<br/>+getCostAndMarginInfo()<br/>+checkStatus()<br/>+updateStatus()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Admin -->|"1: selectOrder(orderId)"| Screen
+    Screen -->|"2: loadDecisionData(orderId)"| RDC
+    RDC -->|"3: getCostAndMarginInfo(orderId)"| OrderRepo
+    OrderRepo -->|"4: executeQuery(Q5A.1)"| DB
+    DB -->|"5: return costInfo"| OrderRepo
+    OrderRepo -->|"6: return costInfo"| RDC
+    RDC -->|"6.1: calculateExpectedMargin() [Q5A.2]"| RDC
+    RDC -->|"7: displayCostAndMargin()"| Screen
+    Admin -->|"8: clickApprove()/clickReject()"| Screen
+    Screen -->|"9: submitDecision(orderId, decision)"| RDC
+    RDC -->|"10: checkStatus(orderId)"| OrderRepo
+    RDC -->|"11: updateStatus(orderId, status, decision)"| OrderRepo
+    OrderRepo -->|"12: executeQuery(Q5A.3/Q5A.4)"| DB
+    RDC -->|"13: showSuccess()"| Screen

@@ -1,0 +1,22 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["DataCleanupScreen<br/>+openDataCleanupPage()<br/>+selectMethod()<br/>+clickConfirmDelete()"]
+    DCC["DataCleanupController<br/>+previewDeleteByDateRange()<br/>+previewClosedOrders()<br/>+executeDeleteByDateRange()<br/>+executeDeleteClosedOrders()"]
+    OrderRepo["OrderRepository<br/>+getDeletableRecords()<br/>+getClosedOrders()<br/>+deleteRecords()<br/>+deleteClosedOrders()"]
+    LogRepo["DeletionLogRepository<br/>+insertDeletionLog()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Admin -->|"1: selectMethod()"| Screen
+    Screen -->|"2a: previewDeleteByDateRange()"| DCC
+    Screen -->|"2b: previewClosedOrders()"| DCC
+    DCC -->|"3: getDeletableRecords()/getClosedOrders()"| OrderRepo
+    OrderRepo -->|"4: executeQuery(Q10A.1-2 / Q10A.8-9)"| DB
+    DCC -->|"5: displayPreview()"| Screen
+    Admin -->|"6: clickConfirmDelete()"| Screen
+    Screen -->|"7: executeDeleteByDateRange()/executeDeleteClosedOrders()"| DCC
+    DCC -->|"8: insertDeletionLog(records)"| LogRepo
+    LogRepo -->|"9: executeQuery(Q10A.3/Q10A.10)"| DB
+    DCC -->|"10: deleteRecords()/deleteClosedOrders()"| OrderRepo
+    OrderRepo -->|"11: executeQuery(Q10A.4-7 / Q10A.11-12)"| DB
+    DCC -->|"12: showSuccess()/showError()"| Screen

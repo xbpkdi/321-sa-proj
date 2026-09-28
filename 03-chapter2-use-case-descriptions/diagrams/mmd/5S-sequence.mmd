@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant Sched as Scheduler / Admin
+    participant TNC as :TrackingNotifyController
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+    participant MP as Marketplace
+
+    Sched->>TNC: processPendingTrackingNotify()
+    TNC->>OrderRepo: getOrdersWithTrackingNotNotified()
+    OrderRepo-->>TNC: return orderList
+
+    loop for each Order
+        TNC->>TNC: validateTrackingAndCarrierPresent(order)
+        alt missing fields
+            TNC-->>Sched: notify("ข้อมูลหมายเลขติดตามไม่ครบถ้วน")
+        else fields complete
+            TNC->>OrderRepo: getChannelInfo(orderId)
+            OrderRepo->>DB: executeQuery(Q9.1)
+            DB-->>OrderRepo: return channelInfo
+            OrderRepo-->>TNC: return channelInfo
+            TNC->>MP: sendTrackingNumber(marketplaceOrderId, trackingNumber)
+            MP-->>TNC: return ackResult
+            alt send succeeded
+                TNC->>OrderRepo: markTrackingNotified(orderId)
+                OrderRepo->>DB: executeQuery(Q9.2)
+                DB-->>OrderRepo: return updateResult
+                TNC->>TNC: proceedToUseCase7S(orderId)
+            else send failed
+                TNC-->>Sched: notify("ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง")
+            end
+        end
+    end
