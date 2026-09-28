@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Sched as Scheduler
+    participant SMC as :SkuMatchController
+    participant SkuRepo as :SkuRuleRepository
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+
+    Sched->>SMC: processPendingSkuMatch()
+    SMC->>OrderRepo: getOrdersByStatus("รอจับคู่กฎ SKU")
+    OrderRepo-->>SMC: return orderList
+
+    loop for each Order
+        SMC->>SkuRepo: findRuleByChannelSku(channelSku, salesChannel)
+        SkuRepo->>DB: executeQuery(Q2S.1)
+        DB-->>SkuRepo: return ruleResult
+        SkuRepo-->>SMC: return ruleResult
+        alt no matching rule found
+            SMC->>OrderRepo: setManualReview(orderId)
+            SMC-->>Sched: notify("ไม่พบกฎ SKU ที่ตรงกับสินค้านี้")
+        else multiple matches found
+            SMC-->>Sched: notify("พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ")
+        else single rule match found
+            SMC->>OrderRepo: bindSkuRuleAndUpdateStatus(orderId, ruleResult)
+            OrderRepo->>DB: executeQuery(Q2S.2)
+            DB-->>OrderRepo: return updateResult
+            SMC->>SMC: proceedToUseCase3S(orderId)
+        end
+    end
+    SMC-->>Sched: showSummary(matchedCount)

@@ -1,0 +1,39 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :LoginScreen
+    participant AuthC as :AuthController
+    participant UserRepo as :UserRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: submitLogin(email, password)
+    Screen->>AuthC: authenticate(email, password)
+    AuthC->>AuthC: validateNotEmpty(email, password)
+    alt email/password empty
+        AuthC-->>Screen: showError("ข้อมูลที่กรอกมาไม่ครบ")
+    else fields provided
+        AuthC->>AuthC: validateEmailFormat(email)
+        alt invalid email format
+            AuthC-->>Screen: showError("รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง")
+        else valid format
+            AuthC->>UserRepo: getUserByEmail(email)
+            UserRepo->>DB: executeQuery(Q1.1)
+            DB-->>UserRepo: return userData
+            UserRepo-->>AuthC: return userData
+            alt failAttempts >= 5
+                AuthC-->>Screen: showError("คุณพยายามเข้าสู่ระบบบ่อยเกินไป")
+            else failAttempts < 5
+                AuthC->>AuthC: verifyPassword(password, userData.passwordHash)
+                alt email not found or password mismatch
+                    AuthC->>UserRepo: incrementFailAttempts(email)
+                    UserRepo->>DB: executeQuery(incrementFailAttempts)
+                    AuthC-->>Screen: showError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
+                else email and password correct
+                    AuthC->>UserRepo: resetFailAttemptsAndSetLastLogin(email)
+                    UserRepo->>DB: executeQuery(Q1.2)
+                    AuthC->>AuthC: createSession(userId)
+                    AuthC-->>Screen: showSuccess("เข้าสู่ระบบสำเร็จ")
+                    Screen-->>Admin: redirectToDashboard()
+                end
+            end
+        end
+    end

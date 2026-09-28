@@ -1,0 +1,23 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Sched(["Scheduler"])
+    POC["PurchaseOrderController<br/>+checkReorderThreshold()<br/>+confirmPurchase()"]
+    StockRepo["StockRepository<br/>+getLowStockSkus()"]
+    SupRepo["SupplierRepository<br/>+checkSupplierConfig()<br/>+getSupplierInfo()"]
+    PORepo["PurchaseOrderRepository<br/>+createPurchaseOrder()"]
+    DB["DBConnector<br/>+executeQuery()"]
+    Sup(["Supplier"])
+
+    Sched -->|"1: checkReorderThreshold()"| POC
+    POC -->|"2: getLowStockSkus()"| StockRepo
+    StockRepo -->|"3: executeQuery()"| DB
+    POC -->|"4: displayReorderList()"| Admin
+    Admin -->|"5: confirmPurchase(sku)"| POC
+    POC -->|"6: checkSupplierConfig(sku)"| SupRepo
+    POC -->|"7: getSupplierInfo(sku)"| SupRepo
+    SupRepo -->|"8: executeQuery(Q7.1)"| DB
+    POC -->|"9: createPurchaseOrder(...)"| PORepo
+    PORepo -->|"10: executeQuery(Q7.2)"| DB
+    POC -->|"11: sendPurchaseOrder()"| Sup
+    POC -->|"12: showSuccess()"| Admin

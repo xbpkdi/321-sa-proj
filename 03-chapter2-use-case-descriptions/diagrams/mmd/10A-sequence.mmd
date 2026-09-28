@@ -1,0 +1,64 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :DataCleanupScreen
+    participant DCC as :DataCleanupController
+    participant OrderRepo as :OrderRepository
+    participant LogRepo as :DeletionLogRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: openDataCleanupPage()
+    Screen-->>Admin: showMethodOptions()
+    Admin->>Screen: selectMethod()
+
+    alt method == delete by date range
+        Admin->>Screen: submitDateRangeForm(dataTypes, cutoffDate)
+        Screen->>DCC: previewDeleteByDateRange(dataTypes, cutoffDate)
+        DCC->>DCC: validateDataTypesSelected(dataTypes)
+        DCC->>DCC: validateCutoffAtLeast12Months(cutoffDate)
+        alt no data type selected or cutoffDate < 12 months
+            DCC-->>Screen: showValidationError()
+        else validation passed
+            DCC->>OrderRepo: getDeletableRecords(dataTypes, cutoffDate)
+            OrderRepo->>DB: executeQuery(Q10A.1, Q10A.2)
+            DB-->>OrderRepo: return recordList
+            OrderRepo-->>DCC: return recordList
+            alt no deletable records found
+                DCC-->>Screen: showInfo("ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก")
+            else records found
+                DCC-->>Screen: displayPreview(recordList)
+                Admin->>Screen: clickConfirmDelete()
+                Screen->>DCC: executeDeleteByDateRange(recordList)
+                DCC->>LogRepo: insertDeletionLog(recordList)
+                LogRepo->>DB: executeQuery(Q10A.3)
+                DCC->>OrderRepo: deleteRecords(recordList)
+                OrderRepo->>DB: executeQuery(Q10A.4, Q10A.5, Q10A.6, Q10A.7)
+                DB-->>OrderRepo: return deleteResult
+                alt delete succeeded
+                    DCC-->>Screen: showSuccess("ลบข้อมูลสำเร็จ")
+                else delete failed
+                    DCC->>DCC: rollbackTransaction()
+                    DCC-->>Screen: showError("ลบข้อมูลไม่สำเร็จ")
+                end
+            end
+        end
+    else method == delete all closed orders
+        Admin->>Screen: clickConfirmDelete()
+        Screen->>DCC: previewClosedOrders()
+        DCC->>OrderRepo: getClosedOrders()
+        OrderRepo->>DB: executeQuery(Q10A.8, Q10A.9)
+        DB-->>OrderRepo: return closedOrderList
+        OrderRepo-->>DCC: return closedOrderList
+        alt no closed orders found
+            DCC-->>Screen: showInfo("ไม่พบ Order ที่ปิดแล้วให้ลบ")
+        else closed orders found
+            DCC-->>Screen: displayPreview(closedOrderList)
+            Admin->>Screen: confirmDeleteClosedOrders()
+            Screen->>DCC: executeDeleteClosedOrders(closedOrderList)
+            DCC->>LogRepo: insertDeletionLog(closedOrderList)
+            LogRepo->>DB: executeQuery(Q10A.10)
+            DCC->>OrderRepo: deleteClosedOrders(closedOrderList)
+            OrderRepo->>DB: executeQuery(Q10A.11, Q10A.12)
+            DB-->>OrderRepo: return deleteResult
+            DCC-->>Screen: showSuccess("ลบ Order ที่ปิดแล้วสำเร็จ")
+        end
+    end

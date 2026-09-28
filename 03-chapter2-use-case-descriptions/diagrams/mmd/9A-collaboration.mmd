@@ -1,0 +1,20 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["LabelPrintScreen<br/>+openReadyToPrintList()<br/>+clickPrintLabel()"]
+    LPC["LabelPrintController<br/>+printLabel()<br/>+validateAddressAndMethod()"]
+    RuleRepo["ShippingRuleRepository<br/>+getLabelTemplate()"]
+    OrderRepo["OrderRepository<br/>+checkAlreadyPrinted()<br/>+updateLabelStatus()"]
+    DB["DBConnector<br/>+executeQuery()"]
+    Printer(["Printer"])
+
+    Admin -->|"1: selectOrder()/clickPrintLabel()"| Screen
+    Screen -->|"2: printLabel(orderId)"| LPC
+    LPC -->|"3: checkAlreadyPrinted(orderId)"| OrderRepo
+    LPC -->|"4: getLabelTemplate(method, channel)"| RuleRepo
+    RuleRepo -->|"5: executeQuery(Q6.1)"| DB
+    LPC -->|"6: sendToPrinter(template, orderData)"| Printer
+    Printer -->|"7: printResult"| LPC
+    LPC -->|"8: updateLabelStatus(orderId, printed)"| OrderRepo
+    OrderRepo -->|"9: executeQuery(Q6.2)"| DB
+    LPC -->|"10: showSuccess()"| Screen

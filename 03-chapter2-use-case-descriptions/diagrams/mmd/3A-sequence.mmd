@@ -1,0 +1,39 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :ProductScreen
+    participant PC as :ProductController
+    participant ProdRepo as :ProductRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: openProductList()
+    Screen->>Admin: displayProductList()
+    Admin->>Screen: clickAddOrEditProduct()
+    Screen-->>Admin: showProductForm()
+
+    Admin->>Screen: submitProductForm(productData)
+    Screen->>PC: saveProduct(productData)
+    PC->>PC: validateNotEmpty(productName, sku)
+    alt product name or SKU empty
+        PC-->>Screen: showError("กรุณากรอกข้อมูลให้ครบถ้วน")
+    else fields provided
+        PC->>ProdRepo: checkSkuExists(sku)
+        ProdRepo->>DB: executeQuery(selectSkuExists)
+        DB-->>ProdRepo: return exists
+        alt duplicate SKU
+            PC-->>Screen: showError("SKU นี้มีอยู่ในระบบแล้ว")
+        else SKU unique
+            PC->>PC: validatePositiveInteger(reorderThreshold, reorderQty)
+            alt not a positive integer
+                PC-->>Screen: showError("กรุณากรอกข้อมูลให้ครบถ้วน")
+            else all validations passed
+                PC->>ProdRepo: upsertProduct(productData)
+                ProdRepo->>DB: executeQuery(Q13.1)
+                DB-->>ProdRepo: return productId
+                ProdRepo-->>PC: return productId
+                PC-->>Screen: showSuccess("บันทึกข้อมูลสินค้าสำเร็จ")
+                opt เข้ามาจาก 2S (ไม่พบกฎ SKU เดิม)
+                    PC->>PC: retryUseCase2S(sku)
+                end
+            end
+        end
+    end

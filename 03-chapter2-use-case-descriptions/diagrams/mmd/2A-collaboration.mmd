@@ -1,0 +1,27 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["OrderVerifyScreen<br/>+openPendingVerificationList()<br/>+selectOrder()<br/>+clickConfirmOrder()"]
+    OVC["OrderVerifyController<br/>+loadPendingOrders()<br/>+getOrderDetail()<br/>+verifyOrder()"]
+    OrderRepo["OrderRepository<br/>+getOrdersByStatus()<br/>+getOrderDetail()<br/>+checkStatus()<br/>+updateStatus()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Admin -->|"1: openPendingVerificationList()"| Screen
+    Screen -->|"2: loadPendingOrders()"| OVC
+    OVC -->|"3: getOrdersByStatus()"| OrderRepo
+    OrderRepo -->|"4: executeQuery()"| DB
+    DB -->|"5: return orderList"| OrderRepo
+    OrderRepo -->|"6: return orderList"| OVC
+    Admin -->|"7: selectOrder(orderId)"| Screen
+    Screen -->|"8: getOrderDetail(orderId)"| OVC
+    OVC -->|"9: getOrderDetail(orderId)"| OrderRepo
+    OrderRepo -->|"10: executeQuery(Q2A.1)"| DB
+    Admin -->|"11: clickConfirmOrder()"| Screen
+    Screen -->|"12: verifyOrder(orderId)"| OVC
+    OVC -->|"13: checkStatus(orderId)"| OrderRepo
+    OrderRepo -->|"14: executeQuery(selectStatus)"| DB
+    DB -->|"15: return status"| OrderRepo
+    OrderRepo -->|"16: return status"| OVC
+    OVC -->|"17: updateStatus(orderId, 'รอจับคู่กฎ SKU')"| OrderRepo
+    OrderRepo -->|"18: executeQuery(Q2A.2)"| DB
+    OVC -->|"19: showSuccess()"| Screen

@@ -1,0 +1,17 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    OneS["RslMatchController (1S)"]
+    LFC["LabelFormatterController<br/>+onRslMatched()"]
+    RuleRepo["ShippingRuleRepository<br/>+getLabelTemplate()"]
+    LabelRepo["LabelRepository<br/>+createLabel()"]
+    OrderRepo["OrderRepository<br/>+getShippingInfo()<br/>+updateStatus()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    OneS -->|"1: onRslMatched(orderId)"| LFC
+    LFC -->|"2: getShippingInfo(orderId)"| OrderRepo
+    LFC -->|"3: getLabelTemplate(method, channel)"| RuleRepo
+    RuleRepo -->|"4: executeQuery(Q6S.1)"| DB
+    LFC -->|"5: createLabel(orderId, template, ...)"| LabelRepo
+    LabelRepo -->|"6: executeQuery(Q6S.2)"| DB
+    LFC -->|"7: updateStatus(orderId, 'รอพิมพ์ใบปะสินค้า')"| OrderRepo
+    OrderRepo -->|"8: executeQuery(Q6S.3)"| DB

@@ -1,0 +1,35 @@
+sequenceDiagram
+    participant OneS as :RslMatchController (1S)
+    participant LFC as :LabelFormatterController
+    participant RuleRepo as :ShippingRuleRepository
+    participant LabelRepo as :LabelRepository
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+
+    OneS->>LFC: onRslMatched(orderId)
+    LFC->>OrderRepo: getShippingInfo(orderId)
+    OrderRepo-->>LFC: return shippingInfo
+    alt shipping address incomplete
+        LFC-->>OneS: notify("ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน")
+    else address complete
+        LFC->>RuleRepo: getLabelTemplate(shippingMethod, salesChannel)
+        RuleRepo->>DB: executeQuery(Q6S.1)
+        DB-->>RuleRepo: return template
+        RuleRepo-->>LFC: return template
+        alt label template not found
+            LFC->>OrderRepo: setManualReview(orderId)
+            LFC-->>OneS: notify("ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม")
+        else template found
+            alt label already exists
+                LFC-->>OneS: confirmRecreateLabel()
+            end
+            LFC->>LabelRepo: createLabel(orderId, template, parcelSeq, parcelTotal)
+            LabelRepo->>DB: executeQuery(Q6S.2)
+            DB-->>LabelRepo: return labelId
+            LabelRepo-->>LFC: return labelId
+            LFC->>OrderRepo: updateStatus(orderId, "รอพิมพ์ใบปะสินค้า")
+            OrderRepo->>DB: executeQuery(Q6S.3)
+            DB-->>OrderRepo: return updateResult
+            LFC->>LFC: proceedToUseCase9A(orderId)
+        end
+    end

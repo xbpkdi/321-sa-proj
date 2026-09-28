@@ -1,0 +1,44 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :OrderVerifyScreen
+    participant OVC as :OrderVerifyController
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: openPendingVerificationList()
+    Screen->>OVC: loadPendingOrders()
+    OVC->>OrderRepo: getOrdersByStatus("รอตรวจสอบคำสั่งซื้อ")
+    OrderRepo->>DB: executeQuery(selectPendingOrders)
+    DB-->>OrderRepo: return orderList
+    OrderRepo-->>OVC: return orderList
+    OVC-->>Screen: displayOrderList(orderList)
+
+    Admin->>Screen: selectOrder(orderId)
+    Screen->>OVC: getOrderDetail(orderId)
+    OVC->>OrderRepo: getOrderDetail(orderId)
+    OrderRepo->>DB: executeQuery(Q2A.1)
+    DB-->>OrderRepo: return orderDetail
+    OrderRepo-->>OVC: return orderDetail
+    OVC-->>Screen: displayOrderDetail(orderDetail)
+
+    Admin->>Screen: clickConfirmOrder()
+    Screen->>OVC: verifyOrder(orderId)
+    OVC->>OVC: validateRequiredFields(sku, qty, shippingAddress)
+    alt missing fields or qty not a positive integer
+        OVC-->>Screen: showError("ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ")
+        OVC->>OrderRepo: setManualReview(orderId)
+    else fields complete
+        OVC->>OrderRepo: checkStatus(orderId)
+        OrderRepo->>DB: executeQuery(selectStatus)
+        DB-->>OrderRepo: return status
+        alt status != "รอตรวจสอบคำสั่งซื้อ"
+            OVC-->>Screen: showError("Order นี้ผ่านการตรวจสอบไปแล้ว")
+        else status valid
+            OVC->>OrderRepo: updateStatus(orderId, "รอจับคู่กฎ SKU")
+            OrderRepo->>DB: executeQuery(Q2A.2)
+            DB-->>OrderRepo: return updateResult
+            OrderRepo-->>OVC: return success
+            OVC-->>Screen: showSuccess("ยืนยันคำสั่งซื้อสำเร็จ")
+            OVC->>OVC: proceedToUseCase2S(orderId)
+        end
+    end

@@ -1,0 +1,37 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :ShipmentScreen
+    participant SC as :ShipmentController
+    participant OrderRepo as :OrderRepository
+    participant DelRepo as :DeliveryPartnerRepository
+    participant TrackRepo as :CarrierTrackingRepository
+    participant DB as :DBConnector
+    participant Del as Delivery
+
+    Admin->>Screen: openReadyToShipList()
+    Screen-->>Admin: displayOrderList()
+    Admin->>Del: handOverPackage()
+    Admin->>Screen: confirmHandover(orderId)
+    Screen->>SC: recordHandover(orderId)
+    SC->>OrderRepo: checkLabelStatus(orderId)
+    OrderRepo-->>SC: return labelStatus
+    alt label not printed yet
+        SC-->>Screen: showError("Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า")
+    else label printed
+        SC->>DelRepo: getTrackingNumber(orderId)
+        DelRepo->>DB: executeQuery(Q8.1)
+        DB-->>DelRepo: return trackingInfo
+        DelRepo-->>SC: return trackingInfo
+        SC->>OrderRepo: updateDispatched(orderId, trackingInfo)
+        OrderRepo->>DB: executeQuery(Q8.2)
+        DB-->>OrderRepo: return updateResult
+        SC-->>Screen: showTrackingNumber(trackingInfo)
+
+        loop track shipment status
+            SC->>TrackRepo: getCarrierStatus(trackingNumber)
+            TrackRepo->>DB: executeQuery(Q8.3)
+            DB-->>TrackRepo: return carrierStatus
+            TrackRepo-->>SC: return carrierStatus
+            SC->>OrderRepo: updateStatusIfChanged(orderId, carrierStatus)
+        end
+    end

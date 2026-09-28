@@ -1,0 +1,48 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :ReorderDecisionScreen
+    participant RDC as :ReorderDecisionController
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: openPendingDecisionList()
+    Screen->>RDC: loadPendingOrders()
+    RDC->>OrderRepo: getOrdersByStatus("รอ Admin ตัดสินใจสั่งซื้อ")
+    OrderRepo-->>RDC: return orderList
+    RDC-->>Screen: displayOrderList(orderList)
+
+    Admin->>Screen: selectOrder(orderId)
+    Screen->>RDC: loadDecisionData(orderId)
+    RDC->>OrderRepo: getCostAndMarginInfo(orderId)
+    OrderRepo->>DB: executeQuery(Q5A.1)
+    DB-->>OrderRepo: return costInfo
+    OrderRepo-->>RDC: return costInfo
+    RDC->>RDC: calculateExpectedMargin(costInfo)
+    Note right of RDC: Q5A.2 Expected Margin =<br/>selling_price - unit_cost
+    alt selling price not found
+        RDC-->>Screen: showError("ไม่พบราคาขายของสินค้านี้")
+        RDC->>OrderRepo: setManualReview(orderId)
+    else data complete
+        RDC-->>Screen: displayCostAndMargin(costInfo)
+        Admin->>Screen: clickApprove() / clickReject()
+        Screen->>RDC: submitDecision(orderId, decision)
+        RDC->>OrderRepo: checkStatus(orderId)
+        OrderRepo-->>RDC: return status
+        alt status != "รอ Admin ตัดสินใจสั่งซื้อ"
+            RDC-->>Screen: showError("Order นี้ได้รับการตัดสินใจไปแล้ว")
+        else status valid
+            alt decision == คุ้มค่า
+                RDC->>OrderRepo: updateStatus(orderId, "รอสั่งซื้อจาก Supplier", "คุ้มค่า")
+                OrderRepo->>DB: executeQuery(Q5A.3)
+                DB-->>OrderRepo: return updateResult
+                RDC-->>Screen: showSuccess("บันทึกผลการตัดสินใจสำเร็จ")
+                RDC->>RDC: proceedToUseCase6A(orderId)
+            else decision == ไม่คุ้มค่า
+                RDC->>OrderRepo: updateStatus(orderId, "รอยกเลิก Order", "ไม่คุ้มค่า")
+                OrderRepo->>DB: executeQuery(Q5A.4)
+                DB-->>OrderRepo: return updateResult
+                RDC-->>Screen: showSuccess("บันทึกผลการตัดสินใจสำเร็จ")
+                RDC->>RDC: proceedToUseCase7A(orderId)
+            end
+        end
+    end

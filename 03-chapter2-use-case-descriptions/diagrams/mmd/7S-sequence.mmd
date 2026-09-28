@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant FiveS as :TrackingNotifyController (5S)
+    participant SDC as :StockDeductionController
+    participant StockRepo as :StockRepository
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+    participant MP as Marketplace
+
+    FiveS->>SDC: onTrackingNotified(orderId)
+    SDC->>StockRepo: getStockAndOrderInfo(orderId)
+    StockRepo->>DB: executeQuery(Q7S.1)
+    DB-->>StockRepo: return stockOrderInfo
+    StockRepo-->>SDC: return stockOrderInfo
+    alt stock_deducted == true
+        SDC->>SDC: skipAlreadyDeducted(orderId)
+    else not yet deducted
+        alt insufficient stock
+            SDC->>OrderRepo: setManualReview(orderId)
+            SDC-->>FiveS: notify("ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก")
+        else sufficient stock
+            alt fulfillSource == in-house
+                SDC->>StockRepo: deductInHouseStock(sku, variation, qty)
+                StockRepo->>DB: executeQuery(Q7S.2)
+            else fulfillSource == RSL
+                SDC->>StockRepo: deductRslStock(sku, variation, qty)
+                StockRepo->>DB: executeQuery(Q7S.3)
+            end
+            DB-->>StockRepo: return deductResult
+            SDC->>SDC: calculateAvailableQty()
+            Note right of SDC: Q7S.4 Available Qty = in_house_qty + rsl_qty
+            SDC->>MP: updateStockQty(sku, availableQty)
+            MP-->>SDC: return ackResult
+            alt Marketplace update succeeded
+                SDC->>OrderRepo: markStockDeductedAndCompleted(orderId)
+                OrderRepo->>DB: executeQuery(Q7S.5)
+                DB-->>OrderRepo: return updateResult
+                SDC-->>FiveS: showSuccess("ตัดสต๊อกและอัปเดตจำนวนสินค้าสำเร็จ")
+            else Marketplace update failed
+                SDC->>OrderRepo: markPendingSync(orderId)
+                SDC-->>FiveS: notify("ไม่สามารถอัปเดตจำนวนสินค้าใน Marketplace ได้")
+            end
+        end
+    end

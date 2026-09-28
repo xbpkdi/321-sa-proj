@@ -1,0 +1,18 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Sched(["Scheduler / Admin"])
+    OIC["OrderIntakeController<br/>+importOrders()<br/>+validateRequiredFields()<br/>+skipOrder()"]
+    MP(["Marketplace"])
+    OrderRepo["OrderRepository<br/>+checkDuplicate()<br/>+saveOrder()"]
+    DB["DBConnector<br/>+executeQuery()"]
+
+    Sched -->|"1: importOrders()"| OIC
+    OIC -->|"2: fetchNewOrders(channel)"| MP
+    MP -->|"3: return orderList"| OIC
+    OIC -->|"4: checkDuplicate(marketplaceOrderId)"| OrderRepo
+    OrderRepo -->|"5: executeQuery()"| DB
+    DB -->|"6: return isDuplicate"| OrderRepo
+    OrderRepo -->|"7: return isDuplicate"| OIC
+    OIC -->|"8: saveOrder(orderData)"| OrderRepo
+    OrderRepo -->|"9: executeQuery(Q11.1)"| DB
+    OIC -->|"10: showImportSummary()"| Sched

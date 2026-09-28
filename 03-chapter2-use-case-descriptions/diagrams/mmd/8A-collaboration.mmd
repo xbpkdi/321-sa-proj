@@ -1,0 +1,22 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Admin(["Admin"])
+    Screen["ShipmentScreen<br/>+openReadyToShipList()<br/>+confirmHandover()"]
+    SC["ShipmentController<br/>+recordHandover()<br/>+checkLabelStatus()"]
+    OrderRepo["OrderRepository<br/>+checkLabelStatus()<br/>+updateDispatched()<br/>+updateStatusIfChanged()"]
+    DelRepo["DeliveryPartnerRepository<br/>+getTrackingNumber()"]
+    TrackRepo["CarrierTrackingRepository<br/>+getCarrierStatus()"]
+    DB["DBConnector<br/>+executeQuery()"]
+    Del(["Delivery"])
+
+    Admin -->|"1: handOverPackage()"| Del
+    Admin -->|"2: confirmHandover(orderId)"| Screen
+    Screen -->|"3: recordHandover(orderId)"| SC
+    SC -->|"4: checkLabelStatus(orderId)"| OrderRepo
+    SC -->|"5: getTrackingNumber(orderId)"| DelRepo
+    DelRepo -->|"6: executeQuery(Q8.1)"| DB
+    SC -->|"7: updateDispatched(orderId, trackingInfo)"| OrderRepo
+    OrderRepo -->|"8: executeQuery(Q8.2)"| DB
+    SC -->|"9: getCarrierStatus(trackingNumber)"| TrackRepo
+    TrackRepo -->|"10: executeQuery(Q8.3)"| DB
+    SC -->|"11: updateStatusIfChanged(orderId, status)"| OrderRepo

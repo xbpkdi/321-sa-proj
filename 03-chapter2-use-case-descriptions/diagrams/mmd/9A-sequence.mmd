@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :LabelPrintScreen
+    participant LPC as :LabelPrintController
+    participant RuleRepo as :ShippingRuleRepository
+    participant OrderRepo as :OrderRepository
+    participant DB as :DBConnector
+    participant Printer as Printer
+
+    Admin->>Screen: openReadyToPrintList()
+    Screen-->>Admin: displayOrderList()
+    Admin->>Screen: selectOrder() then clickPrintLabel()
+    Screen->>LPC: printLabel(orderId)
+    LPC->>LPC: validateAddressAndMethod(orderId)
+    alt address/shipping method incomplete
+        LPC-->>Screen: showError("ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน")
+    else complete
+        LPC->>OrderRepo: checkAlreadyPrinted(orderId)
+        OrderRepo-->>LPC: return printedStatus
+        alt already printed
+            LPC-->>Screen: confirmReprint()
+        end
+        LPC->>RuleRepo: getLabelTemplate(shippingMethod, salesChannel)
+        RuleRepo->>DB: executeQuery(Q6.1)
+        DB-->>RuleRepo: return template
+        RuleRepo-->>LPC: return template
+        LPC->>Printer: sendToPrinter(template, orderData)
+        Printer-->>LPC: printResult
+        LPC->>OrderRepo: updateLabelStatus(orderId, "printed")
+        OrderRepo->>DB: executeQuery(Q6.2)
+        DB-->>OrderRepo: return updateResult
+        LPC-->>Screen: showSuccess("พิมพ์ใบปะสินค้าแล้ว")
+    end

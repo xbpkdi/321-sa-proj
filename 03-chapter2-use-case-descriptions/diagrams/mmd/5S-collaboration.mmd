@@ -1,0 +1,16 @@
+%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
+graph LR
+    Sched(["Scheduler / Admin"])
+    TNC["TrackingNotifyController<br/>+processPendingTrackingNotify()"]
+    OrderRepo["OrderRepository<br/>+getOrdersWithTrackingNotNotified()<br/>+getChannelInfo()<br/>+markTrackingNotified()"]
+    DB["DBConnector<br/>+executeQuery()"]
+    MP(["Marketplace"])
+
+    Sched -->|"1: processPendingTrackingNotify()"| TNC
+    TNC -->|"2: getOrdersWithTrackingNotNotified()"| OrderRepo
+    TNC -->|"3: getChannelInfo(orderId)"| OrderRepo
+    OrderRepo -->|"4: executeQuery(Q9.1)"| DB
+    TNC -->|"5: sendTrackingNumber(marketplaceOrderId, trackingNumber)"| MP
+    MP -->|"6: return ackResult"| TNC
+    TNC -->|"7: markTrackingNotified(orderId)"| OrderRepo
+    OrderRepo -->|"8: executeQuery(Q9.2)"| DB

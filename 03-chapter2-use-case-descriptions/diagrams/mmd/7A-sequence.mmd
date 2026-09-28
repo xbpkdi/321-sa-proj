@@ -1,0 +1,40 @@
+sequenceDiagram
+    actor Admin
+    participant Screen as :CancelOrderScreen
+    participant COC as :CancelOrderController
+    participant OrderRepo as :OrderRepository
+    participant InvRepo as :InventoryRepository
+    participant DB as :DBConnector
+
+    Admin->>Screen: openOrderList()
+    Screen-->>Admin: displayOrderList()
+    Admin->>Screen: selectOrder() then clickCancelOrder()
+    Screen->>COC: checkOrderStatus(orderId)
+    COC->>OrderRepo: getStatus(orderId)
+    OrderRepo-->>COC: return status
+    COC-->>Screen: displayCancelForm(status)
+
+    Admin->>Screen: submitCancelReason(reason) then clickConfirm()
+    Screen->>COC: cancelOrder(orderId, reason)
+    COC->>COC: validateStatus(status)
+    alt status is "จัดส่งสำเร็จ" or "ยกเลิกแล้ว"
+        COC-->>Screen: showError("ไม่สามารถยกเลิก Order นี้ได้")
+    else status cancellable
+        COC->>COC: validateReasonProvided(reason)
+        alt reason not provided
+            COC-->>Screen: showError("กรุณาระบุเหตุผลการยกเลิก")
+        else reason provided
+            COC->>OrderRepo: updateStatusCancelled(orderId, reason)
+            OrderRepo->>DB: executeQuery(Q10.1)
+            DB-->>OrderRepo: return updateResult
+            opt not yet handed to Delivery
+                opt label printed
+                    COC-->>Screen: warnCancelLabelWithCarrier()
+                end
+                COC->>InvRepo: restockInventory(sku, qty)
+                InvRepo->>DB: executeQuery(Q10.2)
+                DB-->>InvRepo: return restockResult
+            end
+            COC-->>Screen: showSuccess("ยกเลิก Order สำเร็จ")
+        end
+    end
