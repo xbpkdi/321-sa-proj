@@ -37,3 +37,12 @@ sequenceDiagram
             end
         end
     end
+
+    Admin->>Screen: clickLogout()
+    opt มีงานที่ยังไม่ได้บันทึก
+        Screen-->>Admin: confirmLogout("ต้องการออกจากระบบหรือไม่")
+    end
+    Screen->>AuthC: logout()
+    AuthC->>AuthC: destroySession(userId)
+    AuthC-->>Screen: showSuccess("ออกจากระบบแล้ว")
+    Screen-->>Admin: redirectToLogin()
