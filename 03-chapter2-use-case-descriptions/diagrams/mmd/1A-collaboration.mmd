@@ -1,8 +1,8 @@
 %%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph LR
     Admin(["Admin"])
-    Screen["LoginScreen<br/>+submitLogin()"]
-    AuthC["AuthController<br/>+authenticate()<br/>+verifyPassword()<br/>+createSession()"]
+    Screen["LoginScreen<br/>+submitLogin()<br/>+clickLogout()"]
+    AuthC["AuthController<br/>+authenticate()<br/>+verifyPassword()<br/>+createSession()<br/>+logout()<br/>+destroySession()"]
     UserRepo["UserRepository<br/>+getUserByEmail()<br/>+incrementFailAttempts()<br/>+resetFailAttemptsAndSetLastLogin()"]
     DB["DBConnector<br/>+executeQuery()"]
 
@@ -17,3 +17,8 @@ graph LR
     UserRepo -->|"8: executeQuery(Q1.2 / increment)"| DB
     AuthC -->|"9: showSuccess()/showError()"| Screen
     Screen -->|"10: redirectToDashboard()"| Admin
+    Admin -->|"11: clickLogout()"| Screen
+    Screen -->|"12: logout()"| AuthC
+    AuthC -->|"13: destroySession(userId)"| AuthC
+    AuthC -->|"14: showSuccess('ออกจากระบบแล้ว')"| Screen
+    Screen -->|"15: redirectToLogin()"| Admin
