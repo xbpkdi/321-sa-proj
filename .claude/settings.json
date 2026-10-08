@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./01418321-final-project/node_modules/**)",
+      "Read(./02-chapter2-business-process/img/old/**)",
+      "Read(./**/*.bkp)",
+      "Read(./**/.DS_Store)",
+      "Read(./01418321-final-project/package-lock.json)",
+      "Read(./01418321-final-project/tsconfig.tsbuildinfo)"
+    ]
+  }
+}
