@@ -27,10 +27,10 @@ sequenceDiagram
             COC->>OrderRepo: updateStatusCancelled(orderId, reason)
             OrderRepo->>DB: executeQuery(Q10.1)
             DB-->>OrderRepo: return updateResult
-            opt not yet handed to Delivery
-                opt label printed
-                    COC-->>Screen: warnCancelLabelWithCarrier()
-                end
+            opt label printed but not handed to Delivery
+                COC-->>Screen: warnCancelLabelWithCarrier()
+            end
+            opt stock already deducted (stock_deducted)
                 COC->>InvRepo: restockInventory(sku, qty)
                 InvRepo->>DB: executeQuery(Q10.2)
                 DB-->>InvRepo: return restockResult
