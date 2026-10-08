@@ -6,7 +6,7 @@ Actor 4 ตัว: เจ้าของ, Delivery, Marketplace, Supplier.
 
 ## อ่านอะไรก่อน (ตามลำดับ หยุดเมื่อพอ)
 1. `todo/00-URGENT-do-now.md` — งานค้าง เรียงตามความสำคัญ
-2. `todo/0X-*.md` — เช็กลิสต์รายบท (01 บท1, 02 BP/UC/CRUD, 03 UC desc, 04 diagram/DB, 05 platform/test, 06 rubric)
+2. `todo/0X-*.md` — เช็กลิสต์รายบท (01 บท1, 02 BP/UC/CRUD, 03 UC desc, 04 diagram/DB, 05 platform/test, 06 rubric, 07 งานค้างฝั่ง frontend)
 3. `00-project-docs/biz-requirement.md` — requirement จริง (source of truth)
 4. `00-project-docs/summary.md` — สรุปการตัดสินใจ, โมเดล human-in-the-loop 3 ระดับ
 
