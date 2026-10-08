@@ -7,7 +7,7 @@ graph LR
     DB["DBConnector<br/>+executeQuery()"]
 
     Sched -->|"1: importOrders()"| OIC
-    OIC -->|"2: fetchNewOrders(channel)"| MP
+    OIC -->|"2: fetchNewOrders('Rakuten Ichiba')"| MP
     MP -->|"3: return orderList"| OIC
     OIC -->|"4: checkDuplicate(marketplaceOrderId)"| OrderRepo
     OrderRepo -->|"5: executeQuery()"| DB

@@ -6,24 +6,22 @@ sequenceDiagram
     participant DB as :DBConnector
 
     Sched->>OIC: importOrders()
-    loop for each channel (Rakuten Ichiba, Yahoo! Auctions, Amazon)
-        OIC->>MP: fetchNewOrders(channel)
-        MP-->>OIC: return orderListFromChannel
-        loop for each imported Order
-            OIC->>OIC: validateRequiredFields(marketplaceOrderId, sku, qty, address)
-            alt missing fields
-                OIC-->>Sched: logWarning("ข้อมูล Order ไม่ครบถ้วน")
-            else fields complete
-                OIC->>OrderRepo: checkDuplicate(marketplaceOrderId)
-                OrderRepo->>DB: executeQuery(selectDuplicateCheck)
-                DB-->>OrderRepo: return isDuplicate
-                alt duplicate
-                    OIC->>OIC: skipOrder()
-                else not duplicate
-                    OIC->>OrderRepo: saveOrder(orderData)
-                    OrderRepo->>DB: executeQuery(Q11.1)
-                    DB-->>OrderRepo: return orderId
-                end
+    OIC->>MP: fetchNewOrders('Rakuten Ichiba')
+    MP-->>OIC: return orderList
+    loop for each imported Order
+        OIC->>OIC: validateRequiredFields(marketplaceOrderId, sku, qty, address)
+        alt missing fields
+            OIC-->>Sched: logWarning("ข้อมูล Order ไม่ครบถ้วน")
+        else fields complete
+            OIC->>OrderRepo: checkDuplicate(marketplaceOrderId)
+            OrderRepo->>DB: executeQuery(selectDuplicateCheck)
+            DB-->>OrderRepo: return isDuplicate
+            alt duplicate
+                OIC->>OIC: skipOrder()
+            else not duplicate
+                OIC->>OrderRepo: saveOrder(orderData)
+                OrderRepo->>DB: executeQuery(Q11.1)
+                DB-->>OrderRepo: return orderId
             end
         end
     end
