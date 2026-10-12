@@ -154,7 +154,7 @@ Colorado Co., Ltd. จำหน่ายสินค้านำเข้าแ�
 - **อุปกรณ์หลัก:** คอมพิวเตอร์ (ตั้งค่ากฎ label, threshold, supplier, cost formula) — มือถือใช้สำหรับเช็คสถานะเท่านั้น
 - **บัญชีผู้ใช้:** มีบัญชี Admin สำหรับตัวแทนบริษัทเท่านั้น ไม่มีระบบบัญชีสำหรับลูกค้า
 - **ข้อมูลที่ต้องป้องกัน:** ข้อมูลออเดอร์และที่อยู่จัดส่งของลูกค้า, ชื่อซัพพลายเออร์และราคาซื้อ, ข้อมูลต้นทุนสินค้า, credential ของ Rakuten/RSL, การตั้งค่า label, กฎ reorder อัตโนมัติ
-- **มาตรการ:** เฉพาะ Admin เท่านั้นที่แก้ไข supplier / reorder quantity / threshold / cost formula ได้ และต้องใช้ 2FA (Two-Factor Authentication)
+- **มาตรการ:** เฉพาะ Admin เท่านั้นที่แก้ไข supplier / reorder quantity / threshold / cost formula ได้ (2FA เลื่อนไปเฟสถัดไป — ดูข้อ 14)
 
 ---
 
@@ -191,6 +191,7 @@ Colorado Co., Ltd. จำหน่ายสินค้านำเข้าแ�
 - การเชื่อมต่อ Amazon (SP-API)
 - ระบบแจ้งเตือน/สื่อสารกับลูกค้าโดยตรง
 - ฟังก์ชันรับชำระเงินภายในระบบ
+- 2FA (Two-Factor Authentication) สำหรับบัญชี Admin — เฟส 1 ใช้ email/password ตาม UC 1A
 - Mercari Shops (เลิกใช้งานแล้ว — ไม่รวมในทุกเฟส)
 
 ---
