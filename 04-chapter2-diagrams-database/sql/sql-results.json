@@ -1,0 +1,1939 @@
+[
+  {
+    "id": "Q1A.1",
+    "uc": "1A",
+    "uc_name": "เข้าสู่ระบบ",
+    "sql": "SELECT user_id, user_password, fail_attempts FROM users WHERE user_email=$1",
+    "run_sql": null,
+    "params": [
+      "admin@colorado.jp"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "user_id",
+        "user_password",
+        "fail_attempts"
+      ],
+      "rows": [
+        [
+          "U001",
+          "$2b$10$Qe3kV1tqB8nN0yH6xP2uUe4m9Lr7sD1aZc5wT8fG3hJ6kM0nB2vXy",
+          "0"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q1A.2",
+    "uc": "1A",
+    "uc_name": "เข้าสู่ระบบ",
+    "sql": "UPDATE users SET fail_attempts = fail_attempts + 1 WHERE user_email=$1",
+    "run_sql": null,
+    "params": [
+      "staff01@colorado.jp"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT user_email, fail_attempts FROM users WHERE user_email = 'staff01@colorado.jp'",
+      "fields": [
+        "user_email",
+        "fail_attempts"
+      ],
+      "rows": [
+        [
+          "staff01@colorado.jp",
+          "3"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q1A.3",
+    "uc": "1A",
+    "uc_name": "เข้าสู่ระบบ",
+    "sql": "UPDATE users SET fail_attempts = 0, last_login = CURRENT_TIMESTAMP WHERE user_email=$1",
+    "run_sql": null,
+    "params": [
+      "admin@colorado.jp"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT user_email, fail_attempts, last_login FROM users WHERE user_email = 'admin@colorado.jp'",
+      "fields": [
+        "user_email",
+        "fail_attempts",
+        "last_login"
+      ],
+      "rows": [
+        [
+          "admin@colorado.jp",
+          "0",
+          "2026-10-12 16:59"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q2A.1",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "SELECT order_id, marketplace_order_id, sku, qty, order_date FROM orders WHERE order_status='รอตรวจสอบคำสั่งซื้อ' ORDER BY order_date",
+    "run_sql": null,
+    "params": [],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_id",
+        "marketplace_order_id",
+        "sku",
+        "qty",
+        "order_date"
+      ],
+      "rows": [
+        [
+          "ORD-24185",
+          "377841-20261004-0000185",
+          "FSH-MLR-240",
+          "0",
+          "2026-10-04 10:40"
+        ],
+        [
+          "ORD-24190",
+          "377841-20261005-0000190",
+          "FSH-MLR-240",
+          "2",
+          "2026-10-05 00:12"
+        ]
+      ],
+      "total": 2
+    }
+  },
+  {
+    "id": "Q2A.2",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "SELECT order_id, marketplace_order_id, sales_channel, order_date, sku, variation, qty, shipping_address, shipping_method, order_status FROM orders WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24190"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_id",
+        "marketplace_order_id",
+        "sales_channel",
+        "order_date",
+        "sku",
+        "variation",
+        "qty",
+        "shipping_address",
+        "shipping_method",
+        "order_status"
+      ],
+      "rows": [
+        [
+          "ORD-24190",
+          "377841-20261005-0000190",
+          "Rakuten Ichiba",
+          "2026-10-05 00:12",
+          "FSH-MLR-240",
+          "สีเงินลายปลาซิว",
+          "2",
+          "150-0001 東京都渋谷区神宮前 1-2-3",
+          "RSL ปกติ",
+          "รอตรวจสอบคำสั่งซื้อ"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q2A.3",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "SELECT order_status FROM orders WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24190"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_status"
+      ],
+      "rows": [
+        [
+          "รอตรวจสอบคำสั่งซื้อ"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q2A.4",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "UPDATE orders SET order_status='รอจับคู่กฎ SKU', verified_at=NOW(), verified_by=$1 WHERE order_id=$2",
+    "run_sql": null,
+    "params": [
+      "U001",
+      "ORD-24190"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, verified_at, verified_by FROM orders WHERE order_id = 'ORD-24190'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "verified_at",
+        "verified_by"
+      ],
+      "rows": [
+        [
+          "ORD-24190",
+          "รอจับคู่กฎ SKU",
+          "2026-10-12 16:59",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q3A.1",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "SELECT sku FROM products WHERE sku=$1",
+    "run_sql": null,
+    "params": [
+      "FSH-MLR-240"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q3A.2",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "INSERT INTO products (sku, product_name, variation, sales_channel, supplier_id, reorder_threshold, reorder_qty, selling_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+    "run_sql": null,
+    "params": [
+      "FSH-TRL-090",
+      "เหยื่อยางหนอน 9 ซม.",
+      "สีส้มเรืองแสง",
+      "Rakuten Ichiba",
+      "SUP-01",
+      "30",
+      "150",
+      "680"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT sku, product_name, supplier_id, reorder_threshold, reorder_qty, selling_price FROM products WHERE sku = 'FSH-TRL-090'",
+      "fields": [
+        "sku",
+        "product_name",
+        "supplier_id",
+        "reorder_threshold",
+        "reorder_qty",
+        "selling_price"
+      ],
+      "rows": [
+        [
+          "FSH-TRL-090",
+          "เหยื่อยางหนอน 9 ซม.",
+          "SUP-01",
+          "30",
+          "150",
+          "680.00"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q3A.3",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "UPDATE products SET product_name=$1, variation=$2, supplier_id=$3, reorder_threshold=$4, reorder_qty=$5, selling_price=$6 WHERE sku=$7",
+    "run_sql": null,
+    "params": [
+      "เหยื่อปลอมมินโนว์ จมช้า 24 กรัม",
+      "สีเงินลายปลาซิว",
+      "SUP-01",
+      "50",
+      "240",
+      "1290",
+      "FSH-MLR-240"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT sku, reorder_threshold, reorder_qty, selling_price FROM products WHERE sku = 'FSH-MLR-240'",
+      "fields": [
+        "sku",
+        "reorder_threshold",
+        "reorder_qty",
+        "selling_price"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "50",
+          "240",
+          "1290.00"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q3A.4",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "INSERT INTO sku_rules (channel_sku, sales_channel, sku, variation, product_name) VALUES ($1, $2, $3, $4, $5)",
+    "run_sql": null,
+    "params": [
+      "rk-mlr240-sv-b",
+      "Rakuten Ichiba",
+      "FSH-MLR-240",
+      "สีเงินลายปลาซิว",
+      "เหยื่อปลอมมินโนว์ จมช้า 24 กรัม"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT sku_rule_id, channel_sku, sku FROM sku_rules WHERE channel_sku = 'rk-mlr240-sv-b'",
+      "fields": [
+        "sku_rule_id",
+        "channel_sku",
+        "sku"
+      ],
+      "rows": [
+        [
+          "7",
+          "rk-mlr240-sv-b",
+          "FSH-MLR-240"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q4A.1",
+    "uc": "4A",
+    "uc_name": "ดึง Order เข้าระบบ",
+    "sql": "SELECT order_id FROM orders WHERE marketplace_order_id=$1 AND sales_channel=$2",
+    "run_sql": null,
+    "params": [
+      "377841-20261005-0000190",
+      "Rakuten Ichiba"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_id"
+      ],
+      "rows": [
+        [
+          "ORD-24190"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q4A.2",
+    "uc": "4A",
+    "uc_name": "ดึง Order เข้าระบบ",
+    "sql": "INSERT INTO orders (marketplace_order_id, sales_channel, order_date, channel_sku, sku, variation, qty, shipping_address, shipping_method, order_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'รอตรวจสอบคำสั่งซื้อ')",
+    "run_sql": null,
+    "params": [
+      "377841-20261005-0000191",
+      "Rakuten Ichiba",
+      "2026-10-05 10:02:00+09",
+      "rk-ydm012-3",
+      "YDM-HRB-012",
+      "แพ็ค 3 หลอด",
+      "3",
+      "100-0005 東京都千代田区丸の内 1-9-1",
+      "RSL ปกติ"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, marketplace_order_id, sku, qty FROM orders WHERE marketplace_order_id = '377841-20261005-0000191'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "marketplace_order_id",
+        "sku",
+        "qty"
+      ],
+      "rows": [
+        [
+          "ORD-24191",
+          "รอตรวจสอบคำสั่งซื้อ",
+          "377841-20261005-0000191",
+          "YDM-HRB-012",
+          "3"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5A.1",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "SELECT o.order_id, o.sku, o.qty, p.selling_price, p.reorder_qty, p.supplier_id, s.lead_time FROM orders o JOIN products p ON p.sku = o.sku JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE o.order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24184"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_id",
+        "sku",
+        "qty",
+        "selling_price",
+        "reorder_qty",
+        "supplier_id",
+        "lead_time"
+      ],
+      "rows": [
+        [
+          "ORD-24184",
+          "FSH-RDS-180",
+          "2",
+          "2690.00",
+          "40",
+          "SUP-01",
+          "21"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5A.2",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "SELECT unit_cost, calculated_at FROM cost_calculation_log WHERE sku=$1 ORDER BY calculated_at DESC LIMIT 1",
+    "run_sql": null,
+    "params": [
+      "FSH-RDS-180"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "unit_cost",
+        "calculated_at"
+      ],
+      "rows": [
+        [
+          "2462.20",
+          "2026-10-03 07:10"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5A.3",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "Expected Margin = selling_price - unit_cost",
+    "run_sql": "SELECT p.sku, p.selling_price, c.unit_cost, p.selling_price - c.unit_cost AS expected_margin FROM products p JOIN cost_calculation_log c ON c.sku = p.sku WHERE c.cost_id = 5",
+    "params": [],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku",
+        "selling_price",
+        "unit_cost",
+        "expected_margin"
+      ],
+      "rows": [
+        [
+          "FSH-RDS-180",
+          "2690.00",
+          "2462.20",
+          "227.80"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5A.4",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "UPDATE orders SET order_status='รอสั่งซื้อจาก Supplier', decision='คุ้มค่า', decided_at=NOW(), decided_by=$1 WHERE order_id=$2",
+    "run_sql": null,
+    "params": [
+      "U001",
+      "ORD-24184"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, decision, decided_by FROM orders WHERE order_id = 'ORD-24184'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "decision",
+        "decided_by"
+      ],
+      "rows": [
+        [
+          "ORD-24184",
+          "รอสั่งซื้อจาก Supplier",
+          "คุ้มค่า",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5A.5",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "UPDATE orders SET order_status='รอยกเลิก Order', decision='ไม่คุ้มค่า', decided_at=NOW(), decided_by=$1 WHERE order_id=$2",
+    "run_sql": null,
+    "params": [
+      "U001",
+      "ORD-24184"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, decision, decided_by FROM orders WHERE order_id = 'ORD-24184'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "decision",
+        "decided_by"
+      ],
+      "rows": [
+        [
+          "ORD-24184",
+          "รอยกเลิก Order",
+          "ไม่คุ้มค่า",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q6A.1",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "SELECT p.sku, p.product_name, s.in_house_qty, s.rsl_qty, p.reorder_threshold, p.reorder_qty FROM products p JOIN stock s ON s.sku = p.sku WHERE s.in_house_qty + s.rsl_qty <= p.reorder_threshold",
+    "run_sql": null,
+    "params": [],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku",
+        "product_name",
+        "in_house_qty",
+        "rsl_qty",
+        "reorder_threshold",
+        "reorder_qty"
+      ],
+      "rows": [
+        [
+          "FSH-RDS-180",
+          "คันเบ็ดสปินนิ่ง 1.8 เมตร",
+          "0",
+          "1",
+          "10",
+          "40"
+        ],
+        [
+          "HOM-KIT-108",
+          "ชุดกล่องถนอมอาหาร 5 ชิ้น",
+          "2",
+          "3",
+          "10",
+          "0"
+        ],
+        [
+          "HOM-STG-045",
+          "กล่องเก็บของพับได้ ฝาใส",
+          "1",
+          "0",
+          "25",
+          "120"
+        ],
+        [
+          "OUT-CHR-003",
+          "เก้าอี้พับแคมป์ปิ้ง โครงอะลูมิเนียม",
+          "6",
+          "8",
+          "15",
+          "60"
+        ]
+      ],
+      "total": 4
+    }
+  },
+  {
+    "id": "Q6A.2",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "SELECT s.supplier_id, s.supplier_name, s.contact_info, s.lead_time, p.reorder_qty AS order_qty FROM products p JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE p.sku=$1",
+    "run_sql": null,
+    "params": [
+      "FSH-RDS-180"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "supplier_id",
+        "supplier_name",
+        "contact_info",
+        "lead_time",
+        "order_qty"
+      ],
+      "rows": [
+        [
+          "SUP-01",
+          "Ningbo Tackle Works",
+          "order@ningbo-tackle.example.cn",
+          "21",
+          "40"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q6A.3",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "INSERT INTO purchase_orders (po_id, sku, supplier_id, order_qty, order_date, eta, status) VALUES ($1, $2, $3, $4, NOW(), $5, 'สั่งซื้อแล้ว')",
+    "run_sql": null,
+    "params": [
+      "PO-0012",
+      "FSH-RDS-180",
+      "SUP-01",
+      "40",
+      "2026-11-02 09:00:00+09"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT po_id, sku, supplier_id, order_qty, eta, status FROM purchase_orders WHERE po_id = 'PO-0012'",
+      "fields": [
+        "po_id",
+        "sku",
+        "supplier_id",
+        "order_qty",
+        "eta",
+        "status"
+      ],
+      "rows": [
+        [
+          "PO-0012",
+          "FSH-RDS-180",
+          "SUP-01",
+          "40",
+          "2026-11-02 00:00",
+          "สั่งซื้อแล้ว"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q6A.4",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "UPDATE orders SET order_status='สั่งซื้อแล้ว', po_id=$1 WHERE sku=$2 AND order_status='รอสั่งซื้อจาก Supplier'",
+    "run_sql": null,
+    "params": [
+      "PO-0011",
+      "FSH-RDS-180"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, po_id FROM orders WHERE order_id = 'ORD-24184'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "po_id"
+      ],
+      "rows": [
+        [
+          "ORD-24184",
+          "สั่งซื้อแล้ว",
+          "PO-0011"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7A.1",
+    "uc": "7A",
+    "uc_name": "ยกเลิก Order",
+    "sql": "UPDATE orders SET order_status='ยกเลิกแล้ว', cancel_reason=$1, cancelled_at=NOW(), cancelled_by=$2 WHERE order_id=$3",
+    "run_sql": null,
+    "params": [
+      "ลูกค้าขอยกเลิกผ่าน Rakuten",
+      "U001",
+      "ORD-24183"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, cancel_reason, cancelled_by FROM orders WHERE order_id = 'ORD-24183'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "cancel_reason",
+        "cancelled_by"
+      ],
+      "rows": [
+        [
+          "ORD-24183",
+          "ยกเลิกแล้ว",
+          "ลูกค้าขอยกเลิกผ่าน Rakuten",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7A.2",
+    "uc": "7A",
+    "uc_name": "ยกเลิก Order",
+    "sql": "UPDATE stock SET in_house_qty = in_house_qty + $1, updated_at=NOW() WHERE sku=$2",
+    "run_sql": null,
+    "params": [
+      "2",
+      "FSH-MLR-240"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT sku, in_house_qty, updated_at FROM stock WHERE sku = 'FSH-MLR-240'",
+      "fields": [
+        "sku",
+        "in_house_qty",
+        "updated_at"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "54",
+          "2026-10-12 16:59"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q8A.1",
+    "uc": "8A",
+    "uc_name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+    "sql": "SELECT tracking_number, carrier_name, pickup_date FROM delivery_partners WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24178"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "tracking_number",
+        "carrier_name",
+        "pickup_date"
+      ],
+      "rows": [
+        [
+          "4418-2291-4178",
+          "Yamato Transport",
+          "2026-10-05 00:00"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q8A.2",
+    "uc": "8A",
+    "uc_name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+    "sql": "UPDATE orders SET order_status='อยู่ระหว่างจัดส่ง', tracking_number=$1, carrier_name=$2, dispatched_at=NOW() WHERE order_id=$3",
+    "run_sql": null,
+    "params": [
+      "4418-2291-4178",
+      "Yamato Transport",
+      "ORD-24178"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, tracking_number, carrier_name FROM orders WHERE order_id = 'ORD-24178'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "tracking_number",
+        "carrier_name"
+      ],
+      "rows": [
+        [
+          "ORD-24178",
+          "อยู่ระหว่างจัดส่ง",
+          "4418-2291-4178",
+          "Yamato Transport"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q8A.3",
+    "uc": "8A",
+    "uc_name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+    "sql": "SELECT delivery_status, last_location, updated_at FROM carrier_tracking WHERE tracking_number=$1",
+    "run_sql": null,
+    "params": [
+      "4418-2291-4174"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "delivery_status",
+        "last_location",
+        "updated_at"
+      ],
+      "rows": [
+        [
+          "in_transit",
+          "Kobe Port Hub",
+          "2026-10-03 23:20"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q9A.1",
+    "uc": "9A",
+    "uc_name": "พิมพ์ใบปะสินค้า",
+    "sql": "SELECT label_template FROM shipping_rules WHERE shipping_method=$1 AND sales_channel=$2",
+    "run_sql": null,
+    "params": [
+      "RSL ปกติ",
+      "Rakuten Ichiba"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "label_template"
+      ],
+      "rows": [
+        [
+          "RSL-STD-A6"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q9A.2",
+    "uc": "9A",
+    "uc_name": "พิมพ์ใบปะสินค้า",
+    "sql": "UPDATE label SET label_status='พิมพ์แล้ว', printed_at=NOW() WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24181"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT label_id, order_id, label_status, printed_at FROM label WHERE order_id = 'ORD-24181'",
+      "fields": [
+        "label_id",
+        "order_id",
+        "label_status",
+        "printed_at"
+      ],
+      "rows": [
+        [
+          "6",
+          "ORD-24181",
+          "พิมพ์แล้ว",
+          "2026-10-12 16:59"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q9A.3",
+    "uc": "9A",
+    "uc_name": "พิมพ์ใบปะสินค้า",
+    "sql": "UPDATE orders SET order_status='พิมพ์ใบปะสินค้าแล้ว' WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24181"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status FROM orders WHERE order_id = 'ORD-24181'",
+      "fields": [
+        "order_id",
+        "order_status"
+      ],
+      "rows": [
+        [
+          "ORD-24181",
+          "พิมพ์ใบปะสินค้าแล้ว"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q10A.1",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT order_id, order_status, order_date FROM orders WHERE order_status IN ('จัดส่งสำเร็จ','ยกเลิกแล้ว') AND order_date < $1",
+    "run_sql": null,
+    "params": [
+      "2025-10-12"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_id",
+        "order_status",
+        "order_date"
+      ],
+      "rows": [
+        [
+          "ORD-24160",
+          "จัดส่งสำเร็จ",
+          "2025-08-15 01:00"
+        ],
+        [
+          "ORD-24161",
+          "ยกเลิกแล้ว",
+          "2025-09-02 05:30"
+        ]
+      ],
+      "total": 2
+    }
+  },
+  {
+    "id": "Q10A.2",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT cost_id, sku, calculated_at FROM cost_calculation_log WHERE calculated_at < $1",
+    "run_sql": null,
+    "params": [
+      "2025-10-12"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "cost_id",
+        "sku",
+        "calculated_at"
+      ],
+      "rows": [
+        [
+          "1",
+          "FSH-MLR-240",
+          "2025-08-14 01:05"
+        ],
+        [
+          "2",
+          "FSH-RDS-180",
+          "2025-09-02 06:30"
+        ]
+      ],
+      "total": 2
+    }
+  },
+  {
+    "id": "Q10A.3",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT label_id, order_id, created_at FROM label WHERE created_at < $1 AND label_status='พิมพ์แล้ว'",
+    "run_sql": null,
+    "params": [
+      "2025-10-12"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "label_id",
+        "order_id",
+        "created_at"
+      ],
+      "rows": [
+        [
+          "1",
+          "ORD-24160",
+          "2025-08-15 01:30"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q10A.4",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT po_id, sku, status FROM purchase_orders WHERE order_date < $1 AND status IN ('ได้รับสินค้าแล้ว','ยกเลิกแล้ว')",
+    "run_sql": null,
+    "params": [
+      "2025-10-12"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "po_id",
+        "sku",
+        "status"
+      ],
+      "rows": [
+        [
+          "PO-0007",
+          "YDM-HRB-012",
+          "ได้รับสินค้าแล้ว"
+        ],
+        [
+          "PO-0008",
+          "FSH-MLR-240",
+          "ได้รับสินค้าแล้ว"
+        ],
+        [
+          "PO-0009",
+          "OUT-LMP-021",
+          "ยกเลิกแล้ว"
+        ]
+      ],
+      "total": 3
+    }
+  },
+  {
+    "id": "Q10A.5",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "INSERT INTO deletion_log (data_type, record_id, deleted_at, deleted_by) VALUES ($1, $2, NOW(), $3)",
+    "run_sql": null,
+    "params": [
+      "order",
+      "ORD-24161",
+      "U001"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT log_id, data_type, record_id, deleted_by FROM deletion_log WHERE log_id > 5",
+      "fields": [
+        "log_id",
+        "data_type",
+        "record_id",
+        "deleted_by"
+      ],
+      "rows": [
+        [
+          "6",
+          "order",
+          "ORD-24161",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q10A.6",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM orders WHERE order_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{ORD-24161}"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT COUNT(*) AS remaining FROM orders WHERE order_id = 'ORD-24161'",
+      "fields": [
+        "remaining"
+      ],
+      "rows": [
+        [
+          "0"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q10A.7",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM cost_calculation_log WHERE cost_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{1,2}"
+    ],
+    "affected": 2,
+    "check": {
+      "sql": "SELECT cost_id, sku FROM cost_calculation_log ORDER BY cost_id",
+      "fields": [
+        "cost_id",
+        "sku"
+      ],
+      "rows": [
+        [
+          "3",
+          "FSH-MLR-240"
+        ],
+        [
+          "4",
+          "OUT-CHR-003"
+        ],
+        [
+          "5",
+          "FSH-RDS-180"
+        ],
+        [
+          "6",
+          "HOM-STG-045"
+        ]
+      ],
+      "total": 4
+    }
+  },
+  {
+    "id": "Q10A.8",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM label WHERE label_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{1}"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT label_id, order_id FROM label ORDER BY label_id",
+      "fields": [
+        "label_id",
+        "order_id"
+      ],
+      "rows": [
+        [
+          "2",
+          "ORD-24170"
+        ],
+        [
+          "3",
+          "ORD-24172"
+        ],
+        [
+          "4",
+          "ORD-24174"
+        ],
+        [
+          "5",
+          "ORD-24178"
+        ],
+        [
+          "6",
+          "ORD-24181"
+        ]
+      ],
+      "total": 5
+    }
+  },
+  {
+    "id": "Q10A.9",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM purchase_orders WHERE po_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{PO-0007,PO-0009}"
+    ],
+    "affected": 2,
+    "check": {
+      "sql": "SELECT po_id, status FROM purchase_orders ORDER BY po_id",
+      "fields": [
+        "po_id",
+        "status"
+      ],
+      "rows": [
+        [
+          "PO-0008",
+          "ได้รับสินค้าแล้ว"
+        ],
+        [
+          "PO-0010",
+          "ได้รับสินค้าแล้ว"
+        ],
+        [
+          "PO-0011",
+          "รอส่งคำสั่งซื้อ"
+        ],
+        [
+          "PO-0091",
+          "สั่งซื้อแล้ว"
+        ]
+      ],
+      "total": 4
+    }
+  },
+  {
+    "id": "Q10A.10",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT order_id, order_status, order_date FROM orders WHERE order_status IN ('จัดส่งสำเร็จ','ยกเลิกแล้ว')",
+    "run_sql": null,
+    "params": [],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "order_id",
+        "order_status",
+        "order_date"
+      ],
+      "rows": [
+        [
+          "ORD-24160",
+          "จัดส่งสำเร็จ",
+          "2025-08-15 01:00"
+        ],
+        [
+          "ORD-24161",
+          "ยกเลิกแล้ว",
+          "2025-09-02 05:30"
+        ],
+        [
+          "ORD-24170",
+          "จัดส่งสำเร็จ",
+          "2026-10-01 03:00"
+        ]
+      ],
+      "total": 3
+    }
+  },
+  {
+    "id": "Q10A.11",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT label_id FROM label WHERE order_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{ORD-24160,ORD-24161,ORD-24170}"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "label_id"
+      ],
+      "rows": [
+        [
+          "1"
+        ],
+        [
+          "2"
+        ]
+      ],
+      "total": 2
+    }
+  },
+  {
+    "id": "Q10A.12",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "INSERT INTO deletion_log (data_type, record_id, deleted_at, deleted_by) VALUES ('order', $1, NOW(), $2)",
+    "run_sql": null,
+    "params": [
+      "ORD-24160",
+      "U001"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT log_id, data_type, record_id, deleted_by FROM deletion_log WHERE log_id > 5",
+      "fields": [
+        "log_id",
+        "data_type",
+        "record_id",
+        "deleted_by"
+      ],
+      "rows": [
+        [
+          "7",
+          "order",
+          "ORD-24160",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q10A.13",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM label WHERE order_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{ORD-24160,ORD-24170}"
+    ],
+    "affected": 2,
+    "check": {
+      "sql": "SELECT label_id, order_id FROM label ORDER BY label_id",
+      "fields": [
+        "label_id",
+        "order_id"
+      ],
+      "rows": [
+        [
+          "3",
+          "ORD-24172"
+        ],
+        [
+          "4",
+          "ORD-24174"
+        ],
+        [
+          "5",
+          "ORD-24178"
+        ],
+        [
+          "6",
+          "ORD-24181"
+        ]
+      ],
+      "total": 4
+    }
+  },
+  {
+    "id": "Q10A.14",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM orders WHERE order_id = ANY($1)",
+    "run_sql": null,
+    "params": [
+      "{ORD-24160,ORD-24161,ORD-24170}"
+    ],
+    "affected": 3,
+    "check": {
+      "sql": "SELECT order_status, COUNT(*) AS orders FROM orders GROUP BY order_status ORDER BY order_status",
+      "fields": [
+        "order_status",
+        "orders"
+      ],
+      "rows": [
+        [
+          "พิมพ์ใบปะสินค้าแล้ว",
+          "1"
+        ],
+        [
+          "ยังไม่ได้จับคู่",
+          "1"
+        ],
+        [
+          "รอ Admin ตัดสินใจสั่งซื้อ",
+          "1"
+        ],
+        [
+          "รอตรวจสอบคำสั่งซื้อ",
+          "2"
+        ],
+        [
+          "รอพิมพ์ใบปะสินค้า",
+          "1"
+        ],
+        [
+          "สั่งซื้อแล้ว",
+          "1"
+        ],
+        [
+          "อยู่ระหว่างจัดส่ง",
+          "1"
+        ],
+        [
+          "แจ้งเลขติดตามแล้ว",
+          "1"
+        ]
+      ],
+      "total": 8
+    }
+  },
+  {
+    "id": "Q1S.1",
+    "uc": "1S",
+    "uc_name": "จับคู่ Order กับเลข RSL",
+    "sql": "SELECT rsl_order_id, rsl_sku, rsl_variation, rsl_stock_qty FROM rsl_shipments WHERE rsl_sku=$1 AND rsl_variation=$2",
+    "run_sql": null,
+    "params": [
+      "FSH-MLR-240",
+      "สีเงินลายปลาซิว"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "rsl_order_id",
+        "rsl_sku",
+        "rsl_variation",
+        "rsl_stock_qty"
+      ],
+      "rows": [
+        [
+          "RSL-9f21a7",
+          "FSH-MLR-240",
+          "สีเงินลายปลาซิว",
+          "96"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q1S.2",
+    "uc": "1S",
+    "uc_name": "จับคู่ Order กับเลข RSL",
+    "sql": "UPDATE orders SET rsl_matched=true, rsl_reference_id=$1, order_status='รอจัดรูปแบบใบปะสินค้า', matched_at=NOW() WHERE order_id=$2",
+    "run_sql": null,
+    "params": [
+      "RSL-9f2240",
+      "ORD-24183"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, rsl_matched, rsl_reference_id FROM orders WHERE order_id = 'ORD-24183'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "rsl_matched",
+        "rsl_reference_id"
+      ],
+      "rows": [
+        [
+          "ORD-24183",
+          "รอจัดรูปแบบใบปะสินค้า",
+          "true",
+          "RSL-9f2240"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q2S.1",
+    "uc": "2S",
+    "uc_name": "จับคู่กฎ SKU",
+    "sql": "SELECT sku_rule_id, sku, variation, product_name, channel_sku FROM sku_rules WHERE channel_sku=$1 AND sales_channel=$2",
+    "run_sql": null,
+    "params": [
+      "rk-mlr240-sv",
+      "Rakuten Ichiba"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku_rule_id",
+        "sku",
+        "variation",
+        "product_name",
+        "channel_sku"
+      ],
+      "rows": [
+        [
+          "1",
+          "FSH-MLR-240",
+          "สีเงินลายปลาซิว",
+          "เหยื่อปลอมมินโนว์ จมช้า 24 กรัม",
+          "rk-mlr240-sv"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q2S.2",
+    "uc": "2S",
+    "uc_name": "จับคู่กฎ SKU",
+    "sql": "UPDATE orders SET sku_rule_id=$1, sku=$2, variation=$3, order_status='รอตรวจสอบสต๊อก', sku_matched_at=NOW() WHERE order_id=$4",
+    "run_sql": null,
+    "params": [
+      "1",
+      "FSH-MLR-240",
+      "สีเงินลายปลาซิว",
+      "ORD-24190"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, sku_rule_id, sku FROM orders WHERE order_id = 'ORD-24190'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "sku_rule_id",
+        "sku"
+      ],
+      "rows": [
+        [
+          "ORD-24190",
+          "รอตรวจสอบสต๊อก",
+          "1",
+          "FSH-MLR-240"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q3S.1",
+    "uc": "3S",
+    "uc_name": "ตรวจสอบของสินค้าใน stock + RSL",
+    "sql": "SELECT * FROM stock WHERE sku=$1",
+    "run_sql": null,
+    "params": [
+      "FSH-MLR-240"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku",
+        "variation",
+        "in_house_qty",
+        "rsl_qty",
+        "updated_at"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "สีเงินลายปลาซิว",
+          "52",
+          "96",
+          "2026-10-04 22:00"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q3S.2",
+    "uc": "3S",
+    "uc_name": "ตรวจสอบของสินค้าใน stock + RSL",
+    "sql": "UPDATE orders SET order_status=$1 WHERE order_id=$2",
+    "run_sql": null,
+    "params": [
+      "ยังไม่ได้จับคู่",
+      "ORD-24190"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status FROM orders WHERE order_id = 'ORD-24190'",
+      "fields": [
+        "order_id",
+        "order_status"
+      ],
+      "rows": [
+        [
+          "ORD-24190",
+          "ยังไม่ได้จับคู่"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q4S.1",
+    "uc": "4S",
+    "uc_name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+    "sql": "SELECT purchase_price, currency, exchange_rate, intl_freight, duty_fee, marketplace_fee, domestic_shipping, rsl_charge, order_qty FROM product_cost WHERE sku=$1",
+    "run_sql": null,
+    "params": [
+      "FSH-MLR-240"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "purchase_price",
+        "currency",
+        "exchange_rate",
+        "intl_freight",
+        "duty_fee",
+        "marketplace_fee",
+        "domestic_shipping",
+        "rsl_charge",
+        "order_qty"
+      ],
+      "rows": [
+        [
+          "9100.00",
+          "CNY",
+          "4.9200",
+          "8600.00",
+          "3150.00",
+          "72.00",
+          "46.00",
+          "18.00",
+          "200"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q4S.2",
+    "uc": "4S",
+    "uc_name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+    "sql": "Unit Cost = ((purchase_price × exchange_rate) + intl_freight + duty_fee) / order_qty + marketplace_fee + domestic_shipping + rsl_charge",
+    "run_sql": "SELECT sku, ROUND(((purchase_price * exchange_rate) + intl_freight + duty_fee) / order_qty + marketplace_fee + domestic_shipping + rsl_charge, 2) AS unit_cost FROM product_cost WHERE sku = 'FSH-MLR-240'",
+    "params": [],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku",
+        "unit_cost"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "418.61"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q4S.3",
+    "uc": "4S",
+    "uc_name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+    "sql": "INSERT INTO cost_calculation_log (sku, unit_cost, calculated_at, calculated_by) VALUES ($1, $2, NOW(), $3)",
+    "run_sql": null,
+    "params": [
+      "FSH-MLR-240",
+      "418.61",
+      "U001"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT cost_id, sku, unit_cost, calculated_by FROM cost_calculation_log WHERE cost_id > 6",
+      "fields": [
+        "cost_id",
+        "sku",
+        "unit_cost",
+        "calculated_by"
+      ],
+      "rows": [
+        [
+          "7",
+          "FSH-MLR-240",
+          "418.61",
+          "U001"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5S.1",
+    "uc": "5S",
+    "uc_name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
+    "sql": "SELECT sales_channel, marketplace_order_id, tracking_number, carrier_name FROM orders WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24174"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sales_channel",
+        "marketplace_order_id",
+        "tracking_number",
+        "carrier_name"
+      ],
+      "rows": [
+        [
+          "Rakuten Ichiba",
+          "377841-20261003-0000174",
+          "4418-2291-4174",
+          "Yamato Transport"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q5S.2",
+    "uc": "5S",
+    "uc_name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
+    "sql": "UPDATE orders SET order_status='แจ้งเลขติดตามแล้ว', tracking_notified=true, tracking_notified_at=NOW() WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24174"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, tracking_notified FROM orders WHERE order_id = 'ORD-24174'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "tracking_notified"
+      ],
+      "rows": [
+        [
+          "ORD-24174",
+          "แจ้งเลขติดตามแล้ว",
+          "true"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q6S.1",
+    "uc": "6S",
+    "uc_name": "จัดรูปแบบใบปะสินค้า",
+    "sql": "SELECT label_template FROM shipping_rules WHERE shipping_method=$1 AND sales_channel=$2",
+    "run_sql": null,
+    "params": [
+      "RSL ปกติ",
+      "Rakuten Ichiba"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "label_template"
+      ],
+      "rows": [
+        [
+          "RSL-STD-A6"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q6S.2",
+    "uc": "6S",
+    "uc_name": "จัดรูปแบบใบปะสินค้า",
+    "sql": "INSERT INTO label (order_id, label_template, rsl_reference_id, parcel_seq, parcel_total, label_status, created_at) VALUES ($1, $2, $3, $4, $5, 'รอพิมพ์', NOW())",
+    "run_sql": null,
+    "params": [
+      "ORD-24183",
+      "RSL-STD-A6",
+      "RSL-9f2240",
+      "1",
+      "1"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT label_id, order_id, label_template, rsl_reference_id, parcel_seq, parcel_total, label_status FROM label WHERE order_id = 'ORD-24183'",
+      "fields": [
+        "label_id",
+        "order_id",
+        "label_template",
+        "rsl_reference_id",
+        "parcel_seq",
+        "parcel_total",
+        "label_status"
+      ],
+      "rows": [
+        [
+          "7",
+          "ORD-24183",
+          "RSL-STD-A6",
+          "RSL-9f2240",
+          "1",
+          "1",
+          "รอพิมพ์"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q6S.3",
+    "uc": "6S",
+    "uc_name": "จัดรูปแบบใบปะสินค้า",
+    "sql": "UPDATE orders SET order_status='รอพิมพ์ใบปะสินค้า' WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24183"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status FROM orders WHERE order_id = 'ORD-24183'",
+      "fields": [
+        "order_id",
+        "order_status"
+      ],
+      "rows": [
+        [
+          "ORD-24183",
+          "รอพิมพ์ใบปะสินค้า"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7S.1",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "SELECT s.sku, s.variation, s.in_house_qty, s.rsl_qty, o.qty, o.fulfill_source, o.stock_deducted FROM stock s JOIN orders o USING (sku, variation) WHERE o.order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24172"
+    ],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku",
+        "variation",
+        "in_house_qty",
+        "rsl_qty",
+        "qty",
+        "fulfill_source",
+        "stock_deducted"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "สีเงินลายปลาซิว",
+          "52",
+          "96",
+          "1",
+          "rsl",
+          "false"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7S.2",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "UPDATE stock SET in_house_qty = in_house_qty - $1, updated_at=NOW() WHERE sku=$2 AND variation=$3",
+    "run_sql": null,
+    "params": [
+      "1",
+      "OUT-LMP-021",
+      "แสงวอร์ม"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT sku, in_house_qty, rsl_qty FROM stock WHERE sku = 'OUT-LMP-021'",
+      "fields": [
+        "sku",
+        "in_house_qty",
+        "rsl_qty"
+      ],
+      "rows": [
+        [
+          "OUT-LMP-021",
+          "29",
+          "12"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7S.3",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "UPDATE stock SET rsl_qty = rsl_qty - $1, updated_at=NOW() WHERE sku=$2 AND variation=$3",
+    "run_sql": null,
+    "params": [
+      "1",
+      "FSH-MLR-240",
+      "สีเงินลายปลาซิว"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT sku, in_house_qty, rsl_qty FROM stock WHERE sku = 'FSH-MLR-240'",
+      "fields": [
+        "sku",
+        "in_house_qty",
+        "rsl_qty"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "52",
+          "95"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7S.4",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "Available Qty = in_house_qty + rsl_qty",
+    "run_sql": "SELECT sku, in_house_qty, rsl_qty, in_house_qty + COALESCE(rsl_qty, 0) AS available_qty FROM stock WHERE sku = 'FSH-MLR-240'",
+    "params": [],
+    "affected": 0,
+    "result": {
+      "fields": [
+        "sku",
+        "in_house_qty",
+        "rsl_qty",
+        "available_qty"
+      ],
+      "rows": [
+        [
+          "FSH-MLR-240",
+          "52",
+          "96",
+          "148"
+        ]
+      ],
+      "total": 1
+    }
+  },
+  {
+    "id": "Q7S.5",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "UPDATE orders SET stock_deducted=true, mp_stock_synced=true, order_status='จัดส่งสำเร็จ', deducted_at=NOW() WHERE order_id=$1",
+    "run_sql": null,
+    "params": [
+      "ORD-24172"
+    ],
+    "affected": 1,
+    "check": {
+      "sql": "SELECT order_id, order_status, stock_deducted, mp_stock_synced FROM orders WHERE order_id = 'ORD-24172'",
+      "fields": [
+        "order_id",
+        "order_status",
+        "stock_deducted",
+        "mp_stock_synced"
+      ],
+      "rows": [
+        [
+          "ORD-24172",
+          "จัดส่งสำเร็จ",
+          "true",
+          "true"
+        ]
+      ],
+      "total": 1
+    }
+  }
+]

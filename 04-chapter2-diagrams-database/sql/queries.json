@@ -1,0 +1,771 @@
+[
+  {
+    "id": "Q1A.1",
+    "uc": "1A",
+    "uc_name": "เข้าสู่ระบบ",
+    "sql": "SELECT user_id, user_password, fail_attempts FROM users WHERE user_email=$1",
+    "kind": "SELECT",
+    "tables": [
+      "users"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q1A.2",
+    "uc": "1A",
+    "uc_name": "เข้าสู่ระบบ",
+    "sql": "UPDATE users SET fail_attempts = fail_attempts + 1 WHERE user_email=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "users"
+    ],
+    "set": [
+      "fail_attempts"
+    ]
+  },
+  {
+    "id": "Q1A.3",
+    "uc": "1A",
+    "uc_name": "เข้าสู่ระบบ",
+    "sql": "UPDATE users SET fail_attempts = 0, last_login = CURRENT_TIMESTAMP WHERE user_email=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "users"
+    ],
+    "set": [
+      "fail_attempts",
+      "last_login"
+    ]
+  },
+  {
+    "id": "Q2A.1",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "SELECT order_id, marketplace_order_id, sku, qty, order_date FROM orders WHERE order_status='รอตรวจสอบคำสั่งซื้อ' ORDER BY order_date",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q2A.2",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "SELECT order_id, marketplace_order_id, sales_channel, order_date, sku, variation, qty, shipping_address, shipping_method, order_status FROM orders WHERE order_id=$1",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q2A.3",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "SELECT order_status FROM orders WHERE order_id=$1",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q2A.4",
+    "uc": "2A",
+    "uc_name": "ตรวจสอบคำสั่งซื้อ",
+    "sql": "UPDATE orders SET order_status='รอจับคู่กฎ SKU', verified_at=NOW(), verified_by=$1 WHERE order_id=$2",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "verified_at",
+      "verified_by"
+    ]
+  },
+  {
+    "id": "Q3A.1",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "SELECT sku FROM products WHERE sku=$1",
+    "kind": "SELECT",
+    "tables": [
+      "products"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q3A.2",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "INSERT INTO products (sku, product_name, variation, sales_channel, supplier_id, reorder_threshold, reorder_qty, selling_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+    "kind": "INSERT",
+    "tables": [
+      "products"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q3A.3",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "UPDATE products SET product_name=$1, variation=$2, supplier_id=$3, reorder_threshold=$4, reorder_qty=$5, selling_price=$6 WHERE sku=$7",
+    "kind": "UPDATE",
+    "tables": [
+      "products"
+    ],
+    "set": [
+      "product_name",
+      "variation",
+      "supplier_id",
+      "reorder_threshold",
+      "reorder_qty",
+      "selling_price"
+    ]
+  },
+  {
+    "id": "Q3A.4",
+    "uc": "3A",
+    "uc_name": "ตั้งกฎ SKU",
+    "sql": "INSERT INTO sku_rules (channel_sku, sales_channel, sku, variation, product_name) VALUES ($1, $2, $3, $4, $5)",
+    "kind": "INSERT",
+    "tables": [
+      "sku_rules"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q4A.1",
+    "uc": "4A",
+    "uc_name": "ดึง Order เข้าระบบ",
+    "sql": "SELECT order_id FROM orders WHERE marketplace_order_id=$1 AND sales_channel=$2",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q4A.2",
+    "uc": "4A",
+    "uc_name": "ดึง Order เข้าระบบ",
+    "sql": "INSERT INTO orders (marketplace_order_id, sales_channel, order_date, channel_sku, sku, variation, qty, shipping_address, shipping_method, order_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'รอตรวจสอบคำสั่งซื้อ')",
+    "kind": "INSERT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q5A.1",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "SELECT o.order_id, o.sku, o.qty, p.selling_price, p.reorder_qty, p.supplier_id, s.lead_time FROM orders o JOIN products p ON p.sku = o.sku JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE o.order_id=$1",
+    "kind": "SELECT",
+    "tables": [
+      "orders",
+      "products",
+      "suppliers"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q5A.2",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "SELECT unit_cost, calculated_at FROM cost_calculation_log WHERE sku=$1 ORDER BY calculated_at DESC LIMIT 1",
+    "kind": "SELECT",
+    "tables": [
+      "cost_calculation_log"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q5A.3",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "Expected Margin = selling_price - unit_cost",
+    "kind": "FORMULA",
+    "tables": [],
+    "set": []
+  },
+  {
+    "id": "Q5A.4",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "UPDATE orders SET order_status='รอสั่งซื้อจาก Supplier', decision='คุ้มค่า', decided_at=NOW(), decided_by=$1 WHERE order_id=$2",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "decision",
+      "decided_at",
+      "decided_by"
+    ]
+  },
+  {
+    "id": "Q5A.5",
+    "uc": "5A",
+    "uc_name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+    "sql": "UPDATE orders SET order_status='รอยกเลิก Order', decision='ไม่คุ้มค่า', decided_at=NOW(), decided_by=$1 WHERE order_id=$2",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "decision",
+      "decided_at",
+      "decided_by"
+    ]
+  },
+  {
+    "id": "Q6A.1",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "SELECT p.sku, p.product_name, s.in_house_qty, s.rsl_qty, p.reorder_threshold, p.reorder_qty FROM products p JOIN stock s ON s.sku = p.sku WHERE s.in_house_qty + s.rsl_qty <= p.reorder_threshold",
+    "kind": "SELECT",
+    "tables": [
+      "products",
+      "stock"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q6A.2",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "SELECT s.supplier_id, s.supplier_name, s.contact_info, s.lead_time, p.reorder_qty AS order_qty FROM products p JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE p.sku=$1",
+    "kind": "SELECT",
+    "tables": [
+      "products",
+      "suppliers"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q6A.3",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "INSERT INTO purchase_orders (po_id, sku, supplier_id, order_qty, order_date, eta, status) VALUES ($1, $2, $3, $4, NOW(), $5, 'สั่งซื้อแล้ว')",
+    "kind": "INSERT",
+    "tables": [
+      "purchase_orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q6A.4",
+    "uc": "6A",
+    "uc_name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+    "sql": "UPDATE orders SET order_status='สั่งซื้อแล้ว', po_id=$1 WHERE sku=$2 AND order_status='รอสั่งซื้อจาก Supplier'",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "po_id"
+    ]
+  },
+  {
+    "id": "Q7A.1",
+    "uc": "7A",
+    "uc_name": "ยกเลิก Order",
+    "sql": "UPDATE orders SET order_status='ยกเลิกแล้ว', cancel_reason=$1, cancelled_at=NOW(), cancelled_by=$2 WHERE order_id=$3",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "cancel_reason",
+      "cancelled_at",
+      "cancelled_by"
+    ]
+  },
+  {
+    "id": "Q7A.2",
+    "uc": "7A",
+    "uc_name": "ยกเลิก Order",
+    "sql": "UPDATE stock SET in_house_qty = in_house_qty + $1, updated_at=NOW() WHERE sku=$2",
+    "kind": "UPDATE",
+    "tables": [
+      "stock"
+    ],
+    "set": [
+      "in_house_qty",
+      "updated_at"
+    ]
+  },
+  {
+    "id": "Q8A.1",
+    "uc": "8A",
+    "uc_name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+    "sql": "SELECT tracking_number, carrier_name, pickup_date FROM delivery_partners WHERE order_id=$1",
+    "kind": "SELECT",
+    "tables": [
+      "delivery_partners"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q8A.2",
+    "uc": "8A",
+    "uc_name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+    "sql": "UPDATE orders SET order_status='อยู่ระหว่างจัดส่ง', tracking_number=$1, carrier_name=$2, dispatched_at=NOW() WHERE order_id=$3",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "tracking_number",
+      "carrier_name",
+      "dispatched_at"
+    ]
+  },
+  {
+    "id": "Q8A.3",
+    "uc": "8A",
+    "uc_name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+    "sql": "SELECT delivery_status, last_location, updated_at FROM carrier_tracking WHERE tracking_number=$1",
+    "kind": "SELECT",
+    "tables": [
+      "carrier_tracking"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q9A.1",
+    "uc": "9A",
+    "uc_name": "พิมพ์ใบปะสินค้า",
+    "sql": "SELECT label_template FROM shipping_rules WHERE shipping_method=$1 AND sales_channel=$2",
+    "kind": "SELECT",
+    "tables": [
+      "shipping_rules"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q9A.2",
+    "uc": "9A",
+    "uc_name": "พิมพ์ใบปะสินค้า",
+    "sql": "UPDATE label SET label_status='พิมพ์แล้ว', printed_at=NOW() WHERE order_id=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "label"
+    ],
+    "set": [
+      "label_status",
+      "printed_at"
+    ]
+  },
+  {
+    "id": "Q9A.3",
+    "uc": "9A",
+    "uc_name": "พิมพ์ใบปะสินค้า",
+    "sql": "UPDATE orders SET order_status='พิมพ์ใบปะสินค้าแล้ว' WHERE order_id=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status"
+    ]
+  },
+  {
+    "id": "Q10A.1",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT order_id, order_status, order_date FROM orders WHERE order_status IN ('จัดส่งสำเร็จ','ยกเลิกแล้ว') AND order_date < $1",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.2",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT cost_id, sku, calculated_at FROM cost_calculation_log WHERE calculated_at < $1",
+    "kind": "SELECT",
+    "tables": [
+      "cost_calculation_log"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.3",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT label_id, order_id, created_at FROM label WHERE created_at < $1 AND label_status='พิมพ์แล้ว'",
+    "kind": "SELECT",
+    "tables": [
+      "label"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.4",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT po_id, sku, status FROM purchase_orders WHERE order_date < $1 AND status IN ('ได้รับสินค้าแล้ว','ยกเลิกแล้ว')",
+    "kind": "SELECT",
+    "tables": [
+      "purchase_orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.5",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "INSERT INTO deletion_log (data_type, record_id, deleted_at, deleted_by) VALUES ($1, $2, NOW(), $3)",
+    "kind": "INSERT",
+    "tables": [
+      "deletion_log"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.6",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM orders WHERE order_id = ANY($1)",
+    "kind": "DELETE",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.7",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM cost_calculation_log WHERE cost_id = ANY($1)",
+    "kind": "DELETE",
+    "tables": [
+      "cost_calculation_log"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.8",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM label WHERE label_id = ANY($1)",
+    "kind": "DELETE",
+    "tables": [
+      "label"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.9",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM purchase_orders WHERE po_id = ANY($1)",
+    "kind": "DELETE",
+    "tables": [
+      "purchase_orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.10",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT order_id, order_status, order_date FROM orders WHERE order_status IN ('จัดส่งสำเร็จ','ยกเลิกแล้ว')",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.11",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "SELECT label_id FROM label WHERE order_id = ANY($1)",
+    "kind": "SELECT",
+    "tables": [
+      "label"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.12",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "INSERT INTO deletion_log (data_type, record_id, deleted_at, deleted_by) VALUES ('order', $1, NOW(), $2)",
+    "kind": "INSERT",
+    "tables": [
+      "deletion_log"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.13",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM label WHERE order_id = ANY($1)",
+    "kind": "DELETE",
+    "tables": [
+      "label"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q10A.14",
+    "uc": "10A",
+    "uc_name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+    "sql": "DELETE FROM orders WHERE order_id = ANY($1)",
+    "kind": "DELETE",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q1S.1",
+    "uc": "1S",
+    "uc_name": "จับคู่ Order กับเลข RSL",
+    "sql": "SELECT rsl_order_id, rsl_sku, rsl_variation, rsl_stock_qty FROM rsl_shipments WHERE rsl_sku=$1 AND rsl_variation=$2",
+    "kind": "SELECT",
+    "tables": [
+      "rsl_shipments"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q1S.2",
+    "uc": "1S",
+    "uc_name": "จับคู่ Order กับเลข RSL",
+    "sql": "UPDATE orders SET rsl_matched=true, rsl_reference_id=$1, order_status='รอจัดรูปแบบใบปะสินค้า', matched_at=NOW() WHERE order_id=$2",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "rsl_matched",
+      "rsl_reference_id",
+      "order_status",
+      "matched_at"
+    ]
+  },
+  {
+    "id": "Q2S.1",
+    "uc": "2S",
+    "uc_name": "จับคู่กฎ SKU",
+    "sql": "SELECT sku_rule_id, sku, variation, product_name, channel_sku FROM sku_rules WHERE channel_sku=$1 AND sales_channel=$2",
+    "kind": "SELECT",
+    "tables": [
+      "sku_rules"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q2S.2",
+    "uc": "2S",
+    "uc_name": "จับคู่กฎ SKU",
+    "sql": "UPDATE orders SET sku_rule_id=$1, sku=$2, variation=$3, order_status='รอตรวจสอบสต๊อก', sku_matched_at=NOW() WHERE order_id=$4",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "sku_rule_id",
+      "sku",
+      "variation",
+      "order_status",
+      "sku_matched_at"
+    ]
+  },
+  {
+    "id": "Q3S.1",
+    "uc": "3S",
+    "uc_name": "ตรวจสอบของสินค้าใน stock + RSL",
+    "sql": "SELECT * FROM stock WHERE sku=$1",
+    "kind": "SELECT",
+    "tables": [
+      "stock"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q3S.2",
+    "uc": "3S",
+    "uc_name": "ตรวจสอบของสินค้าใน stock + RSL",
+    "sql": "UPDATE orders SET order_status=$1 WHERE order_id=$2",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status"
+    ]
+  },
+  {
+    "id": "Q4S.1",
+    "uc": "4S",
+    "uc_name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+    "sql": "SELECT purchase_price, currency, exchange_rate, intl_freight, duty_fee, marketplace_fee, domestic_shipping, rsl_charge, order_qty FROM product_cost WHERE sku=$1",
+    "kind": "SELECT",
+    "tables": [
+      "product_cost"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q4S.2",
+    "uc": "4S",
+    "uc_name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+    "sql": "Unit Cost = ((purchase_price × exchange_rate) + intl_freight + duty_fee) / order_qty + marketplace_fee + domestic_shipping + rsl_charge",
+    "kind": "FORMULA",
+    "tables": [],
+    "set": []
+  },
+  {
+    "id": "Q4S.3",
+    "uc": "4S",
+    "uc_name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+    "sql": "INSERT INTO cost_calculation_log (sku, unit_cost, calculated_at, calculated_by) VALUES ($1, $2, NOW(), $3)",
+    "kind": "INSERT",
+    "tables": [
+      "cost_calculation_log"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q5S.1",
+    "uc": "5S",
+    "uc_name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
+    "sql": "SELECT sales_channel, marketplace_order_id, tracking_number, carrier_name FROM orders WHERE order_id=$1",
+    "kind": "SELECT",
+    "tables": [
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q5S.2",
+    "uc": "5S",
+    "uc_name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
+    "sql": "UPDATE orders SET order_status='แจ้งเลขติดตามแล้ว', tracking_notified=true, tracking_notified_at=NOW() WHERE order_id=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status",
+      "tracking_notified",
+      "tracking_notified_at"
+    ]
+  },
+  {
+    "id": "Q6S.1",
+    "uc": "6S",
+    "uc_name": "จัดรูปแบบใบปะสินค้า",
+    "sql": "SELECT label_template FROM shipping_rules WHERE shipping_method=$1 AND sales_channel=$2",
+    "kind": "SELECT",
+    "tables": [
+      "shipping_rules"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q6S.2",
+    "uc": "6S",
+    "uc_name": "จัดรูปแบบใบปะสินค้า",
+    "sql": "INSERT INTO label (order_id, label_template, rsl_reference_id, parcel_seq, parcel_total, label_status, created_at) VALUES ($1, $2, $3, $4, $5, 'รอพิมพ์', NOW())",
+    "kind": "INSERT",
+    "tables": [
+      "label"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q6S.3",
+    "uc": "6S",
+    "uc_name": "จัดรูปแบบใบปะสินค้า",
+    "sql": "UPDATE orders SET order_status='รอพิมพ์ใบปะสินค้า' WHERE order_id=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "order_status"
+    ]
+  },
+  {
+    "id": "Q7S.1",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "SELECT s.sku, s.variation, s.in_house_qty, s.rsl_qty, o.qty, o.fulfill_source, o.stock_deducted FROM stock s JOIN orders o USING (sku, variation) WHERE o.order_id=$1",
+    "kind": "SELECT",
+    "tables": [
+      "stock",
+      "orders"
+    ],
+    "set": []
+  },
+  {
+    "id": "Q7S.2",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "UPDATE stock SET in_house_qty = in_house_qty - $1, updated_at=NOW() WHERE sku=$2 AND variation=$3",
+    "kind": "UPDATE",
+    "tables": [
+      "stock"
+    ],
+    "set": [
+      "in_house_qty",
+      "updated_at"
+    ]
+  },
+  {
+    "id": "Q7S.3",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "UPDATE stock SET rsl_qty = rsl_qty - $1, updated_at=NOW() WHERE sku=$2 AND variation=$3",
+    "kind": "UPDATE",
+    "tables": [
+      "stock"
+    ],
+    "set": [
+      "rsl_qty",
+      "updated_at"
+    ]
+  },
+  {
+    "id": "Q7S.4",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "Available Qty = in_house_qty + rsl_qty",
+    "kind": "FORMULA",
+    "tables": [],
+    "set": []
+  },
+  {
+    "id": "Q7S.5",
+    "uc": "7S",
+    "uc_name": "ตัดสต๊อกสินค้า",
+    "sql": "UPDATE orders SET stock_deducted=true, mp_stock_synced=true, order_status='จัดส่งสำเร็จ', deducted_at=NOW() WHERE order_id=$1",
+    "kind": "UPDATE",
+    "tables": [
+      "orders"
+    ],
+    "set": [
+      "stock_deducted",
+      "mp_stock_synced",
+      "order_status",
+      "deducted_at"
+    ]
+  }
+]

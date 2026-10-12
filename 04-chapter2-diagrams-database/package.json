@@ -1,0 +1,15 @@
+{
+  "name": "colorado-db-diagrams",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sql": "node sql/run_queries.mjs",
+    "dict": "node sql/gen_dictionary.mjs",
+    "diagrams": "node diagrams/render.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.0",
+    "@hpcc-js/wasm-graphviz": "^1.7.0",
+    "puppeteer-core": "^24.0.0"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "tables": [
+    "users",
+    "suppliers",
+    "products",
+    "sku_rules",
+    "stock",
+    "product_cost",
+    "cost_calculation_log",
+    "purchase_orders",
+    "shipping_rules",
+    "orders",
+    "label",
+    "rsl_shipments",
+    "delivery_partners",
+    "carrier_tracking",
+    "deletion_log"
+  ],
+  "crud": {
+    "1A": {
+      "name": "เข้าสู่ระบบ",
+      "cells": {
+        "users": "RU"
+      }
+    },
+    "2A": {
+      "name": "ตรวจสอบคำสั่งซื้อ",
+      "cells": {
+        "orders": "RU"
+      }
+    },
+    "3A": {
+      "name": "ตั้งกฎ SKU",
+      "cells": {
+        "products": "CRU",
+        "sku_rules": "C"
+      }
+    },
+    "4A": {
+      "name": "ดึง Order เข้าระบบ",
+      "cells": {
+        "orders": "CR"
+      }
+    },
+    "5A": {
+      "name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
+      "cells": {
+        "orders": "RU",
+        "products": "R",
+        "suppliers": "R",
+        "cost_calculation_log": "R"
+      }
+    },
+    "6A": {
+      "name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
+      "cells": {
+        "products": "R",
+        "stock": "R",
+        "suppliers": "R",
+        "purchase_orders": "C",
+        "orders": "U"
+      }
+    },
+    "7A": {
+      "name": "ยกเลิก Order",
+      "cells": {
+        "orders": "U",
+        "stock": "U"
+      }
+    },
+    "8A": {
+      "name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
+      "cells": {
+        "delivery_partners": "R",
+        "orders": "U",
+        "carrier_tracking": "R"
+      }
+    },
+    "9A": {
+      "name": "พิมพ์ใบปะสินค้า",
+      "cells": {
+        "shipping_rules": "R",
+        "label": "U",
+        "orders": "U"
+      }
+    },
+    "10A": {
+      "name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
+      "cells": {
+        "orders": "RD",
+        "cost_calculation_log": "RD",
+        "label": "RD",
+        "purchase_orders": "RD",
+        "deletion_log": "C"
+      }
+    },
+    "1S": {
+      "name": "จับคู่ Order กับเลข RSL",
+      "cells": {
+        "rsl_shipments": "R",
+        "orders": "U"
+      }
+    },
+    "2S": {
+      "name": "จับคู่กฎ SKU",
+      "cells": {
+        "sku_rules": "R",
+        "orders": "U"
+      }
+    },
+    "3S": {
+      "name": "ตรวจสอบของสินค้าใน stock + RSL",
+      "cells": {
+        "stock": "R",
+        "orders": "U"
+      }
+    },
+    "4S": {
+      "name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
+      "cells": {
+        "product_cost": "R",
+        "cost_calculation_log": "C"
+      }
+    },
+    "5S": {
+      "name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
+      "cells": {
+        "orders": "RU"
+      }
+    },
+    "6S": {
+      "name": "จัดรูปแบบใบปะสินค้า",
+      "cells": {
+        "shipping_rules": "R",
+        "label": "C",
+        "orders": "U"
+      }
+    },
+    "7S": {
+      "name": "ตัดสต๊อกสินค้า",
+      "cells": {
+        "stock": "RU",
+        "orders": "RU"
+      }
+    }
+  }
+}
