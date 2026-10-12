@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxfile host="app.diagrams.net">
+<mxfile host="Electron">
   <diagram id="XlnmVz1kYd-Jb9PBp41d" name="To-Be usecase">
-    <mxGraphModel dx="1621" dy="1027" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1165" dy="1097" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -52,6 +51,20 @@
         </mxCell>
         <mxCell id="JPxfeVIN6Nmn7QqBt_JA-11" parent="_Du93UHt1Al1Mdu0f5Wp-1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="4A) ดึง Order เข้าระบบ" vertex="1">
           <mxGeometry height="60" width="150" x="45" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="sys-uc-7s" parent="_Du93UHt1Al1Mdu0f5Wp-1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="7S) ตัดสต๊อกสินค้า" vertex="1">
+          <mxGeometry height="60" width="150" x="401" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="uc-10a" parent="_Du93UHt1Al1Mdu0f5Wp-1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="10A) ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)" vertex="1">
+          <mxGeometry height="100" width="210" x="45" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="gate-edge-5a-6a" edge="1" parent="_Du93UHt1Al1Mdu0f5Wp-1" source="_Du93UHt1Al1Mdu0f5Wp-17" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#b85450;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=#b85450;labelBackgroundColor=#ffffff;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;" target="JPxfeVIN6Nmn7QqBt_JA-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gate-edge-5a-6a-label" connectable="0" parent="gate-edge-5a-6a" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="ต้องอนุมัติ (5A) ก่อน" vertex="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="_Du93UHt1Al1Mdu0f5Wp-4" edge="1" parent="1" source="_Du93UHt1Al1Mdu0f5Wp-10" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="_Du93UHt1Al1Mdu0f5Wp-17">
           <mxGeometry relative="1" as="geometry" />
@@ -132,18 +145,9 @@
         <mxCell id="JPxfeVIN6Nmn7QqBt_JA-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#B0E3E6;strokeColor=#0B8299;" value="RSL" vertex="1">
           <mxGeometry height="120" width="60" x="930" y="240" as="geometry" />
         </mxCell>
-
-        <!-- ===== FIXED: added actor "ระบบ (System)" ===== -->
         <mxCell id="sys-actor-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" value="ระบบ (System)" vertex="1">
           <mxGeometry height="120" width="60" x="1090" y="470" as="geometry" />
         </mxCell>
-
-        <!-- ===== FIXED: added missing "7S) ตัดสต๊อกสินค้า" use case ===== -->
-        <mxCell id="sys-uc-7s" parent="_Du93UHt1Al1Mdu0f5Wp-1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="7S) ตัดสต๊อกสินค้า" vertex="1">
-          <mxGeometry height="60" width="150" x="401" y="920" as="geometry" />
-        </mxCell>
-
-        <!-- ===== FIXED: connect "ระบบ" actor directly to every S use case (1S-7S) ===== -->
         <mxCell id="sys-edge-1" edge="1" parent="1" source="sys-actor-1" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="_Du93UHt1Al1Mdu0f5Wp-16">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -165,23 +169,8 @@
         <mxCell id="sys-edge-7" edge="1" parent="1" source="sys-actor-1" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="sys-uc-7s">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <!-- ===== FIXED: added missing "10A) ลบข้อมูลชั่วคราวที่ไม่ใช้แล้ว" use case (data retention / cleanup) ===== -->
-        <mxCell id="uc-10a" parent="_Du93UHt1Al1Mdu0f5Wp-1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;fillColor=#FFF2CC;strokeColor=#D6B656;" value="10A) ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)" vertex="1">
-          <mxGeometry height="100" width="210" x="45" y="930" as="geometry" />
-        </mxCell>
         <mxCell id="edge-10a" edge="1" parent="1" source="_Du93UHt1Al1Mdu0f5Wp-10" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="uc-10a">
           <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- ===== FIXED: explicit gate — 5A (approve) must happen before 6A (send order to supplier) ===== -->
-        <mxCell id="gate-edge-5a-6a" edge="1" parent="_Du93UHt1Al1Mdu0f5Wp-1" source="_Du93UHt1Al1Mdu0f5Wp-17" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#b85450;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=#b85450;labelBackgroundColor=#ffffff;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;" target="JPxfeVIN6Nmn7QqBt_JA-4">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="gate-edge-5a-6a-label" connectable="0" parent="gate-edge-5a-6a" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=11;fontColor=#b85450;labelBackgroundColor=#ffffff;" value="ต้องอนุมัติ (5A) ก่อน" vertex="1">
-          <mxGeometry relative="1" x="0" y="0" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
