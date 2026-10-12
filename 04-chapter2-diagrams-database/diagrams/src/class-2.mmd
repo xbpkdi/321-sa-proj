@@ -1,0 +1,138 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class CancelOrderScreen {
+        -controller
+        -messages: string[]
+        +clickCancelOrder()
+        +openOrderList()
+        +selectOrder()
+        +submitCancelReason()
+    }
+    class DashboardScreen {
+        -controller
+        -messages: string[]
+        +clickImportOrders()
+    }
+    class OrderVerifyScreen {
+        -controller
+        -messages: string[]
+        +clickConfirmOrder()
+        +openPendingVerificationList()
+        +selectOrder()
+    }
+    class CancelOrderController {
+        -orderRepository: OrderRepository
+        -stockRepository: StockRepository
+        +cancelOrder()
+        +checkOrderStatus()
+        +validateReasonProvided()
+        +validateStatus()
+    }
+    class OrderIntakeController {
+        -orderRepository: OrderRepository
+        +addWarning()
+        +importOrders()
+        +skipOrder()
+        +validateRequiredFields()
+    }
+    class OrderVerifyController {
+        -orderRepository: OrderRepository
+        +getOrderDetail()
+        +loadPendingOrders()
+        +proceedToUseCase2S()
+        +validateRequiredFields()
+        +verifyOrder()
+    }
+    class SkuMatchController {
+        -orderRepository: OrderRepository
+        -skuRuleRepository: SkuRuleRepository
+        +proceedToUseCase3S()
+        +processPendingSkuMatch()
+    }
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
+    }
+    class SkuRuleRepository {
+        -db: DBConnector
+        -table: string = "sku_rules"
+        +findRuleByChannelSku()
+        +insertSkuRule()
+    }
+    class StockRepository {
+        -db: DBConnector
+        -table: string = "stock"
+        +deductInHouseStock()
+        +deductRslStock()
+        +getLowStockSkus()
+        +getStockAndOrderInfo()
+        +getStockBySku()
+        +restockInventory()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- CancelOrderScreen
+    BaseScreen <|-- DashboardScreen
+    BaseScreen <|-- OrderVerifyScreen
+    BaseController <|-- CancelOrderController
+    BaseController <|-- OrderIntakeController
+    BaseController <|-- OrderVerifyController
+    BaseController <|-- SkuMatchController
+    BaseRepository <|-- OrderRepository
+    BaseRepository <|-- SkuRuleRepository
+    BaseRepository <|-- StockRepository
+    BaseRepository o-- DBConnector : db
+    CancelOrderScreen "1" --> "1" CancelOrderController : uses
+    DashboardScreen "1" --> "1" OrderIntakeController : uses
+    OrderVerifyScreen "1" --> "1" OrderVerifyController : uses
+    CancelOrderController ..> OrderRepository
+    CancelOrderController ..> StockRepository
+    OrderIntakeController ..> OrderRepository
+    OrderVerifyController ..> OrderRepository
+    SkuMatchController ..> OrderRepository
+    SkuMatchController ..> SkuRuleRepository

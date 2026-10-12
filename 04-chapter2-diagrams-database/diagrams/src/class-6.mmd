@@ -1,0 +1,86 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class DataCleanupScreen {
+        -controller
+        -messages: string[]
+        +clickConfirmDelete()
+        +confirmDeleteClosedOrders()
+        +openDataCleanupPage()
+        +selectMethod()
+        +submitDateRangeForm()
+    }
+    class DataCleanupController {
+        -deletionLogRepository: DeletionLogRepository
+        -orderRepository: OrderRepository
+        +executeDeleteByDateRange()
+        +executeDeleteClosedOrders()
+        +previewClosedOrders()
+        +previewDeleteByDateRange()
+        +rollbackTransaction()
+        +validateCutoffAtLeast12Months()
+        +validateDataTypesSelected()
+    }
+    class DeletionLogRepository {
+        -db: DBConnector
+        -table: string = "deletion_log"
+        +insertDeletionLog()
+    }
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- DataCleanupScreen
+    BaseController <|-- DataCleanupController
+    BaseRepository <|-- DeletionLogRepository
+    BaseRepository <|-- OrderRepository
+    BaseRepository o-- DBConnector : db
+    DataCleanupScreen "1" --> "1" DataCleanupController : uses
+    DataCleanupController ..> DeletionLogRepository
+    DataCleanupController ..> OrderRepository

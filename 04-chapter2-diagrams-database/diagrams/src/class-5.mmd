@@ -1,0 +1,165 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class LabelPrintScreen {
+        -controller
+        -messages: string[]
+        +clickPrintLabel()
+        +openReadyToPrintList()
+        +selectOrder()
+    }
+    class RslMatchScreen {
+        -controller
+        -messages: string[]
+        +clickMatchWithRsl()
+        +openUnmatchedOrderList()
+        +selectOrder()
+    }
+    class ShipmentScreen {
+        -controller
+        -messages: string[]
+        +clickSendTracking()
+        +confirmHandover()
+        +openReadyToShipList()
+    }
+    class LabelFormatterController {
+        -labelRepository: LabelRepository
+        -orderRepository: OrderRepository
+        -shippingRuleRepository: ShippingRuleRepository
+        +onRslMatched()
+        +proceedToUseCase9A()
+    }
+    class LabelPrintController {
+        -labelRepository: LabelRepository
+        -orderRepository: OrderRepository
+        -shippingRuleRepository: ShippingRuleRepository
+        +printLabel()
+        +validateAddressAndMethod()
+    }
+    class RslMatchController {
+        -orderRepository: OrderRepository
+        -rslRepository: RslRepository
+        +matchOrderWithRsl()
+        +proceedToUseCase6S()
+    }
+    class ShipmentController {
+        -carrierTrackingRepository: CarrierTrackingRepository
+        -deliveryPartnerRepository: DeliveryPartnerRepository
+        -orderRepository: OrderRepository
+        +checkLabelStatus()
+        +recordHandover()
+    }
+    class TrackingNotifyController {
+        -orderRepository: OrderRepository
+        +proceedToUseCase7S()
+        +sendTrackingNotify()
+        +validateTrackingAndCarrierPresent()
+    }
+    class CarrierTrackingRepository {
+        -db: DBConnector
+        -table: string = "carrier_tracking"
+        +getCarrierStatus()
+    }
+    class DeliveryPartnerRepository {
+        -db: DBConnector
+        -table: string = "delivery_partners"
+        +getTrackingNumber()
+    }
+    class LabelRepository {
+        -db: DBConnector
+        -table: string = "label"
+        +createLabel()
+        +updateLabelStatus()
+    }
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
+    }
+    class RslRepository {
+        -db: DBConnector
+        -table: string = "rsl_shipments"
+        +findRslBySkuAndVariation()
+    }
+    class ShippingRuleRepository {
+        -db: DBConnector
+        -table: string = "shipping_rules"
+        +getLabelTemplate()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- LabelPrintScreen
+    BaseScreen <|-- RslMatchScreen
+    BaseScreen <|-- ShipmentScreen
+    BaseController <|-- LabelFormatterController
+    BaseController <|-- LabelPrintController
+    BaseController <|-- RslMatchController
+    BaseController <|-- ShipmentController
+    BaseController <|-- TrackingNotifyController
+    BaseRepository <|-- CarrierTrackingRepository
+    BaseRepository <|-- DeliveryPartnerRepository
+    BaseRepository <|-- LabelRepository
+    BaseRepository <|-- OrderRepository
+    BaseRepository <|-- RslRepository
+    BaseRepository <|-- ShippingRuleRepository
+    BaseRepository o-- DBConnector : db
+    LabelPrintScreen "1" --> "1" LabelPrintController : uses
+    RslMatchScreen "1" --> "1" RslMatchController : uses
+    ShipmentScreen "1" --> "1" ShipmentController : uses
+    ShipmentScreen "1" --> "1" TrackingNotifyController : uses
+    LabelFormatterController ..> LabelRepository
+    LabelFormatterController ..> OrderRepository
+    LabelFormatterController ..> ShippingRuleRepository
+    LabelPrintController ..> LabelRepository
+    LabelPrintController ..> OrderRepository
+    LabelPrintController ..> ShippingRuleRepository
+    RslMatchController ..> LabelFormatterController : triggers
+    RslMatchController ..> OrderRepository
+    RslMatchController ..> RslRepository
+    ShipmentController ..> CarrierTrackingRepository
+    ShipmentController ..> DeliveryPartnerRepository
+    ShipmentController ..> OrderRepository
+    TrackingNotifyController ..> OrderRepository

@@ -1,0 +1,51 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class LoginScreen {
+        -controller
+        -messages: string[]
+        +clickLogout()
+        +submitLogin()
+    }
+    class AuthController {
+        -userRepository: UserRepository
+        +authenticate()
+        +createSession()
+        +destroySession()
+        +logout()
+        +validateEmailFormat()
+        +validateNotEmpty()
+        +verifyPassword()
+    }
+    class UserRepository {
+        -db: DBConnector
+        -table: string = "users"
+        +getUserByEmail()
+        +incrementFailAttempts()
+        +resetFailAttemptsAndSetLastLogin()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- LoginScreen
+    BaseController <|-- AuthController
+    BaseRepository <|-- UserRepository
+    BaseRepository o-- DBConnector : db
+    LoginScreen "1" --> "1" AuthController : uses
+    AuthController ..> UserRepository
