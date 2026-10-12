@@ -17,6 +17,7 @@ Actor 4 ตัว: เจ้าของ, Delivery, Marketplace, Supplier.
 - `03-chapter2-use-case-descriptions/00-use-case-descriptions.md` — UC desc ทั้งหมด (84KB ใหญ่ ใช้ grep หา UC id เช่น `5A`, `7S` แล้วอ่านเฉพาะช่วง)
   - `diagrams/mmd/*.mmd` = ต้นฉบับ sequence/collab, `diagrams/png/` = ผลลัพธ์ render
   - `ui-design-brief.md`, `frontend-build-plan.md` — สเปค UI/แผน frontend
+- `05-chapter2-platform-testing/chapter2-platform-testing.md` — 2.22–2.24, 2.26 (รูปที่ `img/` จับจากเว็บจริง)
 - `01418321-final-project/` — โค้ด Next.js (git repo แยก, มี CLAUDE.md ของตัวเอง). ทำงานโค้ดให้เปิด claude ในโฟลเดอร์นั้น
 - `todo-ref/` — เช็กลิสต์จากตัวอย่าง KU Job (reference format เท่านั้น ไม่ใช่เนื้อหาเรา)
 - `sa-ref.pdf` (72MB) — รายงานตัวอย่าง. อย่าเปิดทั้งไฟล์; ใช้ `pages` เฉพาะหน้าที่ต้องการ. โครงหัวข้อสรุปไว้ใน `todo-ref/` แล้ว
