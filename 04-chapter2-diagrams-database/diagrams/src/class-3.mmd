@@ -1,0 +1,139 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class ProductScreen {
+        -controller
+        -messages: string[]
+        +clickAddOrEditProduct()
+        +openProductList()
+        +submitProductForm()
+    }
+    class StockCheckScreen {
+        -controller
+        -messages: string[]
+        +selectProduct()
+    }
+    class ProductController {
+        -productRepository: ProductRepository
+        -skuRuleRepository: SkuRuleRepository
+        +retryUseCase2S()
+        +saveProduct()
+        +validateNotEmpty()
+        +validatePositiveInteger()
+    }
+    class StockCheckController {
+        -orderRepository: OrderRepository
+        -stockRepository: StockRepository
+        +calculateTotalQty()
+        +checkStock()
+        +compareWithReorderThreshold()
+        +proceedToUseCase1S()
+        +proceedToUseCase4S()
+    }
+    class StockDeductionController {
+        -orderRepository: OrderRepository
+        -stockRepository: StockRepository
+        +calculateAvailableQty()
+        +onTrackingNotified()
+        +skipAlreadyDeducted()
+    }
+    class TrackingNotifyController {
+        -orderRepository: OrderRepository
+        +proceedToUseCase7S()
+        +sendTrackingNotify()
+        +validateTrackingAndCarrierPresent()
+    }
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
+    }
+    class ProductRepository {
+        -db: DBConnector
+        -table: string = "products"
+        +checkSkuExists()
+        +insertProduct()
+        +updateProduct()
+    }
+    class SkuRuleRepository {
+        -db: DBConnector
+        -table: string = "sku_rules"
+        +findRuleByChannelSku()
+        +insertSkuRule()
+    }
+    class StockRepository {
+        -db: DBConnector
+        -table: string = "stock"
+        +deductInHouseStock()
+        +deductRslStock()
+        +getLowStockSkus()
+        +getStockAndOrderInfo()
+        +getStockBySku()
+        +restockInventory()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- ProductScreen
+    BaseScreen <|-- StockCheckScreen
+    BaseController <|-- ProductController
+    BaseController <|-- StockCheckController
+    BaseController <|-- StockDeductionController
+    BaseController <|-- TrackingNotifyController
+    BaseRepository <|-- OrderRepository
+    BaseRepository <|-- ProductRepository
+    BaseRepository <|-- SkuRuleRepository
+    BaseRepository <|-- StockRepository
+    BaseRepository o-- DBConnector : db
+    ProductScreen "1" --> "1" ProductController : uses
+    StockCheckScreen "1" --> "1" StockCheckController : uses
+    ProductController ..> ProductRepository
+    ProductController ..> SkuRuleRepository
+    StockCheckController ..> OrderRepository
+    StockCheckController ..> StockRepository
+    StockDeductionController ..> OrderRepository
+    StockDeductionController ..> StockRepository
+    TrackingNotifyController ..> OrderRepository
+    TrackingNotifyController ..> StockDeductionController : triggers

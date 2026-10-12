@@ -1,0 +1,27 @@
+digraph DFD1 {
+  rankdir=TB; nodesep=0.35; ranksep=0.9; node [fontname="Helvetica", fontsize=13]; edge [fontname="Helvetica", fontsize=11];
+  Admin [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Admin"]; RMS [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Rakuten Ichiba\n(RMS)"]; RSL [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="RSL"];
+  Delivery [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Delivery"]; Supplier [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Supplier"];
+  P1 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="1.0\nเข้าสู่ระบบ\n(1A)"];
+  P2 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="2.0\nรับและตรวจสอบคำสั่งซื้อ\n(4A, 2A, 2S, 7A)"];
+  P3 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="3.0\nจัดการสินค้าและสต๊อก\n(3A, 3S, 7S)"];
+  P4 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="4.0\nคำนวณต้นทุนและสั่งซื้อเติม\n(4S, 5A, 6A)"];
+  P5 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="5.0\nจัดการใบปะและจัดส่ง\n(1S, 6S, 9A, 8A, 5S)"];
+  P6 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="6.0\nลบข้อมูลเก่า\n(10A)"];
+  D1 [shape=record, style=filled, fillcolor="#f8f8f8", label="D1 | users"]; D2 [shape=record, style=filled, fillcolor="#f8f8f8", label="D2 | orders"]; D3 [shape=record, style=filled, fillcolor="#f8f8f8", label="D3 | products, sku_rules"];
+  D4 [shape=record, style=filled, fillcolor="#f8f8f8", label="D4 | stock, rsl_shipments"]; D5 [shape=record, style=filled, fillcolor="#f8f8f8", label="D5 | product_cost, cost_calculation_log"];
+  D6 [shape=record, style=filled, fillcolor="#f8f8f8", label="D6 | suppliers, purchase_orders"]; D7 [shape=record, style=filled, fillcolor="#f8f8f8", label="D7 | shipping_rules, label"];
+  D8 [shape=record, style=filled, fillcolor="#f8f8f8", label="D8 | delivery_partners, carrier_tracking"]; D9 [shape=record, style=filled, fillcolor="#f8f8f8", label="D9 | deletion_log"];
+  Admin -> P1 [label="อีเมล, รหัสผ่าน"]; P1 -> D1 [label="fail_attempts, last_login"]; D1 -> P1 [label="ข้อมูลผู้ใช้"];
+  RMS -> P2 [label="คำสั่งซื้อใหม่"]; Admin -> P2 [label="ยืนยัน/ยกเลิก Order"]; P2 -> D2 [label="Order, สถานะ"];
+  D3 -> P2 [label="กฎ SKU"];
+  Admin -> P3 [label="ข้อมูลสินค้า, กฎ SKU"]; P3 -> D3 [label="สินค้า, กฎ SKU"]; D4 -> P3 [label="ยอดสต๊อก"];
+  P3 -> D4 [label="ยอดหลังตัดสต๊อก"]; P3 -> RMS [label="จำนวนคงเหลือ"]; P3 -> D2 [label="สถานะ Order"];
+  D5 -> P4 [label="องค์ประกอบต้นทุน"]; P4 -> D5 [label="ต้นทุนต่อหน่วย"]; Admin -> P4 [label="ผลตัดสินใจ"];
+  P4 -> Admin [label="ต้นทุน, กำไรที่คาด"]; D6 -> P4 [label="ข้อมูล Supplier"]; P4 -> D6 [label="คำสั่งซื้อเติม"];
+  P4 -> Supplier [label="คำสั่งซื้อ"]; P4 -> D2 [label="ผลตัดสินใจ, po_id"];
+  RSL -> P5 [label="ข้อมูล RSL"]; D7 -> P5 [label="template"]; P5 -> D7 [label="ใบปะสินค้า"];
+  P5 -> Admin [label="ใบปะสินค้า"]; P5 -> Delivery [label="พัสดุ"]; Delivery -> P5 [label="เลขติดตาม, สถานะ"];
+  P5 -> D8 [label="ข้อมูลส่งมอบ"]; P5 -> RMS [label="เลขติดตาม"]; P5 -> D2 [label="สถานะจัดส่ง"];
+  Admin -> P6 [label="ประเภทข้อมูล, วันที่"]; D2 -> P6 [label="Order ที่ปิดแล้ว"]; P6 -> D9 [label="บันทึกการลบ"];
+}

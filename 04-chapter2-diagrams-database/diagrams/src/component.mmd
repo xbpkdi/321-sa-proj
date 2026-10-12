@@ -1,0 +1,34 @@
+%%{init: {'flowchart': {'nodeSpacing': 40, 'rankSpacing': 70}, 'themeVariables': {'fontSize': '15px'}}}%%
+flowchart LR
+    Admin(["Admin"])
+    subgraph FE["«component» FrontEnd (Next.js 16, React 19)"]
+        direction TB
+        Pages["«component» Screens<br/>CancelOrderScreen<br/>CostCalculatorScreen<br/>DashboardScreen<br/>DataCleanupScreen<br/>LabelPrintScreen<br/>LoginScreen<br/>OrderVerifyScreen<br/>ProductScreen<br/>ReorderDecisionScreen<br/>RslMatchScreen<br/>ShipmentScreen<br/>StockCheckScreen"]
+        UILib["«library» shadcn/ui, Radix UI<br/>TanStack Table, Recharts<br/>Tailwind CSS, Sonner, Lucide"]
+    end
+    subgraph BE["«component» BackEnd (Next.js Server, TypeScript)"]
+        direction TB
+        Ctrl["«component» Controllers<br/>AuthController<br/>CancelOrderController<br/>CostCalculatorController<br/>DataCleanupController<br/>LabelFormatterController<br/>LabelPrintController<br/>OrderIntakeController<br/>OrderVerifyController<br/>ProductController<br/>PurchaseOrderController<br/>ReorderDecisionController<br/>RslMatchController<br/>ShipmentController<br/>SkuMatchController<br/>StockCheckController<br/>StockDeductionController<br/>TrackingNotifyController"]
+        Repo["«component» Repositories<br/>CarrierTrackingRepository<br/>CostLogRepository<br/>DeletionLogRepository<br/>DeliveryPartnerRepository<br/>LabelRepository<br/>OrderRepository<br/>ProductCostRepository<br/>ProductRepository<br/>PurchaseOrderRepository<br/>RslRepository<br/>ShippingRuleRepository<br/>SkuRuleRepository<br/>StockRepository<br/>SupplierRepository<br/>UserRepository"]
+        Conn["«component» DBConnector<br/>node-postgres (pg)"]
+        Sched["«component» Scheduler"]
+    end
+    DB[("«database» PostgreSQL<br/>15 tables")]
+    RMS["«external API» Rakuten RMS API"]
+    RSL["«external API» RSL API"]
+    Carrier["«external API» Carrier Tracking API"]
+    Printer["«device» Label Printer"]
+    Mail["«external» Email (Supplier PO)"]
+
+    Admin -->|"HTTPS"| Pages
+    Pages -. uses .-> UILib
+    Pages -->|"IController"| Ctrl
+    Sched -->|"IController"| Ctrl
+    Ctrl -->|"IRepository"| Repo
+    Repo -->|"executeQuery()"| Conn
+    Conn -->|"SQL"| DB
+    Ctrl -->|"orders, tracking, stock"| RMS
+    Ctrl -->|"match, stock"| RSL
+    Ctrl -->|"tracking status"| Carrier
+    Ctrl -->|"print"| Printer
+    Ctrl -->|"purchase order"| Mail

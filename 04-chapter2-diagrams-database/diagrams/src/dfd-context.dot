@@ -1,0 +1,12 @@
+digraph DFD0 {
+  rankdir=LR; nodesep=0.7; ranksep=1.6; node [fontname="Helvetica", fontsize=14]; edge [fontname="Helvetica", fontsize=12];
+  Admin [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Admin\n(เจ้าของ)"]; RMS [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Rakuten Ichiba\n(RMS)"]; RSL [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="RSL"];
+  Delivery [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Delivery"]; Supplier [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Supplier"];
+  P0 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="0\nระบบจัดการหลังบ้าน\nColorado"];
+  Admin -> P0 [label="ข้อมูลเข้าสู่ระบบ, ยืนยัน Order,\nกฎ SKU, ต้นทุน, ผลตัดสินใจสั่งซื้อ"];
+  P0 -> Admin [label="รายการ Order, สต๊อก, ต้นทุนต่อหน่วย,\nใบปะสินค้า, รายงาน"];
+  RMS -> P0 [label="คำสั่งซื้อใหม่"]; P0 -> RMS [label="เลขติดตามพัสดุ,\nจำนวนคงเหลือ"];
+  RSL -> P0 [label="ข้อมูลสินค้าในคลัง RSL"]; P0 -> RSL [label="คำขอจับคู่ Order"];
+  Delivery -> P0 [label="เลขติดตาม, สถานะพัสดุ"]; P0 -> Delivery [label="พัสดุพร้อมใบปะ"];
+  P0 -> Supplier [label="คำสั่งซื้อเติมสต๊อก"]; Supplier -> P0 [label="ผลการสั่งซื้อ"];
+}
