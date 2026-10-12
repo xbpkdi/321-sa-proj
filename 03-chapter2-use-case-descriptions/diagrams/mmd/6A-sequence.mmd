@@ -1,35 +1,43 @@
 sequenceDiagram
     actor Admin
-    participant Sched as Scheduler
+    participant Screen as :ReorderDecisionScreen
     participant POC as :PurchaseOrderController
     participant StockRepo as :StockRepository
     participant SupRepo as :SupplierRepository
     participant PORepo as :PurchaseOrderRepository
+    participant OrderRepo as :OrderRepository
     participant DB as :DBConnector
     participant Sup as Supplier
 
-    Sched->>POC: checkReorderThreshold()
+    Admin->>Screen: openReorderList()
+    Screen->>POC: checkReorderThreshold()
     POC->>StockRepo: getLowStockSkus()
-    StockRepo->>DB: executeQuery(selectLowStock)
+    StockRepo->>DB: executeQuery(Q6A.1)
     DB-->>StockRepo: return skuList
     StockRepo-->>POC: return skuList
-    POC-->>Admin: displayReorderList(skuList)
+    POC-->>Screen: displayReorderList(skuList)
 
-    Admin->>POC: confirmPurchase(sku)
-    POC->>SupRepo: checkSupplierConfig(sku)
-    SupRepo-->>POC: return configExists
+    Admin->>Screen: clickPurchase(sku, orderQty)
+    Screen->>POC: confirmPurchase(sku, orderQty)
+    POC->>SupRepo: getSupplierInfo(sku)
+    SupRepo->>DB: executeQuery(Q6A.2)
+    DB-->>SupRepo: return supplierInfo
+    SupRepo-->>POC: return supplierInfo
     alt Supplier/Reorder Qty not configured
-        POC-->>Admin: showError("ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ")
-        POC->>PORepo: setManualReview(sku)
+        POC-->>Screen: showError("ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ")
     else configuration complete
-        POC->>SupRepo: getSupplierInfo(sku)
-        SupRepo->>DB: executeQuery(Q7.1)
-        DB-->>SupRepo: return supplierInfo
-        SupRepo-->>POC: return supplierInfo
-        POC->>PORepo: createPurchaseOrder(sku, supplierId, orderQty)
-        PORepo->>DB: executeQuery(Q7.2)
-        DB-->>PORepo: return poId
+        POC->>POC: calculateEta(leadTime)
+        POC->>PORepo: createPurchaseOrder(poId, sku, supplierId, orderQty, eta)
+        PORepo->>DB: executeQuery(Q6A.3)
+        DB-->>PORepo: return insertResult
         PORepo-->>POC: return poId
         POC->>Sup: sendPurchaseOrder(poId)
-        POC-->>Admin: showSuccess("สั่งซื้อแล้ว พร้อมวันที่คาดว่าจะได้รับ")
+        alt send failed
+            POC-->>Screen: showError("ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่")
+        else sent
+            POC->>OrderRepo: linkOrders(poId, sku)
+            OrderRepo->>DB: executeQuery(Q6A.4)
+            DB-->>OrderRepo: return updateResult
+            POC-->>Screen: showSuccess("สั่งซื้อแล้ว พร้อมวันที่คาดว่าจะได้รับ")
+        end
     end

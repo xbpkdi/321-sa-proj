@@ -1,23 +1,28 @@
 %%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph LR
     Admin(["Admin"])
-    Sched(["Scheduler"])
-    POC["PurchaseOrderController<br/>+checkReorderThreshold()<br/>+confirmPurchase()"]
+    Screen["ReorderDecisionScreen<br/>+openReorderList()<br/>+clickPurchase()"]
+    POC["PurchaseOrderController<br/>+checkReorderThreshold()<br/>+confirmPurchase()<br/>+calculateEta()"]
     StockRepo["StockRepository<br/>+getLowStockSkus()"]
-    SupRepo["SupplierRepository<br/>+checkSupplierConfig()<br/>+getSupplierInfo()"]
+    SupRepo["SupplierRepository<br/>+getSupplierInfo()"]
     PORepo["PurchaseOrderRepository<br/>+createPurchaseOrder()"]
+    OrderRepo["OrderRepository<br/>+linkOrders()"]
     DB["DBConnector<br/>+executeQuery()"]
     Sup(["Supplier"])
 
-    Sched -->|"1: checkReorderThreshold()"| POC
-    POC -->|"2: getLowStockSkus()"| StockRepo
-    StockRepo -->|"3: executeQuery()"| DB
-    POC -->|"4: displayReorderList()"| Admin
-    Admin -->|"5: confirmPurchase(sku)"| POC
-    POC -->|"6: checkSupplierConfig(sku)"| SupRepo
-    POC -->|"7: getSupplierInfo(sku)"| SupRepo
-    SupRepo -->|"8: executeQuery(Q7.1)"| DB
-    POC -->|"9: createPurchaseOrder(...)"| PORepo
-    PORepo -->|"10: executeQuery(Q7.2)"| DB
-    POC -->|"11: sendPurchaseOrder()"| Sup
-    POC -->|"12: showSuccess()"| Admin
+    Admin -->|"1: openReorderList()"| Screen
+    Screen -->|"2: checkReorderThreshold()"| POC
+    POC -->|"3: getLowStockSkus()"| StockRepo
+    StockRepo -->|"4: executeQuery(Q6A.1)"| DB
+    POC -->|"5: displayReorderList(skuList)"| Screen
+    Admin -->|"6: clickPurchase(sku, orderQty)"| Screen
+    Screen -->|"7: confirmPurchase(sku, orderQty)"| POC
+    POC -->|"8: getSupplierInfo(sku)"| SupRepo
+    SupRepo -->|"9: executeQuery(Q6A.2)"| DB
+    POC -->|"10: calculateEta(leadTime)"| POC
+    POC -->|"11: createPurchaseOrder(...)"| PORepo
+    PORepo -->|"12: executeQuery(Q6A.3)"| DB
+    POC -->|"13: sendPurchaseOrder(poId)"| Sup
+    POC -->|"14: linkOrders(poId, sku)"| OrderRepo
+    OrderRepo -->|"15: executeQuery(Q6A.4)"| DB
+    POC -->|"16: showSuccess()"| Screen

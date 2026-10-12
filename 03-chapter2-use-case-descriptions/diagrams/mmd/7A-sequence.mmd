@@ -3,7 +3,7 @@ sequenceDiagram
     participant Screen as :CancelOrderScreen
     participant COC as :CancelOrderController
     participant OrderRepo as :OrderRepository
-    participant InvRepo as :InventoryRepository
+    participant StockRepo as :StockRepository
     participant DB as :DBConnector
 
     Admin->>Screen: openOrderList()
@@ -25,15 +25,15 @@ sequenceDiagram
             COC-->>Screen: showError("กรุณาระบุเหตุผลการยกเลิก")
         else reason provided
             COC->>OrderRepo: updateStatusCancelled(orderId, reason)
-            OrderRepo->>DB: executeQuery(Q10.1)
+            OrderRepo->>DB: executeQuery(Q7A.1)
             DB-->>OrderRepo: return updateResult
             opt label printed but not handed to Delivery
                 COC-->>Screen: warnCancelLabelWithCarrier()
             end
             opt stock already deducted (stock_deducted)
-                COC->>InvRepo: restockInventory(sku, qty)
-                InvRepo->>DB: executeQuery(Q10.2)
-                DB-->>InvRepo: return restockResult
+                COC->>StockRepo: restockInventory(sku, qty)
+                StockRepo->>DB: executeQuery(Q7A.2)
+                DB-->>StockRepo: return restockResult
             end
             COC-->>Screen: showSuccess("ยกเลิก Order สำเร็จ")
         end

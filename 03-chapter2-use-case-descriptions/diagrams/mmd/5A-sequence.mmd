@@ -3,6 +3,7 @@ sequenceDiagram
     participant Screen as :ReorderDecisionScreen
     participant RDC as :ReorderDecisionController
     participant OrderRepo as :OrderRepository
+    participant CostRepo as :CostLogRepository
     participant DB as :DBConnector
 
     Admin->>Screen: openPendingDecisionList()
@@ -17,8 +18,12 @@ sequenceDiagram
     OrderRepo->>DB: executeQuery(Q5A.1)
     DB-->>OrderRepo: return costInfo
     OrderRepo-->>RDC: return costInfo
-    RDC->>RDC: calculateExpectedMargin(costInfo)
-    Note right of RDC: Q5A.2 Expected Margin =<br/>selling_price - unit_cost
+    RDC->>CostRepo: getLatestUnitCost(sku)
+    CostRepo->>DB: executeQuery(Q5A.2)
+    DB-->>CostRepo: return unitCost
+    CostRepo-->>RDC: return unitCost
+    RDC->>RDC: calculateExpectedMargin(costInfo, unitCost)
+    Note right of RDC: Q5A.3 Expected Margin =<br/>selling_price - unit_cost
     alt selling price not found
         RDC-->>Screen: showError("ไม่พบราคาขายของสินค้านี้")
         RDC->>OrderRepo: setManualReview(orderId)
@@ -33,13 +38,13 @@ sequenceDiagram
         else status valid
             alt decision == คุ้มค่า
                 RDC->>OrderRepo: updateStatus(orderId, "รอสั่งซื้อจาก Supplier", "คุ้มค่า")
-                OrderRepo->>DB: executeQuery(Q5A.3)
+                OrderRepo->>DB: executeQuery(Q5A.4)
                 DB-->>OrderRepo: return updateResult
                 RDC-->>Screen: showSuccess("บันทึกผลการตัดสินใจสำเร็จ")
                 RDC->>RDC: proceedToUseCase6A(orderId)
             else decision == ไม่คุ้มค่า
                 RDC->>OrderRepo: updateStatus(orderId, "รอยกเลิก Order", "ไม่คุ้มค่า")
-                OrderRepo->>DB: executeQuery(Q5A.4)
+                OrderRepo->>DB: executeQuery(Q5A.5)
                 DB-->>OrderRepo: return updateResult
                 RDC-->>Screen: showSuccess("บันทึกผลการตัดสินใจสำเร็จ")
                 RDC->>RDC: proceedToUseCase7A(orderId)

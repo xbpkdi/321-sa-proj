@@ -4,12 +4,15 @@ graph LR
     Screen["StockCheckScreen<br/>+selectProduct()"]
     SCC["StockCheckController<br/>+checkStock()<br/>+calculateTotalQty()<br/>+compareWithReorderThreshold()"]
     StockRepo["StockRepository<br/>+getStockBySku()"]
+    OrderRepo["OrderRepository<br/>+updateOrderStatus()"]
     DB["DBConnector<br/>+executeQuery()"]
 
     Admin -->|"1: selectProduct(sku)"| Screen
     Screen -->|"2: checkStock(sku)"| SCC
     SCC -->|"3: getStockBySku(sku)"| StockRepo
-    StockRepo -->|"4: executeQuery(Q3.1)"| DB
+    StockRepo -->|"4: executeQuery(Q3S.1)"| DB
     DB -->|"5: return stockData"| StockRepo
     StockRepo -->|"6: return stockData"| SCC
     SCC -->|"7: showStatus()"| Screen
+    SCC -->|"8: updateOrderStatus(orderId, status)"| OrderRepo
+    OrderRepo -->|"9: executeQuery(Q3S.2)"| DB

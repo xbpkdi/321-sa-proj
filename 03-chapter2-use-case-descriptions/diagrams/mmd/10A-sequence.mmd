@@ -19,7 +19,7 @@ sequenceDiagram
             DCC-->>Screen: showValidationError()
         else validation passed
             DCC->>OrderRepo: getDeletableRecords(dataTypes, cutoffDate)
-            OrderRepo->>DB: executeQuery(Q10A.1, Q10A.2)
+            OrderRepo->>DB: executeQuery(Q10A.1, Q10A.2, Q10A.3, Q10A.4)
             DB-->>OrderRepo: return recordList
             OrderRepo-->>DCC: return recordList
             alt no deletable records found
@@ -29,9 +29,9 @@ sequenceDiagram
                 Admin->>Screen: clickConfirmDelete()
                 Screen->>DCC: executeDeleteByDateRange(recordList)
                 DCC->>LogRepo: insertDeletionLog(recordList)
-                LogRepo->>DB: executeQuery(Q10A.3)
+                LogRepo->>DB: executeQuery(Q10A.5)
                 DCC->>OrderRepo: deleteRecords(recordList)
-                OrderRepo->>DB: executeQuery(Q10A.4, Q10A.5, Q10A.6, Q10A.7)
+                OrderRepo->>DB: executeQuery(Q10A.6, Q10A.7, Q10A.8, Q10A.9)
                 DB-->>OrderRepo: return deleteResult
                 alt delete succeeded
                     DCC-->>Screen: showSuccess("ลบข้อมูลสำเร็จ")
@@ -45,7 +45,7 @@ sequenceDiagram
         Admin->>Screen: clickConfirmDelete()
         Screen->>DCC: previewClosedOrders()
         DCC->>OrderRepo: getClosedOrders()
-        OrderRepo->>DB: executeQuery(Q10A.8, Q10A.9)
+        OrderRepo->>DB: executeQuery(Q10A.10, Q10A.11)
         DB-->>OrderRepo: return closedOrderList
         OrderRepo-->>DCC: return closedOrderList
         alt no closed orders found
@@ -55,9 +55,9 @@ sequenceDiagram
             Admin->>Screen: confirmDeleteClosedOrders()
             Screen->>DCC: executeDeleteClosedOrders(closedOrderList)
             DCC->>LogRepo: insertDeletionLog(closedOrderList)
-            LogRepo->>DB: executeQuery(Q10A.10)
+            LogRepo->>DB: executeQuery(Q10A.12)
             DCC->>OrderRepo: deleteClosedOrders(closedOrderList)
-            OrderRepo->>DB: executeQuery(Q10A.11, Q10A.12)
+            OrderRepo->>DB: executeQuery(Q10A.13, Q10A.14)
             DB-->>OrderRepo: return deleteResult
             DCC-->>Screen: showSuccess("ลบ Order ที่ปิดแล้วสำเร็จ")
         end

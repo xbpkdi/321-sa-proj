@@ -1,28 +1,36 @@
 sequenceDiagram
-    participant Sched as Scheduler / Admin
+    actor Admin
+    participant Screen as :DashboardScreen
     participant OIC as :OrderIntakeController
     participant MP as Marketplace
     participant OrderRepo as :OrderRepository
     participant DB as :DBConnector
 
-    Sched->>OIC: importOrders()
+    Admin->>Screen: clickImportOrders()
+    Screen->>OIC: importOrders()
     OIC->>MP: fetchNewOrders('Rakuten Ichiba')
-    MP-->>OIC: return orderList
-    loop for each imported Order
-        OIC->>OIC: validateRequiredFields(marketplaceOrderId, sku, qty, address)
-        alt missing fields
-            OIC-->>Sched: logWarning("ข้อมูล Order ไม่ครบถ้วน")
-        else fields complete
-            OIC->>OrderRepo: checkDuplicate(marketplaceOrderId)
-            OrderRepo->>DB: executeQuery(selectDuplicateCheck)
-            DB-->>OrderRepo: return isDuplicate
-            alt duplicate
-                OIC->>OIC: skipOrder()
-            else not duplicate
-                OIC->>OrderRepo: saveOrder(orderData)
-                OrderRepo->>DB: executeQuery(Q11.1)
-                DB-->>OrderRepo: return orderId
+    alt connection failed
+        OIC-->>Screen: showError("ไม่สามารถเชื่อมต่อกับ Rakuten Ichiba ได้")
+    else orders received
+        MP-->>OIC: return orderList
+        loop for each imported Order
+            OIC->>OIC: validateRequiredFields(marketplaceOrderId, sku, qty, address)
+            alt missing fields
+                OIC->>OIC: addWarning("ข้อมูล Order ไม่ครบถ้วน")
+            else fields complete
+                OIC->>OrderRepo: checkDuplicate(marketplaceOrderId)
+                OrderRepo->>DB: executeQuery(Q4A.1)
+                DB-->>OrderRepo: return isDuplicate
+                OrderRepo-->>OIC: return isDuplicate
+                alt duplicate
+                    OIC->>OIC: skipOrder()
+                else not duplicate
+                    OIC->>OrderRepo: saveOrder(orderData)
+                    OrderRepo->>DB: executeQuery(Q4A.2)
+                    DB-->>OrderRepo: return orderId
+                    OrderRepo-->>OIC: return orderId
+                end
             end
         end
+        OIC-->>Screen: showImportSummary(importedCount, warnings)
     end
-    OIC-->>Sched: showImportSummary(importedCount)
