@@ -30,11 +30,11 @@
 - [ ] 25. Class diagram — แสดงโครงสร้างของคลาสในระบบ (10 classes) — Obj ทุกรายการในทุก sequence diagram จะต้องถูก abstraction เป็นคลาสในรูปนี้ และกำหนดความสัมพันธ์ของคลาสเป็น super/sub, aggregation, dependency และ association แต่ละคลาสมี attribute และ method
 - [ ] 26. State Diagram — แสดง obj.state ที่สำคัญๆ ของระบบ (1 diagram) — ต้องกำหนดให้ state เป็น class.state โดยระบุ class การเปลี่ยนจะกำหนดโดย [condition]event/action โดย action จะต้องเป็นชื่อ uc และเมื่อมีการเปลี่ยนค่า state จะต้องปรับปรุงใน db โดยคำสั่ง SQL
 - [ ] 27. Component diagram — แสดงการรวม class เพื่อ compile (1 diagram) — มีรูปแสดง class ทั้งหมด และ library/API ที่ใช้
-- [ ] 28. SW development platform — แสดง platform ของเครื่องมือต่างๆ ที่ใช้ (1 รูป) — แสดงรูปของเครื่องมือส่งๆ ที่ใช้ในการพัฒนา (Stack of tools)
-- [ ] 29. Site map/UI structure — แสดงโครงสร้างของ application (8 screen) — แสดงเป็น tree โดย root คือ login และให้แสดง tree ของแต่ละผู้ใช้
-- [ ] 30. User interface design — แสดงหน้าจอการทำงานของ actor (8 screen) — แสดง screen ทั้งหมดให้กำหนดชื่อแจงแต่ละ screen ตาม uc name
-- [ ] 31. Output design (report) — แสดงรายงานทั้งหมดในระบบ (2 reports) — แสดงโครงสร้างของ report และตัวอย่างของรายงานที่ได้บันทึกข้อมูลผ่าน uc ต่างๆ
+- [x] 28. SW development platform — แสดง platform ของเครื่องมือต่างๆ ที่ใช้ (1 รูป) — แสดงรูปของเครื่องมือส่งๆ ที่ใช้ในการพัฒนา (Stack of tools)
+- [x] 29. Site map/UI structure — แสดงโครงสร้างของ application (8 screen) — แสดงเป็น tree โดย root คือ login และให้แสดง tree ของแต่ละผู้ใช้
+- [x] 30. User interface design — แสดงหน้าจอการทำงานของ actor (8 screen) — แสดง screen ทั้งหมดให้กำหนดชื่อแจงแต่ละ screen ตาม uc name
+- [x] 31. Output design (report) — แสดงรายงานทั้งหมดในระบบ (2 reports) — แสดงโครงสร้างของ report และตัวอย่างของรายงานที่ได้บันทึกข้อมูลผ่าน uc ต่างๆ
 - [ ] 32. SQL Statement ใน UC description — แสดง SQL command ทั้งหมดในระบบ (10 statements) — แสดง Query number, uc id, sql command
-- [ ] 33. การทดสอบโปรแกรมทำงานตาม UC description — แสดงผลการทดสอบโปรแกรมต่างๆ (8 tables) — แสดง uc id, uc name, capture screen แสดงการบันทึกและการออกรายงานทั้งหมด
+- [x] 33. การทดสอบโปรแกรมทำงานตาม UC description — แสดงผลการทดสอบโปรแกรมต่างๆ (8 tables) — แสดง uc id, uc name, capture screen แสดงการบันทึกและการออกรายงานทั้งหมด
 - [ ] 34. ความพร้อม — แสดงความพร้อมของการนำเสนอ (1 งาน) — มีสไลด์ (มีเลขหน้าสไลด์), รายงาน (pdf, word) และโปรแกรมพร้อมทำงาน และสมาชิกทุกคนออนไลน์ และเปิดกล้องได้ หากไม่เปิดกล้องจะหัก 50%
 - [ ] 35. คะแนนการทำงาน — แสดงการแบ่งงานและผลการทำงาน (1 งาน) — มีคะแนนการทำงานของทีมงานโดยหัวหน้า ตามรูปแบบที่กำหนด
