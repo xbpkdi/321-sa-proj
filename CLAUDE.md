@@ -4,31 +4,35 @@
 3 ระบบอัตโนมัติหลัก: Auto Label Printing, Auto Reorder, Unit Cost Calculator.
 Actor 4 ตัว: เจ้าของ, Delivery, Marketplace, Supplier.
 
-## อ่านอะไรก่อน (ตามลำดับ หยุดเมื่อพอ)
-1. `todo/00-URGENT-do-now.md` — งานค้าง เรียงตามความสำคัญ
-2. `todo/0X-*.md` — เช็กลิสต์รายบท (01 บท1, 02 BP/UC/CRUD, 03 UC desc, 04 diagram/DB, 05 platform/test, 06 rubric, 07 งานค้างฝั่ง frontend)
-3. `00-project-docs/biz-requirement.md` — requirement จริง (source of truth)
-4. `00-project-docs/summary.md` — สรุปการตัดสินใจ, โมเดล human-in-the-loop 3 ระดับ
+## อ่านอะไรก่อน
+1. `00-project-docs/biz-requirement.md` — requirement จริง (source of truth)
+2. `01418321-final-project/report/รายละเอียดของคะแนนโครงงาน.xlsx` — เกณฑ์ให้คะแนน 36 ข้อ
+3. `sa-ref.pdf` (72MB) — รายงานตัวอย่าง เลขหน้า PDF = เลขหน้าพิมพ์ + 18 เปิดเฉพาะ `pages` ที่ต้องการ
 
 ## แผนที่ไฟล์
-- `01-chapter1-introduction/chapter1.md` — บทที่ 1
-- `02-chapter2-business-process/03-chapter2-content.md` — เนื้อหา 2.1–2.12
-  - `src/*(fixed).drawio.xml` = ต้นฉบับล่าสุด, `img/final/` = รูปส่งเล่ม, `img/old/` = เก่า ไม่ต้องดู
-- `03-chapter2-use-case-descriptions/00-use-case-descriptions.md` — UC desc ทั้งหมด (84KB ใหญ่ ใช้ grep หา UC id เช่น `5A`, `7S` แล้วอ่านเฉพาะช่วง)
-  - `diagrams/mmd/*.mmd` = ต้นฉบับ sequence/collab, `diagrams/png/` = ผลลัพธ์ render
-  - `ui-design-brief.md`, `frontend-build-plan.md` — สเปค UI/แผน frontend
-- `05-chapter2-platform-testing/chapter2-platform-testing.md` — 2.22–2.24, 2.26 (รูปที่ `img/` จับจากเว็บจริง)
-- `01418321-final-project/` — โค้ด Next.js (git repo แยก, มี CLAUDE.md ของตัวเอง). ทำงานโค้ดให้เปิด claude ในโฟลเดอร์นั้น
-- `todo-ref/` — เช็กลิสต์จากตัวอย่าง KU Job (reference format เท่านั้น ไม่ใช่เนื้อหาเรา)
-- `sa-ref.pdf` (72MB) — รายงานตัวอย่าง. อย่าเปิดทั้งไฟล์; ใช้ `pages` เฉพาะหน้าที่ต้องการ. โครงหัวข้อสรุปไว้ใน `todo-ref/` แล้ว
+เนื้อหาเล่มทั้งหมดเขียนลง Word ผ่าน `01418321-final-project/report/` (repo แยก) ไม่มีไฟล์ md ของเนื้อหาแล้ว
+- `report/build_report.py` — สร้าง .docx, `report/export_pdf.sh` — สร้างทั้งเล่ม + อัปเดตสารบัญ + PDF ผ่าน Word
+- `report/content/ch1.py` — บทคัดย่อ + บทที่ 1, `content/ch2.py` — ข้อความ/ตารางบทที่ 2
+- `report/content/usecases.json` — Use Case Description ทั้ง 17 UC (source of truth ของ query `Q<UC>.n`)
+- `report/content/tables.json` — คำอธิบายตารางและ attribute สำหรับ 2.21
+- `02-chapter2-business-process/src/*(fixed).drawio.xml` = ต้นฉบับ BP/UC, `img/final/` = รูปส่งเล่ม, `img/old/` = เก่า ไม่ต้องดู
+- `03-chapter2-use-case-descriptions/diagrams/mmd/*.mmd` = sequence/collab, `png/` = ผล render, `check_diagrams.py` = ตรวจตามเกณฑ์
+- `04-chapter2-diagrams-database/` — `npm i` แล้ว
+  - `sql/schema.sql`, `sql/seed.sql` — ฐานข้อมูล 15 ตาราง + ข้อมูลตัวอย่าง
+  - `npm run sql` รัน query ทุกข้อ → `sql/sql-results.json` (2.25)
+  - `npm run dict` → `sql/dictionary.json`, `queries.json`, `crud.json` (2.12, 2.20, 2.21)
+  - `python3 diagrams/gen_diagrams.py && npm run diagrams` → รูป 2.14–2.19 ใน `diagrams/png/`
+- `05-chapter2-platform-testing/img/` — รูปหน้าจอ/รายงาน/ผลทดสอบ จับจากเว็บจริง
+
+## ลำดับการสร้างเล่มใหม่
+แก้ query ใน usecases.json → `npm run sql && npm run dict` → `python3 diagrams/gen_diagrams.py && npm run diagrams` → render mmd ที่แก้ → `python3 03-chapter2-use-case-descriptions/diagrams/check_diagrams.py` → `./01418321-final-project/report/export_pdf.sh`
 
 ## ประหยัด token
-- ห้ามเปิด `.png`/`.pdf` ถ้าไม่ได้ถูกขอให้ดูภาพ — ใช้ `.mmd`/`.drawio.xml`/`.md` แทน
+- ห้ามเปิด `.png`/`.pdf` ถ้าไม่ได้ถูกขอให้ดูภาพ — ใช้ `.mmd`/`.drawio.xml`/`.json` แทน
 - `.drawio.xml` ยาวมาก: grep หา `value="..."` ที่ต้องการ อย่า Read ทั้งไฟล์
-- `todo/06-grading-rubric-checklist.md` = `todo-ref/06-...` (ไฟล์เดียวกัน อ่านแค่อันเดียว)
 - อย่าไล่อ่าน `node_modules`, `img/old/`, `*.bkp`
 
 ## Convention
 - เอกสารเขียนภาษาไทย ศัพท์เทคนิคภาษาอังกฤษ
-- UC id: เลข + `A`(Admin เป็นผู้เริ่ม) หรือ `S`(System auto) เช่น `1A`, `5S`. หัวข้อใน UC desc เป็น `## 5S) ...`
+- UC id: เลข + `A`(Admin เป็นผู้เริ่ม) หรือ `S`(System auto) เช่น `1A`, `5S`. Query: `Q<UC>.n` เรียงตามขั้นตอน เช่น `Q3A.1`, `Q3A.2`
 - Commit: แยกเป็นส่วนย่อย, รูปแบบ `docs: ...`
