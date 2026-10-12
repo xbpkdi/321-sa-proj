@@ -1,0 +1,20 @@
+# โปรเจกต์โค้ดจริง — เป็น git repo แยกของตัวเอง (github.com/xbpkdi/01418321-final-project)
+01418321-final-project/
+
+# macOS
+.DS_Store
+
+# ไฟล์ backup ของ draw.io
+*.bkp
+
+# npm
+node_modules/
+
+# เครื่องมือ AI และไฟล์อ้างอิงที่ไม่ใช่ของโปรเจกต์
+.agents/
+.aider-desk/
+skills-lock.json
+design-ref/
+
+# python
+__pycache__/
