@@ -10,9 +10,9 @@ graph LR
     Admin -->|"1: selectOrder()/clickMatchWithRsl()"| Screen
     Screen -->|"2: matchOrderWithRsl(orderId, sku, variation)"| RMC
     RMC -->|"3: findRslBySkuAndVariation(sku, variation)"| RslRepo
-    RslRepo -->|"4: executeQuery(Q4.1)"| DB
+    RslRepo -->|"4: executeQuery(Q1S.1)"| DB
     DB -->|"5: return rslResults"| RslRepo
     RslRepo -->|"6: return rslResults"| RMC
     RMC -->|"7: saveRslMatch(orderId, rslReferenceId)"| OrderRepo
-    OrderRepo -->|"8: executeQuery(Q4.2)"| DB
+    OrderRepo -->|"8: executeQuery(Q1S.2)"| DB
     RMC -->|"9: showSuccess()"| Screen

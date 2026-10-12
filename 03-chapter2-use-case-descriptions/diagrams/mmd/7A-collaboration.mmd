@@ -4,7 +4,7 @@ graph LR
     Screen["CancelOrderScreen<br/>+openOrderList()<br/>+selectOrder()<br/>+clickCancelOrder()<br/>+submitCancelReason()"]
     COC["CancelOrderController<br/>+checkOrderStatus()<br/>+cancelOrder()<br/>+validateStatus()"]
     OrderRepo["OrderRepository<br/>+getStatus()<br/>+updateStatusCancelled()"]
-    InvRepo["InventoryRepository<br/>+restockInventory()"]
+    StockRepo["StockRepository<br/>+restockInventory()"]
     DB["DBConnector<br/>+executeQuery()"]
 
     Admin -->|"1: selectOrder()/clickCancelOrder()"| Screen
@@ -13,7 +13,7 @@ graph LR
     Admin -->|"4: submitCancelReason(reason)"| Screen
     Screen -->|"5: cancelOrder(orderId, reason)"| COC
     COC -->|"6: updateStatusCancelled(orderId, reason)"| OrderRepo
-    OrderRepo -->|"7: executeQuery(Q10.1)"| DB
-    COC -->|"8: restockInventory(sku, qty)"| InvRepo
-    InvRepo -->|"9: executeQuery(Q10.2)"| DB
+    OrderRepo -->|"7: executeQuery(Q7A.1)"| DB
+    COC -->|"8: restockInventory(sku, qty)"| StockRepo
+    StockRepo -->|"9: executeQuery(Q7A.2)"| DB
     COC -->|"10: showSuccess()"| Screen

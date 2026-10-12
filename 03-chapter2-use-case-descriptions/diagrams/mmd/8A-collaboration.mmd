@@ -14,9 +14,9 @@ graph LR
     Screen -->|"3: recordHandover(orderId)"| SC
     SC -->|"4: checkLabelStatus(orderId)"| OrderRepo
     SC -->|"5: getTrackingNumber(orderId)"| DelRepo
-    DelRepo -->|"6: executeQuery(Q8.1)"| DB
+    DelRepo -->|"6: executeQuery(Q8A.1)"| DB
     SC -->|"7: updateDispatched(orderId, trackingInfo)"| OrderRepo
-    OrderRepo -->|"8: executeQuery(Q8.2)"| DB
+    OrderRepo -->|"8: executeQuery(Q8A.2)"| DB
     SC -->|"9: getCarrierStatus(trackingNumber)"| TrackRepo
-    TrackRepo -->|"10: executeQuery(Q8.3)"| DB
+    TrackRepo -->|"10: executeQuery(Q8A.3)"| DB
     SC -->|"11: updateStatusIfChanged(orderId, status)"| OrderRepo

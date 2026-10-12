@@ -8,7 +8,7 @@ sequenceDiagram
     Admin->>Screen: openPendingVerificationList()
     Screen->>OVC: loadPendingOrders()
     OVC->>OrderRepo: getOrdersByStatus("รอตรวจสอบคำสั่งซื้อ")
-    OrderRepo->>DB: executeQuery(selectPendingOrders)
+    OrderRepo->>DB: executeQuery(Q2A.1)
     DB-->>OrderRepo: return orderList
     OrderRepo-->>OVC: return orderList
     OVC-->>Screen: displayOrderList(orderList)
@@ -16,7 +16,7 @@ sequenceDiagram
     Admin->>Screen: selectOrder(orderId)
     Screen->>OVC: getOrderDetail(orderId)
     OVC->>OrderRepo: getOrderDetail(orderId)
-    OrderRepo->>DB: executeQuery(Q2A.1)
+    OrderRepo->>DB: executeQuery(Q2A.2)
     DB-->>OrderRepo: return orderDetail
     OrderRepo-->>OVC: return orderDetail
     OVC-->>Screen: displayOrderDetail(orderDetail)
@@ -29,13 +29,13 @@ sequenceDiagram
         OVC->>OrderRepo: setManualReview(orderId)
     else fields complete
         OVC->>OrderRepo: checkStatus(orderId)
-        OrderRepo->>DB: executeQuery(selectStatus)
+        OrderRepo->>DB: executeQuery(Q2A.3)
         DB-->>OrderRepo: return status
         alt status != "รอตรวจสอบคำสั่งซื้อ"
             OVC-->>Screen: showError("Order นี้ผ่านการตรวจสอบไปแล้ว")
         else status valid
             OVC->>OrderRepo: updateStatus(orderId, "รอจับคู่กฎ SKU")
-            OrderRepo->>DB: executeQuery(Q2A.2)
+            OrderRepo->>DB: executeQuery(Q2A.4)
             DB-->>OrderRepo: return updateResult
             OrderRepo-->>OVC: return success
             OVC-->>Screen: showSuccess("ยืนยันคำสั่งซื้อสำเร็จ")

@@ -3,6 +3,7 @@ sequenceDiagram
     participant Screen as :ProductScreen
     participant PC as :ProductController
     participant ProdRepo as :ProductRepository
+    participant SkuRepo as :SkuRuleRepository
     participant DB as :DBConnector
 
     Admin->>Screen: openProductList()
@@ -17,7 +18,7 @@ sequenceDiagram
         PC-->>Screen: showError("กรุณากรอกข้อมูลให้ครบถ้วน")
     else fields provided
         PC->>ProdRepo: checkSkuExists(sku)
-        ProdRepo->>DB: executeQuery(selectSkuExists)
+        ProdRepo->>DB: executeQuery(Q3A.1)
         DB-->>ProdRepo: return exists
         alt duplicate SKU
             PC-->>Screen: showError("SKU นี้มีอยู่ในระบบแล้ว")
@@ -26,10 +27,19 @@ sequenceDiagram
             alt not a positive integer
                 PC-->>Screen: showError("กรุณากรอกข้อมูลให้ครบถ้วน")
             else all validations passed
-                PC->>ProdRepo: upsertProduct(productData)
-                ProdRepo->>DB: executeQuery(Q13.1)
-                DB-->>ProdRepo: return productId
-                ProdRepo-->>PC: return productId
+                alt add new product
+                    PC->>ProdRepo: insertProduct(productData)
+                    ProdRepo->>DB: executeQuery(Q3A.2)
+                else edit existing product
+                    PC->>ProdRepo: updateProduct(productData)
+                    ProdRepo->>DB: executeQuery(Q3A.3)
+                end
+                DB-->>ProdRepo: return result
+                ProdRepo-->>PC: return result
+                opt Admin sets channel SKU mapping
+                    PC->>SkuRepo: insertSkuRule(channelSku, sku)
+                    SkuRepo->>DB: executeQuery(Q3A.4)
+                end
                 PC-->>Screen: showSuccess("บันทึกข้อมูลสินค้าสำเร็จ")
                 opt เข้ามาจาก 2S (ไม่พบกฎ SKU เดิม)
                     PC->>PC: retryUseCase2S(sku)

@@ -9,12 +9,12 @@ graph LR
     Admin -->|"1: submitLogin(email, password)"| Screen
     Screen -->|"2: authenticate(email, password)"| AuthC
     AuthC -->|"3: getUserByEmail(email)"| UserRepo
-    UserRepo -->|"4: executeQuery(Q1.1)"| DB
+    UserRepo -->|"4: executeQuery(Q1A.1)"| DB
     DB -->|"5: return userData"| UserRepo
     UserRepo -->|"6: return userData"| AuthC
     AuthC -->|"7a: incrementFailAttempts(email)"| UserRepo
     AuthC -->|"7b: resetFailAttemptsAndSetLastLogin(email)"| UserRepo
-    UserRepo -->|"8: executeQuery(Q1.2 / increment)"| DB
+    UserRepo -->|"8: executeQuery(Q1A.2 / Q1A.3)"| DB
     AuthC -->|"9: showSuccess()/showError()"| Screen
     Screen -->|"10: redirectToDashboard()"| Admin
     Admin -->|"11: clickLogout()"| Screen

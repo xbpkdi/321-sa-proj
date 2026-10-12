@@ -9,7 +9,7 @@ sequenceDiagram
     Admin->>Screen: selectProduct() or clickCalculateCost()
     Screen->>CCC: loadCostComponents(sku)
     CCC->>CostRepo: getCostComponents(sku)
-    CostRepo->>DB: executeQuery(Q5.1)
+    CostRepo->>DB: executeQuery(Q4S.1)
     DB-->>CostRepo: return costComponents
     CostRepo-->>CCC: return costComponents
     CCC-->>Screen: displayCostForm(costComponents)
@@ -24,9 +24,9 @@ sequenceDiagram
             CCC-->>Screen: showWarning("ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง")
         end
         CCC->>CCC: computeUnitCost(costData)
-        Note right of CCC: Q5.2 Unit Cost =<br/>((purchase_price × exchange_rate) + intl_freight + duty_fee)<br/>/ order_qty + marketplace_fee + domestic_shipping + rsl_charge
+        Note right of CCC: Q4S.2 Unit Cost =<br/>((purchase_price × exchange_rate) + intl_freight + duty_fee)<br/>/ order_qty + marketplace_fee + domestic_shipping + rsl_charge
         CCC->>LogRepo: saveCostLog(sku, unitCost)
-        LogRepo->>DB: executeQuery(Q5.3)
+        LogRepo->>DB: executeQuery(Q4S.3)
         DB-->>LogRepo: return logId
         LogRepo-->>CCC: return logId
         CCC-->>Screen: displayUnitCostResult(unitCost)

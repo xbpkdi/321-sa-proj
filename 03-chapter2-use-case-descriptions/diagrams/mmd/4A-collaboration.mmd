@@ -1,18 +1,22 @@
 %%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph LR
-    Sched(["Scheduler / Admin"])
+    Admin(["Admin"])
+    Screen["DashboardScreen<br/>+clickImportOrders()"]
     OIC["OrderIntakeController<br/>+importOrders()<br/>+validateRequiredFields()<br/>+skipOrder()"]
     MP(["Marketplace"])
     OrderRepo["OrderRepository<br/>+checkDuplicate()<br/>+saveOrder()"]
     DB["DBConnector<br/>+executeQuery()"]
 
-    Sched -->|"1: importOrders()"| OIC
-    OIC -->|"2: fetchNewOrders('Rakuten Ichiba')"| MP
-    MP -->|"3: return orderList"| OIC
-    OIC -->|"4: checkDuplicate(marketplaceOrderId)"| OrderRepo
-    OrderRepo -->|"5: executeQuery()"| DB
-    DB -->|"6: return isDuplicate"| OrderRepo
-    OrderRepo -->|"7: return isDuplicate"| OIC
-    OIC -->|"8: saveOrder(orderData)"| OrderRepo
-    OrderRepo -->|"9: executeQuery(Q11.1)"| DB
-    OIC -->|"10: showImportSummary()"| Sched
+    Admin -->|"1: clickImportOrders()"| Screen
+    Screen -->|"2: importOrders()"| OIC
+    OIC -->|"3: fetchNewOrders('Rakuten Ichiba')"| MP
+    MP -->|"4: return orderList"| OIC
+    OIC -->|"5: validateRequiredFields()"| OIC
+    OIC -->|"6: checkDuplicate(marketplaceOrderId)"| OrderRepo
+    OrderRepo -->|"7: executeQuery(Q4A.1)"| DB
+    DB -->|"8: return isDuplicate"| OrderRepo
+    OrderRepo -->|"9: return isDuplicate"| OIC
+    OIC -->|"10: saveOrder(orderData)"| OrderRepo
+    OrderRepo -->|"11: executeQuery(Q4A.2)"| DB
+    DB -->|"12: return orderId"| OrderRepo
+    OIC -->|"13: showImportSummary()"| Screen

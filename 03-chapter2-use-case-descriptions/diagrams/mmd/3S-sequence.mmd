@@ -3,12 +3,13 @@ sequenceDiagram
     participant Screen as :StockCheckScreen
     participant SCC as :StockCheckController
     participant StockRepo as :StockRepository
+    participant OrderRepo as :OrderRepository
     participant DB as :DBConnector
 
     Admin->>Screen: selectProduct(sku)
     Screen->>SCC: checkStock(sku)
     SCC->>StockRepo: getStockBySku(sku)
-    StockRepo->>DB: executeQuery(Q3.1)
+    StockRepo->>DB: executeQuery(Q3S.1)
     DB-->>StockRepo: return stockData
     StockRepo-->>SCC: return stockData
     alt SKU not found
@@ -18,9 +19,13 @@ sequenceDiagram
         SCC->>SCC: compareWithReorderThreshold(totalQty)
         alt totalQty <= reorderThreshold
             SCC-->>Screen: showStatus("สต๊อกต่ำกว่าเกณฑ์")
+            SCC->>OrderRepo: updateOrderStatus(orderId, "รอ Admin ตัดสินใจสั่งซื้อ")
+            OrderRepo->>DB: executeQuery(Q3S.2)
             SCC->>SCC: proceedToUseCase4S(sku)
         else totalQty > reorderThreshold
             SCC-->>Screen: showStatus("สต๊อกปกติ")
+            SCC->>OrderRepo: updateOrderStatus(orderId, "ยังไม่ได้จับคู่")
+            OrderRepo->>DB: executeQuery(Q3S.2)
             SCC->>SCC: proceedToUseCase1S(sku)
         end
     end

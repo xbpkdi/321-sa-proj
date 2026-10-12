@@ -16,7 +16,7 @@ sequenceDiagram
             AuthC-->>Screen: showError("รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง")
         else valid format
             AuthC->>UserRepo: getUserByEmail(email)
-            UserRepo->>DB: executeQuery(Q1.1)
+            UserRepo->>DB: executeQuery(Q1A.1)
             DB-->>UserRepo: return userData
             UserRepo-->>AuthC: return userData
             alt failAttempts >= 5
@@ -25,11 +25,11 @@ sequenceDiagram
                 AuthC->>AuthC: verifyPassword(password, userData.passwordHash)
                 alt email not found or password mismatch
                     AuthC->>UserRepo: incrementFailAttempts(email)
-                    UserRepo->>DB: executeQuery(incrementFailAttempts)
+                    UserRepo->>DB: executeQuery(Q1A.2)
                     AuthC-->>Screen: showError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
                 else email and password correct
                     AuthC->>UserRepo: resetFailAttemptsAndSetLastLogin(email)
-                    UserRepo->>DB: executeQuery(Q1.2)
+                    UserRepo->>DB: executeQuery(Q1A.3)
                     AuthC->>AuthC: createSession(userId)
                     AuthC-->>Screen: showSuccess("เข้าสู่ระบบสำเร็จ")
                     Screen-->>Admin: redirectToDashboard()

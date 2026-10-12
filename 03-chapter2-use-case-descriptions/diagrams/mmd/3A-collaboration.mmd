@@ -3,19 +3,22 @@ graph LR
     Admin(["Admin"])
     Screen["ProductScreen<br/>+openProductList()<br/>+clickAddOrEditProduct()<br/>+submitProductForm()"]
     PC["ProductController<br/>+saveProduct()<br/>+validateNotEmpty()<br/>+validatePositiveInteger()"]
-    ProdRepo["ProductRepository<br/>+checkSkuExists()<br/>+upsertProduct()"]
+    ProdRepo["ProductRepository<br/>+checkSkuExists()<br/>+insertProduct()<br/>+updateProduct()"]
+    SkuRepo["SkuRuleRepository<br/>+insertSkuRule()"]
     DB["DBConnector<br/>+executeQuery()"]
 
     Admin -->|"1: openProductList()"| Screen
     Admin -->|"2: submitProductForm(productData)"| Screen
     Screen -->|"3: saveProduct(productData)"| PC
     PC -->|"4: checkSkuExists(sku)"| ProdRepo
-    ProdRepo -->|"5: executeQuery()"| DB
+    ProdRepo -->|"5: executeQuery(Q3A.1)"| DB
     DB -->|"6: return exists"| ProdRepo
     ProdRepo -->|"7: return exists"| PC
-    PC -->|"8: upsertProduct(productData)"| ProdRepo
-    ProdRepo -->|"9: executeQuery(Q13.1)"| DB
-    DB -->|"10: return productId"| ProdRepo
-    ProdRepo -->|"11: return productId"| PC
-    PC -->|"12: showSuccess()"| Screen
-    PC -->|"13: retryUseCase2S(sku) [ถ้ามาจาก 2S]"| PC
+    PC -->|"8: insertProduct() / updateProduct()"| ProdRepo
+    ProdRepo -->|"9: executeQuery(Q3A.2 / Q3A.3)"| DB
+    DB -->|"10: return result"| ProdRepo
+    ProdRepo -->|"11: return result"| PC
+    PC -->|"12: insertSkuRule(channelSku, sku) [ถ้ากำหนด mapping]"| SkuRepo
+    SkuRepo -->|"13: executeQuery(Q3A.4)"| DB
+    PC -->|"14: showSuccess()"| Screen
+    PC -->|"15: retryUseCase2S(sku) [ถ้ามาจาก 2S]"| PC
