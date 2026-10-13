@@ -16,29 +16,31 @@ classDiagram
         #db: DBConnector
         #executeQuery(queryId, params)
     }
-    class DataCleanupScreen {
+    class ReorderDecisionScreen {
         -controller
         -messages: string[]
-        +clickConfirmDelete()
-        +openDataCleanupPage()
-        +selectMethod()
-        +submitDateRangeForm()
+        +clickApprove()
+        +clickPurchase()
+        +clickReject()
+        +openPendingDecisionList()
+        +openReorderList()
+        +selectOrder()
     }
-    class DataCleanupController {
-        -deletionLogRepository: DeletionLogRepository
+    class ReorderDecisionController {
+        -costLogRepository: CostLogRepository
         -orderRepository: OrderRepository
-        +executeDeleteByDateRange()
-        +executeDeleteClosedOrders()
-        +previewClosedOrders()
-        +previewDeleteByDateRange()
-        +rollbackTransaction()
-        +validateCutoffAtLeast12Months()
-        +validateDataTypesSelected()
+        +calculateExpectedMargin()
+        +loadDecisionData()
+        +loadPendingOrders()
+        +proceedToUseCase6A()
+        +proceedToUseCase7A()
+        +submitDecision()
     }
-    class DeletionLogRepository {
+    class CostLogRepository {
         -db: DBConnector
-        -table: string = "deletion_log"
-        +insertDeletionLog()
+        -table: string = "cost_calculation_log"
+        +getLatestUnitCost()
+        +saveCostLog()
     }
     class OrderRepository {
         -db: DBConnector
@@ -75,11 +77,11 @@ classDiagram
         -pool: Pool
         +executeQuery()
     }
-    BaseScreen <|-- DataCleanupScreen
-    BaseController <|-- DataCleanupController
-    BaseRepository <|-- DeletionLogRepository
+    BaseScreen <|-- ReorderDecisionScreen
+    BaseController <|-- ReorderDecisionController
+    BaseRepository <|-- CostLogRepository
     BaseRepository <|-- OrderRepository
     BaseRepository o-- DBConnector : db
-    DataCleanupScreen "1" --> "1" DataCleanupController : uses
-    DataCleanupController ..> DeletionLogRepository
-    DataCleanupController ..> OrderRepository
+    ReorderDecisionScreen "1" --> "1" ReorderDecisionController : uses
+    ReorderDecisionController ..> CostLogRepository
+    ReorderDecisionController ..> OrderRepository

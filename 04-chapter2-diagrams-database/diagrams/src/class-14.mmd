@@ -1,0 +1,53 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction TB
+    class Users {
+        -user_id: VARCHAR❨10❩
+        -user_email: VARCHAR❨100❩
+        -user_password: VARCHAR❨100❩
+        -fail_attempts: SMALLINT
+        -last_login: TIMESTAMPTZ
+    }
+    class ShippingRules {
+        -rule_id: INTEGER
+        -shipping_method: VARCHAR❨30❩
+        -sales_channel: VARCHAR❨30❩
+        -label_template: VARCHAR❨30❩
+    }
+    class Label {
+        -label_id: INTEGER
+        -order_id: VARCHAR❨12❩
+        -label_template: VARCHAR❨30❩
+        -rsl_reference_id: VARCHAR❨20❩
+        -parcel_seq: SMALLINT
+        -parcel_total: SMALLINT
+        -label_status: VARCHAR❨10❩
+        -created_at: TIMESTAMPTZ
+        -printed_at: TIMESTAMPTZ
+    }
+    class DeliveryPartners {
+        -tracking_number: VARCHAR❨20❩
+        -order_id: VARCHAR❨12❩
+        -carrier_name: VARCHAR❨50❩
+        -pickup_date: DATE
+    }
+    class CarrierTracking {
+        -tracking_number: VARCHAR❨20❩
+        -delivery_status: VARCHAR❨12❩
+        -last_location: VARCHAR❨100❩
+        -updated_at: TIMESTAMPTZ
+    }
+    class DeletionLog {
+        -log_id: INTEGER
+        -data_type: VARCHAR❨10❩
+        -record_id: VARCHAR❨20❩
+        -deleted_at: TIMESTAMPTZ
+        -deleted_by: VARCHAR❨10❩
+    }
+    Users "1" -- "0..*" CostCalculationLog
+    ShippingRules "1" -- "0..*" Orders
+    Users "1" -- "0..*" Orders
+    Orders "1" -- "0..*" Label
+    Orders "1" -- "1" DeliveryPartners
+    DeliveryPartners "1" -- "1" CarrierTracking
+    Users "1" -- "0..*" DeletionLog

@@ -1,0 +1,108 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class LabelPrintScreen {
+        -controller
+        -messages: string[]
+        +clickPrintLabel()
+        +openReadyToPrintList()
+        +selectOrder()
+    }
+    class LabelFormatterController {
+        -labelRepository: LabelRepository
+        -orderRepository: OrderRepository
+        -shippingRuleRepository: ShippingRuleRepository
+        +onRslMatched()
+        +proceedToUseCase9A()
+    }
+    class LabelPrintController {
+        -labelRepository: LabelRepository
+        -orderRepository: OrderRepository
+        -shippingRuleRepository: ShippingRuleRepository
+        +printLabel()
+        +validateAddressAndMethod()
+    }
+    class RslMatchController {
+        -orderRepository: OrderRepository
+        -rslRepository: RslRepository
+        +matchOrderWithRsl()
+        +proceedToUseCase6S()
+    }
+    class LabelRepository {
+        -db: DBConnector
+        -table: string = "label"
+        +createLabel()
+        +updateLabelStatus()
+    }
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
+    }
+    class ShippingRuleRepository {
+        -db: DBConnector
+        -table: string = "shipping_rules"
+        +getLabelTemplate()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- LabelPrintScreen
+    BaseController <|-- LabelFormatterController
+    BaseController <|-- LabelPrintController
+    BaseController <|-- RslMatchController
+    BaseRepository <|-- LabelRepository
+    BaseRepository <|-- OrderRepository
+    BaseRepository <|-- ShippingRuleRepository
+    BaseRepository o-- DBConnector : db
+    LabelPrintScreen "1" --> "1" LabelPrintController : uses
+    LabelFormatterController ..> LabelRepository
+    LabelFormatterController ..> OrderRepository
+    LabelFormatterController ..> ShippingRuleRepository
+    LabelPrintController ..> LabelRepository
+    LabelPrintController ..> OrderRepository
+    LabelPrintController ..> ShippingRuleRepository
+    RslMatchController ..> LabelFormatterController : triggers
+    RslMatchController ..> OrderRepository

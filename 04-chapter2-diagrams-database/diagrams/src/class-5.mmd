@@ -16,45 +16,32 @@ classDiagram
         #db: DBConnector
         #executeQuery(queryId, params)
     }
-    class LabelPrintScreen {
+    class StockCheckScreen {
         -controller
         -messages: string[]
-        +clickPrintLabel()
-        +openReadyToPrintList()
-        +selectOrder()
+        +selectProduct()
     }
-    class RslMatchScreen {
-        -controller
-        -messages: string[]
-        +clickMatchWithRsl()
-        +openUnmatchedOrderList()
-        +selectOrder()
-    }
-    class LabelFormatterController {
-        -labelRepository: LabelRepository
+    class StockCheckController {
         -orderRepository: OrderRepository
-        -shippingRuleRepository: ShippingRuleRepository
-        +onRslMatched()
-        +proceedToUseCase9A()
+        -stockRepository: StockRepository
+        +calculateTotalQty()
+        +checkStock()
+        +compareWithReorderThreshold()
+        +proceedToUseCase1S()
+        +proceedToUseCase4S()
     }
-    class LabelPrintController {
-        -labelRepository: LabelRepository
+    class StockDeductionController {
         -orderRepository: OrderRepository
-        -shippingRuleRepository: ShippingRuleRepository
-        +printLabel()
-        +validateAddressAndMethod()
+        -stockRepository: StockRepository
+        +calculateAvailableQty()
+        +onTrackingNotified()
+        +skipAlreadyDeducted()
     }
-    class RslMatchController {
+    class TrackingNotifyController {
         -orderRepository: OrderRepository
-        -rslRepository: RslRepository
-        +matchOrderWithRsl()
-        +proceedToUseCase6S()
-    }
-    class LabelRepository {
-        -db: DBConnector
-        -table: string = "label"
-        +createLabel()
-        +updateLabelStatus()
+        +proceedToUseCase7S()
+        +sendTrackingNotify()
+        +validateTrackingAndCarrierPresent()
     }
     class OrderRepository {
         -db: DBConnector
@@ -87,38 +74,31 @@ classDiagram
         +updateStatusCancelled()
         +updateStatusIfChanged()
     }
-    class RslRepository {
+    class StockRepository {
         -db: DBConnector
-        -table: string = "rsl_shipments"
-        +findRslBySkuAndVariation()
-    }
-    class ShippingRuleRepository {
-        -db: DBConnector
-        -table: string = "shipping_rules"
-        +getLabelTemplate()
+        -table: string = "stock"
+        +deductInHouseStock()
+        +deductRslStock()
+        +getLowStockSkus()
+        +getStockAndOrderInfo()
+        +getStockBySku()
+        +restockInventory()
     }
     class DBConnector {
         -pool: Pool
         +executeQuery()
     }
-    BaseScreen <|-- LabelPrintScreen
-    BaseScreen <|-- RslMatchScreen
-    BaseController <|-- LabelFormatterController
-    BaseController <|-- LabelPrintController
-    BaseController <|-- RslMatchController
-    BaseRepository <|-- LabelRepository
+    BaseScreen <|-- StockCheckScreen
+    BaseController <|-- StockCheckController
+    BaseController <|-- StockDeductionController
+    BaseController <|-- TrackingNotifyController
     BaseRepository <|-- OrderRepository
-    BaseRepository <|-- RslRepository
-    BaseRepository <|-- ShippingRuleRepository
+    BaseRepository <|-- StockRepository
     BaseRepository o-- DBConnector : db
-    LabelPrintScreen "1" --> "1" LabelPrintController : uses
-    RslMatchScreen "1" --> "1" RslMatchController : uses
-    LabelFormatterController ..> LabelRepository
-    LabelFormatterController ..> OrderRepository
-    LabelFormatterController ..> ShippingRuleRepository
-    LabelPrintController ..> LabelRepository
-    LabelPrintController ..> OrderRepository
-    LabelPrintController ..> ShippingRuleRepository
-    RslMatchController ..> LabelFormatterController : triggers
-    RslMatchController ..> OrderRepository
-    RslMatchController ..> RslRepository
+    StockCheckScreen "1" --> "1" StockCheckController : uses
+    StockCheckController ..> OrderRepository
+    StockCheckController ..> StockRepository
+    StockDeductionController ..> OrderRepository
+    StockDeductionController ..> StockRepository
+    TrackingNotifyController ..> OrderRepository
+    TrackingNotifyController ..> StockDeductionController : triggers

@@ -1,0 +1,46 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class Orders {
+        -order_id: VARCHAR❨12❩
+        -marketplace_order_id: VARCHAR❨30❩
+        -sales_channel: VARCHAR❨30❩
+        -order_date: TIMESTAMPTZ
+        -channel_sku: VARCHAR❨40❩
+        -sku: VARCHAR❨20❩
+        -variation: VARCHAR❨50❩
+        -qty: INTEGER
+        -shipping_address: VARCHAR❨255❩
+        -shipping_method: VARCHAR❨30❩
+        -order_status: VARCHAR❨30❩
+        -verified_at: TIMESTAMPTZ
+        -verified_by: VARCHAR❨10❩
+        -sku_rule_id: INTEGER
+        -sku_matched_at: TIMESTAMPTZ
+        -decision: VARCHAR❨10❩
+        -decided_at: TIMESTAMPTZ
+        -decided_by: VARCHAR❨10❩
+        -po_id: VARCHAR❨12❩
+        -rsl_matched: BOOLEAN
+        -rsl_reference_id: VARCHAR❨20❩
+        -matched_at: TIMESTAMPTZ
+        -fulfill_source: VARCHAR❨10❩
+        -tracking_number: VARCHAR❨20❩
+        -carrier_name: VARCHAR❨50❩
+        -dispatched_at: TIMESTAMPTZ
+        -tracking_notified: BOOLEAN
+        -tracking_notified_at: TIMESTAMPTZ
+        -stock_deducted: BOOLEAN
+        -mp_stock_synced: BOOLEAN
+        -deducted_at: TIMESTAMPTZ
+        -cancel_reason: VARCHAR❨255❩
+        -cancelled_at: TIMESTAMPTZ
+        -cancelled_by: VARCHAR❨10❩
+    }
+    ShippingRules "1" -- "0..*" Orders
+    Products "1" -- "0..*" Orders
+    Users "1" -- "0..*" Orders
+    SkuRules "1" -- "0..*" Orders
+    PurchaseOrders "1" -- "0..*" Orders
+    Orders "1" -- "0..*" Label
+    Orders "1" -- "1" DeliveryPartners

@@ -1,0 +1,96 @@
+%%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+classDiagram
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
+    }
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
+    }
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
+    }
+    class ShipmentScreen {
+        -controller
+        -messages: string[]
+        +clickSendTracking()
+        +confirmHandover()
+        +openReadyToShipList()
+    }
+    class ShipmentController {
+        -carrierTrackingRepository: CarrierTrackingRepository
+        -deliveryPartnerRepository: DeliveryPartnerRepository
+        -orderRepository: OrderRepository
+        +checkLabelStatus()
+        +recordHandover()
+    }
+    class TrackingNotifyController {
+        -orderRepository: OrderRepository
+        +proceedToUseCase7S()
+        +sendTrackingNotify()
+        +validateTrackingAndCarrierPresent()
+    }
+    class CarrierTrackingRepository {
+        -db: DBConnector
+        -table: string = "carrier_tracking"
+        +getCarrierStatus()
+    }
+    class DeliveryPartnerRepository {
+        -db: DBConnector
+        -table: string = "delivery_partners"
+        +getTrackingNumber()
+    }
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
+    }
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
+    }
+    BaseScreen <|-- ShipmentScreen
+    BaseController <|-- ShipmentController
+    BaseController <|-- TrackingNotifyController
+    BaseRepository <|-- CarrierTrackingRepository
+    BaseRepository <|-- DeliveryPartnerRepository
+    BaseRepository <|-- OrderRepository
+    BaseRepository o-- DBConnector : db
+    ShipmentScreen "1" --> "1" ShipmentController : uses
+    ShipmentScreen "1" --> "1" TrackingNotifyController : uses
+    ShipmentController ..> CarrierTrackingRepository
+    ShipmentController ..> DeliveryPartnerRepository
+    ShipmentController ..> OrderRepository
+    TrackingNotifyController ..> OrderRepository

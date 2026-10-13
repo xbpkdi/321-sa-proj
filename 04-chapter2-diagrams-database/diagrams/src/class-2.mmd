@@ -16,33 +16,10 @@ classDiagram
         #db: DBConnector
         #executeQuery(queryId, params)
     }
-    class CancelOrderScreen {
-        -controller
-        -messages: string[]
-        +clickCancelOrder()
-        +openOrderList()
-        +selectOrder()
-        +submitCancelReason()
-    }
     class DashboardScreen {
         -controller
         -messages: string[]
         +clickImportOrders()
-    }
-    class OrderVerifyScreen {
-        -controller
-        -messages: string[]
-        +clickConfirmOrder()
-        +openPendingVerificationList()
-        +selectOrder()
-    }
-    class CancelOrderController {
-        -orderRepository: OrderRepository
-        -stockRepository: StockRepository
-        +cancelOrder()
-        +checkOrderStatus()
-        +validateReasonProvided()
-        +validateStatus()
     }
     class OrderIntakeController {
         -orderRepository: OrderRepository
@@ -50,14 +27,6 @@ classDiagram
         +importOrders()
         +skipOrder()
         +validateRequiredFields()
-    }
-    class OrderVerifyController {
-        -orderRepository: OrderRepository
-        +getOrderDetail()
-        +loadPendingOrders()
-        +proceedToUseCase2S()
-        +validateRequiredFields()
-        +verifyOrder()
     }
     class SkuMatchController {
         -orderRepository: OrderRepository
@@ -102,37 +71,17 @@ classDiagram
         +findRuleByChannelSku()
         +insertSkuRule()
     }
-    class StockRepository {
-        -db: DBConnector
-        -table: string = "stock"
-        +deductInHouseStock()
-        +deductRslStock()
-        +getLowStockSkus()
-        +getStockAndOrderInfo()
-        +getStockBySku()
-        +restockInventory()
-    }
     class DBConnector {
         -pool: Pool
         +executeQuery()
     }
-    BaseScreen <|-- CancelOrderScreen
     BaseScreen <|-- DashboardScreen
-    BaseScreen <|-- OrderVerifyScreen
-    BaseController <|-- CancelOrderController
     BaseController <|-- OrderIntakeController
-    BaseController <|-- OrderVerifyController
     BaseController <|-- SkuMatchController
     BaseRepository <|-- OrderRepository
     BaseRepository <|-- SkuRuleRepository
-    BaseRepository <|-- StockRepository
     BaseRepository o-- DBConnector : db
-    CancelOrderScreen "1" --> "1" CancelOrderController : uses
     DashboardScreen "1" --> "1" OrderIntakeController : uses
-    OrderVerifyScreen "1" --> "1" OrderVerifyController : uses
-    CancelOrderController ..> OrderRepository
-    CancelOrderController ..> StockRepository
     OrderIntakeController ..> OrderRepository
-    OrderVerifyController ..> OrderRepository
     SkuMatchController ..> OrderRepository
     SkuMatchController ..> SkuRuleRepository
