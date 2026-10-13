@@ -1,0 +1,258 @@
+% บทพูดนำเสนอระบบหลังบ้าน Colorado แยกตามผู้พูด 3 คน
+% สร้าง PDF:  ./speaker_script/build.sh
+% การแบ่งผู้พูดเป็นข้อเสนอ แก้ชื่อได้ที่ \speakerA \speakerB \speakerC ด้านล่าง
+\documentclass[12pt,a4paper]{article}
+\usepackage[a4paper,margin=1.8cm,top=1.6cm,bottom=1.8cm]{geometry}
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{tabularx,booktabs,array}
+\usepackage{fancyhdr}
+
+\setmainfont{Sukhumvit Set}[UprightFont={* Text}, BoldFont={* Semi Bold}]
+\newfontfamily\heavy{Sukhumvit Set}[UprightFont={* Bold}]
+\newfontfamily\enfont{Sukhumvit Set}[UprightFont={* Text}]
+\XeTeXlinebreaklocale "th"
+\XeTeXlinebreakskip = 0pt plus 1pt
+\linespread{1.25}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+
+% สีจาก DESIGN.md ของเว็บ (Atlassian tokens)
+\definecolor{ink}{HTML}{292A2E}    % color.text
+\definecolor{muted}{HTML}{505258}  % color.text.subtle
+\definecolor{sA}{HTML}{FF5A36}     % coral สีแบรนด์รอง
+\definecolor{sB}{HTML}{1868DB}     % color.background.brand.bold
+\definecolor{sC}{HTML}{6E5DC6}     % color.background.accent.purple.bolder
+
+\newcommand{\speakerA}{นายธนภัทร พูลโภคา}
+\newcommand{\speakerB}{นายอชิระ ภู่รุ่งเรือง}
+\newcommand{\speakerC}{นางสาวปิยากร ผลพานิช}
+
+\setlist[itemize]{leftmargin=1.3em, itemsep=2pt, topsep=2pt, label=\textcolor{cur}{\textbullet}}
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\small\color{muted} Colorado Back-Office System  บทพูดนำเสนอ}
+\fancyfoot[R]{\small\color{muted}\thepage}
+
+\newcommand{\speaker}[4]{% #1 สี  #2 ชื่อ  #3 สไลด์  #4 เวลา
+  \clearpage\colorlet{cur}{#1}%
+  \begin{tcolorbox}[enhanced,colback=#1,colframe=#1,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
+    \color{white}{\heavy\Huge #2}\hfill{\Large สไลด์ #3}\\[2pt]
+    {\large เวลาประมาณ #4}
+  \end{tcolorbox}\vspace{2pt}}
+\newenvironment{topic}[2]{%
+  \begin{tcolorbox}[enhanced,colback=white,colframe=cur,boxrule=1pt,arc=4pt,
+    left=8pt,right=8pt,top=4pt,bottom=6pt,before skip=6pt,after skip=6pt,breakable,
+    title={\heavy สไลด์ #1\quad #2},colbacktitle=cur,coltitle=white,fonttitle=\large]}
+  {\end{tcolorbox}}
+\newcommand{\say}{\par{\heavy\textcolor{cur}{พูด}}\par}
+\newcommand{\extra}{\par\vspace{2pt}{\heavy\textcolor{cur}{พูดเพิ่มถ้ามีเวลา}}\par}
+\newcommand{\point}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{ชี้ตรงไหน}}\quad #1\par}
+\newcommand{\pass}[1]{\par\vspace{4pt}\begin{tcolorbox}[colback=cur!10,colframe=cur!10,arc=3pt,left=6pt,right=6pt,top=3pt,bottom=3pt]
+  {\heavy\textcolor{cur}{ส่งต่อ}}\quad #1\end{tcolorbox}}
+\newcommand{\num}[1]{{\heavy\textcolor{cur}{#1}}}
+
+\begin{document}
+\colorlet{cur}{ink}
+
+\begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=12pt,right=12pt,top=12pt,bottom=12pt]
+  \color{white}{\heavy\huge บทพูดนำเสนอ Colorado Back-Office System}\\[4pt]
+  {\large 01418321 System Analysis and Design}\\[2pt]
+  {\large ระบบจัดการหลังบ้านอัตโนมัติ เฟส 1: Rakuten Ichiba, Rakuten RMS และ RSL}
+\end{tcolorbox}
+
+\vspace{6pt}
+{\heavy\Large แบ่งกันพูดอย่างไร}\par
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{4.3cm} p{1.8cm} X p{1.7cm}}
+\toprule
+ผู้พูด & สไลด์ & เรื่องที่พูด & เวลา\\
+\midrule
+\textcolor{sA}{\speakerA} & 1 ถึง 5 & เปิดเรื่องเป็นภาษาอังกฤษ ปัญหา วัตถุประสงค์ & 4 นาที\\
+\textcolor{sB}{\speakerB} & 6 ถึง 13 & Business Process, Use Case, Use Case Description และ diagram การออกแบบ & 5 นาที\\
+\textcolor{sC}{\speakerC} & 14 ถึง 19 & Platform หน้าจอ รายงาน SQL การทดสอบ สรุป และถาม-ตอบ & 4 นาที\\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+{\heavy\Large วิธีใช้บทนี้}\par
+\begin{itemize}
+  \item หัวข้อ \textbf{พูด} เป็นประโยคที่พูดตามได้ทันที ส่วน \textbf{พูดเพิ่มถ้ามีเวลา} ใช้เมื่อเวลาเหลือหรืออาจารย์สนใจ
+  \item ตัวเลขที่เป็น\num{ตัวหนาสี}ต้องพูดให้ตรง ตัวเลขเวลาเป็น\textbf{ค่าประมาณ} ต้องพูดคำว่า ``ประมาณ'' ทุกครั้ง
+  \item ตามเกณฑ์ของวิชา ช่วงแนะนำธุรกิจตอนเริ่มนำเสนอต้องพูดเป็นภาษาอังกฤษ (สไลด์ 1 และ 2)
+  \item ทุกคนเปิดกล้องตลอดการนำเสนอ ถ้าไม่เปิดกล้องจะถูกหักคะแนนครึ่งหนึ่ง
+\end{itemize}
+
+\vspace{6pt}
+{\heavy\Large ประโยคที่ทุกคนต้องพูดได้}\par
+\begin{tcolorbox}[colback=ink!6,colframe=ink!6,arc=4pt]
+\large ระบบทำงานซ้ำแทนเจ้าของ 7 Use Case แต่ทุกขั้นที่ใช้เงินจริง เช่น การสั่งซื้อจาก Supplier ยังต้องให้เจ้าของกดอนุมัติก่อนเสมอ
+\end{tcolorbox}
+
+% ================================================================ คนที่ 1
+\speaker{sA}{\speakerA}{1 ถึง 5}{4 นาที}
+
+\begin{topic}{1}{Cover (English)}
+\say
+{\enfont Good morning, everyone. We are presenting a back-office system for Colorado Company Limited. My name is [name], and my teammates are [name] and [name]. Our project covers phase one of the system, which connects Rakuten Ichiba, Rakuten RMS and Rakuten Super Logistics.}
+\point{ชื่อระบบและรูปหน้า Dashboard ทางขวา}
+\end{topic}
+
+\begin{topic}{2}{Business introduction (English)}
+\say
+{\enfont Colorado Company Limited sells imported and OEM products on Rakuten Ichiba, one of the biggest online marketplaces in Japan. The main products are fishing gear and lures, outdoor goods, household items and Thai herbal inhalers. The business started in 2009 as a side business and is now run by one owner. Rakuten Super Logistics, or RSL, keeps the stock and ships the parcels to customers.}
+
+{\enfont The problem is that every order is handled by hand by one person. The owner checks new orders, checks stock in two warehouses, matches each order with RSL, formats and prints the shipping label, and sends the tracking number to the customer. The owner also decides when to reorder without a clear rule, and calculates the real unit cost from eight cost items. Our goal is to automate the repetitive work, while the owner still approves every decision that spends money.}
+\extra
+{\enfont In the next phases, the same system can be connected to Yahoo! Auctions and Amazon.}
+\end{topic}
+
+\begin{topic}{3}{Agenda}
+\say
+\begin{itemize}
+  \item จากนี้ขอพูดเป็นภาษาไทยครับ/ค่ะ การนำเสนอมี 4 ส่วน คือ ปัญหาและวัตถุประสงค์ Business Process กับ Use Case การออกแบบระบบ และการพัฒนากับผลการทดสอบ
+\end{itemize}
+\end{topic}
+
+\begin{topic}{4}{Problems}
+\say
+\begin{itemize}
+  \item ร้านขายสินค้ากลุ่มหลักประมาณ \num{5 ถึง 10 ชิ้นต่อวัน} ทุกคำสั่งซื้อต้องผ่านงานมือ 5 อย่าง คือ ตรวจคำสั่งซื้อ เช็กสต๊อก 2 คลัง จับคู่กับ RSL จัดรูปแบบและพิมพ์ใบปะ และแจ้งเลขติดตาม
+  \item รวมแล้วประมาณ \num{12 นาทีต่อคำสั่งซื้อ} หรือประมาณ \num{1 ถึง 2 ชั่วโมงต่อวัน} ตัวเลขนี้เป็นค่าประมาณจากขั้นตอนที่เจ้าของเล่า ยังไม่ได้จับเวลาจริง
+  \item นอกจากเวลา ยังมีเรื่องเงิน ค่าส่งเมื่อจัดส่งเองประมาณ 600 เยน แพงกว่าคู่แข่ง \num{400 เยนต่อชิ้น} และการคำนวณต้นทุนจริงต้องรวม \num{8 รายการ} จึงตัดสินใจสั่งซื้อด้วยความรู้สึก
+\end{itemize}
+\point{ตารางเวลาด้านซ้าย และกล่องตัวเลข 4 กล่อง}
+\end{topic}
+
+\begin{topic}{5}{Objectives and scope}
+\say
+\begin{itemize}
+  \item ระบบมีงานอัตโนมัติ 3 เรื่อง คือ จัดรูปแบบใบปะหน้าพัสดุ แจ้งและเตรียมการสั่งซื้อเติมสต๊อก และคำนวณต้นทุนต่อหน่วย
+  \item เฟส 1 ทำเฉพาะ Rakuten Ichiba, Rakuten RMS และ RSL ผู้ใช้มีคนเดียวคือเจ้าของในฐานะ Admin
+  \item จุดออกแบบสำคัญคือ human-in-the-loop ตามที่อาจารย์แนะนำ ระบบเตรียมทุกอย่างให้ แต่การสั่งซื้อที่ใช้เงินจริงต้องให้เจ้าของกดอนุมัติก่อน
+\end{itemize}
+\pass{``ต่อไป [ชื่อคนที่ 2] จะเล่าว่าเราวิเคราะห์ขั้นตอนการทำงานและออกแบบระบบอย่างไรครับ/ค่ะ''}
+\end{topic}
+
+% ================================================================ คนที่ 2
+\speaker{sB}{\speakerB}{6 ถึง 13}{5 นาที}
+
+\begin{topic}{6}{Business process: As-Is}
+\say
+\begin{itemize}
+  \item ขอบคุณครับ/ค่ะ รูปนี้คือ Business Process เดิม ทุกกล่องเป็นงานของ Super Admin คนเดียว เริ่มจากลูกค้าสั่งซื้อใน Marketplace จนส่งเลขติดตามกลับไป
+  \item จุดสีแดงคือปัญหา 4 จุด จับคู่ Order กับสต๊อกเอง คำนวณความคุ้มค่าเอง จัดรูปแบบใบปะเอง และติดตามพัสดุเอง แต่ละจุดเรามีเวลาประมาณการกำกับไว้ทางขวา
+\end{itemize}
+\end{topic}
+
+\begin{topic}{7}{Business process: To-Be}
+\say
+\begin{itemize}
+  \item ใน Business Process ใหม่ เราเพิ่ม lane ของระบบ ระบบรับงานที่ทำซ้ำไป 7 Use Case ที่ขึ้นต้นด้วย S
+  \item งานที่ยังให้คนทำมี 4 แบบ คือ ตรวจคำสั่งซื้อ อนุมัติการสั่งซื้อ กดพิมพ์ใบปะ และส่งมอบพัสดุให้ขนส่ง เพราะเป็นงานที่ต้องตัดสินใจหรือเป็นงานทางกายภาพ
+\end{itemize}
+\end{topic}
+
+\begin{topic}{8}{Use case diagram}
+\say
+\begin{itemize}
+  \item หลังวิเคราะห์ CRUD Table เราพบ Use Case ที่ขาด เช่น ตรวจคำสั่งซื้อ จับคู่กฎ SKU ตัดสต๊อก และลบข้อมูลเก่า จึงได้ \num{17 Use Case} Admin 10 และระบบ 7
+  \item เลขลงท้าย A คือ Admin เป็นคนเริ่ม และ S คือระบบเริ่มเอง
+\end{itemize}
+\end{topic}
+
+\begin{topic}{9}{Use case 5A}
+\say
+\begin{itemize}
+  \item ตัวอย่าง Use Case Description ที่สำคัญที่สุดคือ 5A ตัดสินใจสั่งซื้อสินค้าเพิ่ม ระบบดึงต้นทุนต่อหน่วยล่าสุดและราคาขาย แล้วคำนวณกำไรที่คาดไว้ให้
+  \item แต่ปุ่ม ``คุ้มค่า'' หรือ ``ไม่คุ้มค่า'' ต้องให้เจ้าของกดเอง ถ้าคุ้มค่าจะไปต่อ 6A สั่งซื้อ ถ้าไม่คุ้มค่าจะไป 7A ยกเลิก
+  \item ทุก query มีเลขตาม Use Case เช่น Q5A.1 ถึง Q5A.5 เลขเดียวกันอยู่ใน Use Case Description, Sequence Diagram และโค้ด
+\end{itemize}
+\point{object ติดกับ actor คือ ReorderDecisionScreen และฐานข้อมูลเชื่อมผ่าน DBConnector}
+\end{topic}
+
+\begin{topic}{10}{Class diagram}
+\say
+\begin{itemize}
+  \item Class Diagram ได้จาก object ทุกตัวใน Sequence Diagram แบ่งเป็น 7 รูปตามกลุ่มงาน รูปนี้คือกลุ่มคำนวณต้นทุนและสั่งซื้อเติม
+  \item มีความสัมพันธ์ 4 แบบ คือ สืบทอดจาก Base class, หน้าจอใช้ Controller, Controller เรียก Repository และ Repository ทุกตัวใช้ DBConnector ร่วมกัน
+\end{itemize}
+\end{topic}
+
+\begin{topic}{11}{State diagram}
+\say
+\begin{itemize}
+  \item State Diagram แสดงสถานะของ Order ทุกเส้นเขียนเป็นเงื่อนไข event และชื่อ Use Case ที่ทำ
+  \item ทุกครั้งที่สถานะเปลี่ยน ระบบ UPDATE ค่า order\_status ด้วย query ที่กำกับบนเส้น เช่น Q2A.4 หรือ Q7S.5
+\end{itemize}
+\end{topic}
+
+\begin{topic}{12}{ER diagram}
+\say
+\begin{itemize}
+  \item ฐานข้อมูลมี \num{15 ตาราง} ชื่อตรงกับ CRUD Table ทุก relationship เป็น 1 ต่อ 1 หรือ 1 ต่อหลาย ไม่มีหลายต่อหลาย เส้นคู่คือ total participation
+  \item รูปขวาคือ ER พร้อม query ป้ายสีแดงบอกว่า query ไหนใช้ตารางไหน และ query ที่ UPDATE จะแสดงคอลัมน์ที่ถูกแก้
+\end{itemize}
+\end{topic}
+
+\begin{topic}{13}{Data flow diagram}
+\say
+\begin{itemize}
+  \item Context Diagram มีระบบเป็น process เดียว รับส่งข้อมูลกับ 5 external entity คือ Admin, Rakuten, RSL, Delivery และ Supplier
+  \item Level 0 แตกเป็น 6 process ตามกลุ่ม Use Case และมี data store 9 กลุ่ม
+\end{itemize}
+\pass{``ต่อไป [ชื่อคนที่ 3] จะแสดงระบบที่พัฒนาและผลการทดสอบครับ/ค่ะ''}
+\end{topic}
+
+% ================================================================ คนที่ 3
+\speaker{sC}{\speakerC}{14 ถึง 19}{4 นาที}
+
+\begin{topic}{14}{Platform and components}
+\say
+\begin{itemize}
+  \item ขอบคุณครับ/ค่ะ ระบบพัฒนาด้วย Next.js, React และ TypeScript ฐานข้อมูลเป็น PostgreSQL และเชื่อมกับ Rakuten RMS และ RSL
+  \item Component Diagram แสดงการรวมคลาสเป็น FrontEnd, BackEnd และ Database พร้อม library และ API ภายนอก
+\end{itemize}
+\end{topic}
+
+\begin{topic}{15}{Site map and screens}
+\say
+\begin{itemize}
+  \item ระบบมี \num{12 หน้าจอ} root ของ site map คือหน้า Login ชื่อหน้าจอตรงกับ Screen ใน Sequence Diagram เช่น ReorderDecisionScreen ของ 5A และ 6A
+\end{itemize}
+\point{ถ้ามีเวลา เปิดเว็บจริงให้ดู flow ตั้งแต่นำเข้า Order จนพิมพ์ใบปะ}
+\end{topic}
+
+\begin{topic}{16}{Output design}
+\say
+\begin{itemize}
+  \item ระบบมีรายงาน 2 ฉบับ ใบปะสินค้าที่สร้างจาก 6S และพิมพ์จาก 9A กับรายงานต้นทุนต่อหน่วยจาก 4S ที่ใช้สูตร Q4S.2
+\end{itemize}
+\end{topic}
+
+\begin{topic}{17}{SQL and testing}
+\say
+\begin{itemize}
+  \item SQL ทั้งหมด \num{63 คำสั่ง} เราสร้างฐานข้อมูลตัวอย่างแล้วรันทุกคำสั่งบน PostgreSQL ผ่านครบทุกข้อ ผลการรันอยู่ในหัวข้อ 2.25 ของรายงาน
+  \item ทดสอบเว็บตาม Use Case Description \num{34 กรณี} ทั้งกรณีปกติและกรณีผิดพลาด ข้อความที่คาดหวังคัดจาก Use Case Description คำต่อคำ ผ่านทุกกรณี
+\end{itemize}
+\end{topic}
+
+\begin{topic}{18}{Summary}
+\say
+\begin{itemize}
+  \item สรุป ก่อนมีระบบ เจ้าของใช้เวลางานมือประมาณ 1 ถึง 2 ชั่วโมงต่อวัน หลังมีระบบ ระบบทำงานซ้ำ 7 Use Case แทน เจ้าของเหลือแค่ตรวจ อนุมัติ พิมพ์ และส่งมอบ
+  \item ขั้นต่อไปคือต่อฐานข้อมูลและ Rakuten RMS API จริง แล้วขยายไป Yahoo! Auctions และ Amazon
+\end{itemize}
+\end{topic}
+
+\begin{topic}{19}{Q\&A}
+\say
+\begin{itemize}
+  \item ขอบคุณครับ/ค่ะ เปิดให้ถามคำถาม
+\end{itemize}
+\end{topic}
+
+\end{document}

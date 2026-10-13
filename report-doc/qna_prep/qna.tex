@@ -1,0 +1,204 @@
+% เตรียมตอบคำถามหลังนำเสนอระบบหลังบ้าน Colorado แยกตามคนตอบ
+% สร้าง PDF:  ./qna_prep/build.sh
+% ตัวเลขทั้งหมดตรงกับรายงาน (report-doc/content และ 04-chapter2-diagrams-database)
+\documentclass[12pt,a4paper]{article}
+\usepackage[a4paper,margin=1.8cm,top=1.6cm,bottom=1.8cm]{geometry}
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{tabularx,booktabs,array}
+\usepackage{fancyhdr}
+\usepackage{pifont}
+
+\setmainfont{Sukhumvit Set}[UprightFont={* Text}, BoldFont={* Semi Bold}]
+\newfontfamily\heavy{Sukhumvit Set}[UprightFont={* Bold}]
+\XeTeXlinebreaklocale "th"
+\XeTeXlinebreakskip = 0pt plus 1pt
+\linespread{1.25}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+
+\definecolor{ink}{HTML}{292A2E}    % color.text
+\definecolor{muted}{HTML}{505258}  % color.text.subtle
+\definecolor{sA}{HTML}{FF5A36}
+\definecolor{sB}{HTML}{1868DB}
+\definecolor{sC}{HTML}{6E5DC6}
+
+\newcommand{\speakerA}{นายธนภัทร พูลโภคา}
+\newcommand{\speakerB}{นายอชิระ ภู่รุ่งเรือง}
+\newcommand{\speakerC}{นางสาวปิยากร ผลพานิช}
+
+\setlist[itemize]{leftmargin=1.3em, itemsep=2pt, topsep=2pt, label=\textcolor{cur}{\textbullet}}
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[L]{\small\color{muted} Colorado Back-Office System  เตรียมตอบคำถาม}
+\fancyfoot[R]{\small\color{muted}\thepage}
+
+\newcommand{\speaker}[3]{% #1 สี  #2 ชื่อ  #3 หมวด
+  \clearpage\colorlet{cur}{#1}%
+  \begin{tcolorbox}[enhanced,colback=#1,colframe=#1,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
+    \color{white}{\heavy\Huge #2}\\[2pt]{\large #3}
+  \end{tcolorbox}\vspace{2pt}}
+\newcounter{qa}
+\newcommand{\must}{\quad{\small\textcolor{white}{\ding{72} ทุกคนต้องตอบได้}}}
+\newenvironment{q}[1]{\refstepcounter{qa}%
+  \begin{tcolorbox}[enhanced,colback=white,colframe=cur,boxrule=1pt,arc=4pt,breakable,
+    left=8pt,right=8pt,top=4pt,bottom=6pt,before skip=6pt,after skip=6pt,
+    title={\heavy Q\theqa\quad #1},colbacktitle=cur,coltitle=white,fonttitle=\large]}
+  {\end{tcolorbox}}
+\newcommand{\ans}{\par{\heavy\textcolor{cur}{ตอบ}}\par}
+\newcommand{\evidence}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{เปิดหลักฐาน}}\quad #1\par}
+\newcommand{\num}[1]{{\heavy\textcolor{cur}{#1}}}
+
+\begin{document}
+\colorlet{cur}{ink}
+\begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=12pt,right=12pt,top=12pt,bottom=12pt]
+  \color{white}{\heavy\huge เตรียมตอบคำถาม Colorado Back-Office System}\\[4pt]
+  {\large 01418321 System Analysis and Design}
+\end{tcolorbox}
+
+\vspace{6pt}
+{\heavy\Large ใครตอบเรื่องอะไร}\par
+\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{4.3cm} X}
+\toprule
+คนตอบ & หมวด\\
+\midrule
+\textcolor{sA}{\speakerA} & ธุรกิจ ปัญหา ตัวเลขประมาณการ ขอบเขต\\
+\textcolor{sB}{\speakerB} & Business Process, Use Case, CRUD, diagram, ER\\
+\textcolor{sC}{\speakerC} & SQL, ฐานข้อมูล, เว็บ, การทดสอบ, ขั้นต่อไป\\
+\bottomrule
+\end{tabularx}
+
+\vspace{8pt}
+{\heavy\Large ตอบ 4 จังหวะ จบใน 30 ถึง 45 วินาที}\par
+\begin{enumerate}
+  \item ฟังให้จบ แล้วทวนคำถามสั้น ๆ
+  \item ประโยคแรกคือคำตอบ
+  \item ให้หลักฐาน 1 อย่าง เช่น เปิดหน้าในรายงานหรือเปิดเว็บ
+  \item โยงกลับไปที่ human-in-the-loop หรือปัญหาของเจ้าของ
+\end{enumerate}
+
+{\heavy\Large ห้ามพูด}\par
+\begin{tcolorbox}[colback=ink!6,colframe=ink!6,arc=4pt]
+\begin{itemize}
+  \item ``เจ้าของใช้เวลา 2 ชั่วโมงต่อวัน'' แบบไม่มีคำว่าประมาณ ตัวเลขเวลาทั้งหมดเป็น\textbf{ค่าประมาณ} จากขั้นตอนที่เจ้าของเล่า
+  \item ``ระบบสั่งซื้อให้อัตโนมัติ'' ที่ถูกคือระบบ\textbf{เตรียม}คำสั่งซื้อ แต่เจ้าของต้องกดอนุมัติ (5A) ก่อน
+\end{itemize}
+\end{tcolorbox}
+
+% ================================================================ คนที่ 1
+\speaker{sA}{\speakerA}{ธุรกิจ ปัญหา ขอบเขต}
+
+\begin{q}{ทำไมเฟส 1 ทำแค่ Rakuten \must}
+\ans
+Rakuten เป็นช่องทางขายหลักที่มีคำสั่งซื้อจริงให้ทดสอบทันที และร้านใช้ RSL ซึ่งอยู่ในระบบเดียวกับ Rakuten อยู่แล้ว Rakuten RMS มี API ครอบคลุมทั้งดึงคำสั่งซื้อ ใบปะ และสต๊อก การทำทีละแพลตฟอร์มยังลดความเสี่ยงจากการเชื่อมหลายระบบพร้อมกัน
+\evidence{รายงานหัวข้อ 1.1 และ 1.5}
+\end{q}
+
+\begin{q}{ตัวเลข 1 ถึง 2 ชั่วโมงต่อวันมาจากไหน \must}
+\ans
+มาจากจำนวนขายประมาณ \num{5 ถึง 10 ชิ้นต่อวัน} ตาม requirement คูณเวลาต่อคำสั่งซื้อประมาณ \num{12 นาที} ที่แยกเป็น 5 งาน เป็นค่าประมาณจากขั้นตอนที่เจ้าของเล่า ยังไม่ได้จับเวลาจริง ถ้าเจ้าของจับเวลาจริงให้ภายหลังจะแก้ตัวเลขในตารางที่ 1-1
+\evidence{ตารางที่ 1-1 ในหัวข้อ 1.2}
+\end{q}
+
+\begin{q}{ปัญหาไม่ใช่แค่ "ไม่มีคอมพิวเตอร์" หรือ}
+\ans
+ไม่ใช่ เจ้าของใช้คอมพิวเตอร์และ Rakuten RMS อยู่แล้ว ปัญหาคือข้อมูลอยู่คนละที่ ต้องคัดลอกและเทียบเองทุกคำสั่งซื้อ เช่น สต๊อกอยู่ทั้งคลังบริษัทและ RSL ต้นทุนต้องรวม 8 รายการ ระบบใหม่รวมข้อมูลไว้ที่เดียวและทำขั้นตอนซ้ำให้ ปัญหาวัดผลได้จากเวลาต่อวันที่ลดลง
+\end{q}
+
+\begin{q}{ทำไมไม่ให้ระบบสั่งซื้อจาก Supplier เองเลย \must}
+\ans
+เพราะเป็นขั้นที่ใช้เงินจริง ถ้าข้อมูลสต๊อกหรือต้นทุนผิด ระบบอาจสั่งของผิดจำนวนโดยไม่มีใครเห็น อาจารย์แนะนำให้ใช้ human-in-the-loop เราจึงให้ระบบคำนวณต้นทุน กำไรที่คาด และเตรียมคำสั่งซื้อ แต่ Use Case 5A ให้เจ้าของกดอนุมัติก่อนทุกครั้ง
+\evidence{สไลด์ 9 และ Use Case Description 5A}
+\end{q}
+
+\begin{q}{อะไรที่ยังทำด้วยมือ}
+\ans
+วางแผนสินค้า จัดหา เจรจาโรงงาน ตัดสินใจเรื่องคุณภาพ อนุมัติการสั่งซื้อ กดพิมพ์ใบปะ และส่งมอบพัสดุให้ขนส่ง ส่วนลูกค้ายังสั่งและชำระเงินผ่าน Rakuten ตามเดิม
+\end{q}
+
+% ================================================================ คนที่ 2
+\speaker{sB}{\speakerB}{Business Process, Use Case, diagram, ER}
+
+\begin{q}{Use Case ที่เพิ่มจากการวิเคราะห์ CRUD มีอะไรบ้าง \must}
+\ans
+ตรวจคำสั่งซื้อ (2A) จับคู่กฎ SKU (2S) และตั้งกฎ SKU (3A) พิมพ์ใบปะ (9A) แยกจากการจัดรูปแบบ (6S) ส่งเลขติดตาม (5S) ตัดสต๊อก (7S) และลบข้อมูลเก่า (10A) ซึ่งเป็น Use Case เดียวที่มีการ Delete
+\evidence{หัวข้อ 2.10 และ 2.12}
+\end{q}
+
+\begin{q}{ทำไม 1A และ 10A ไม่อยู่ใน Business Process}
+\ans
+1A เข้าสู่ระบบเป็นเงื่อนไขก่อนเริ่มทุกขั้นตอน ส่วน 10A เป็นงานดูแลระบบที่ทำเป็นระยะ ไม่ได้ผูกกับการรับส่งคำสั่งซื้อ จึงเขียนเหตุผลไว้ใต้ตารางจับคู่ BP กับ UC
+\evidence{หัวข้อ 2.7}
+\end{q}
+
+\begin{q}{object ที่ติดกับ actor ใน Sequence Diagram คืออะไร \must}
+\ans
+เป็นหน้าจอทุกตัว เช่น LoginScreen หรือ ReorderDecisionScreen ไม่ใช้ชื่อ View และทุก diagram ต่อฐานข้อมูลผ่าน DBConnector เรามีสคริปต์ check\_diagrams.py ตรวจทุก diagram ว่า Admin ไม่ส่งข้อความตรงไปที่ controller และ object ใน Collaboration ตรงกับ Sequence
+\end{q}
+
+\begin{q}{เลข query อ่านอย่างไร}
+\ans
+Q ตามด้วยเลข Use Case และลำดับในขั้นตอน เช่น Q3A.1 คือ query แรกของ Use Case 3A เลขเดียวกันใช้ใน Use Case Description, Sequence Diagram, ER Diagram พร้อม Query, Query Table และคอมเมนต์ในโค้ด
+\end{q}
+
+\begin{q}{Class Diagram มีความสัมพันธ์แบบไหนบ้าง}
+\ans
+มีครบ 4 แบบ สืบทอดจาก BaseScreen, BaseController และ BaseRepository, association จากหน้าจอไปที่ Controller, dependency จาก Controller ไปที่ Repository และ aggregation ระหว่าง Repository กับ DBConnector
+\evidence{รูป Class Diagram 7 รูปในหัวข้อ 2.14}
+\end{q}
+
+\begin{q}{State Diagram บอก SQL อย่างไร}
+\ans
+ทุกเส้นเขียนเป็น [เงื่อนไข] event / Use Case และกำกับเลข query ที่ UPDATE ค่า order\_status เช่น จากรอตรวจสอบคำสั่งซื้อไปรอจับคู่กฎ SKU ใช้ Q2A.4
+\end{q}
+
+\begin{q}{ER มี M:N ไหม total participation ดูตรงไหน}
+\ans
+ไม่มี M:N ทุก relationship เป็น 1:1 หรือ 1:N เส้นคู่คือ total participation เช่น ใบปะทุกใบต้องมี Order ส่วนเส้นเดี่ยวคือ partial เช่น Order ไม่จำเป็นต้องมีคำสั่งซื้อเติมสต๊อก
+\evidence{หัวข้อ 2.18}
+\end{q}
+
+\begin{q}{ทำไม ER แบ่งเป็นหลายรูป}
+\ans
+ตาราง orders มี 34 คอลัมน์ ถ้ารวมทุก attribute ไว้ในรูปเดียวจะอ่านไม่ออกในกระดาษ A4 จึงมีรูปภาพรวมที่แสดงทุก entity และ relationship แล้วแยกรายละเอียด attribute เป็น 3 ส่วน
+\end{q}
+
+% ================================================================ คนที่ 3
+\speaker{sC}{\speakerC}{SQL ฐานข้อมูล เว็บ การทดสอบ}
+
+\begin{q}{SQL รันจริงหรือเปล่า ผลดูตรงไหน \must}
+\ans
+รันจริง เราสร้างฐานข้อมูล PostgreSQL 15 ตารางพร้อมข้อมูลตัวอย่าง แล้วรันทั้ง \num{63 คำสั่ง} ผ่านครบ แต่ละคำสั่งรันแยกจากข้อมูลตั้งต้นชุดเดียวกัน คำสั่งที่แก้ข้อมูลแสดงข้อมูลหลังรันด้วย
+\evidence{หัวข้อ 2.25 และไฟล์ sql/schema.sql, seed.sql}
+\end{q}
+
+\begin{q}{ทำไม SQL ไม่ใช้ JOIN ซับซ้อน}
+\ans
+เกณฑ์ของวิชาให้ใช้ SQL ที่อ่านเข้าใจง่าย เราจึงแตกเป็นคำสั่งสั้น ๆ หลายข้อ เช่น 10A แยก query ของต้นทุน ใบปะ และคำสั่งซื้อเติมสต๊อกออกจากกัน
+\end{q}
+
+\begin{q}{ตอนนี้เว็บต่อฐานข้อมูลจริงหรือยัง}
+\ans
+หน้าจอทั้ง 12 หน้าใช้ข้อมูลตัวอย่างชุดเดียวกับฐานข้อมูลที่รัน SQL และเก็บใน localStorage ระหว่างพัฒนา โครงสร้างข้อมูลตรงกับ schema ทุกคอลัมน์ ขั้นต่อไปคือเปลี่ยนไปต่อ PostgreSQL จริงที่ไฟล์เดียว
+\end{q}
+
+\begin{q}{ทดสอบกรณีระบบภายนอกล่มอย่างไร \must}
+\ans
+มีหน้า /dev ที่ไม่อยู่ในเมนู ใช้จำลองข้อผิดพลาดตามทางเลือกของแต่ละ Use Case เช่น Rakuten เชื่อมต่อไม่ได้ หรือเครื่องพิมพ์ไม่พร้อม แล้วดูว่าระบบแสดงข้อความตรงกับ Use Case Description คำต่อคำ ทดสอบ \num{34 กรณี} ผ่านทุกกรณี
+\evidence{หัวข้อ 2.26}
+\end{q}
+
+\begin{q}{ต้นทุนต่อหน่วยคำนวณอย่างไร}
+\ans
+Unit Cost = ((purchase\_price × exchange\_rate) + intl\_freight + duty\_fee) / order\_qty + marketplace\_fee + domestic\_shipping + rsl\_charge ตามสูตร Q4S.2 เช่น FSH-MLR-240 ได้ \num{418.61} ผลบันทึกใน cost\_calculation\_log ด้วย Q4S.3
+\end{q}
+
+\begin{q}{ถ้าจะขยายไป Amazon ต้องแก้อะไร}
+\ans
+เพิ่มค่าช่องทางขายและกฎ SKU ของช่องทางใหม่ในตาราง sku\_rules และ shipping\_rules ส่วน Use Case เดิมใช้ได้เพราะออกแบบให้ทุกตารางมี sales\_channel อยู่แล้ว
+\end{q}
+
+\end{document}
