@@ -221,8 +221,8 @@ const TBL = { fontFace: FONT, color: TEXT, border: { type: "solid", pt: 0.5, col
 // 10 Class diagram
 {
   const s = content("Class diagram", "Screen → Controller → Repository → DBConnector", "03 Design");
-  figure(s, DB("class-4.png"), M, 1.5, 12.23, 5.45, "คำนวณต้นทุนและสั่งซื้อเติม (4/8)");
-  s.addNotes("Class Diagram ได้จาก object ทุกตัวใน Sequence Diagram แบ่งเป็น 7 รูปตามกลุ่มงาน มีความสัมพันธ์ครบ 4 แบบ สืบทอด association dependency และ aggregation");
+  figure(s, DB("class-6.png"), M, 1.5, 12.23, 5.45, "คำนวณต้นทุน (6/15)");
+  s.addNotes("Class Diagram ได้จาก object ทุกตัวใน Sequence Diagram แบ่งเป็น 15 รูปตามกลุ่มงาน มีความสัมพันธ์ครบ 4 แบบ สืบทอด association dependency และ aggregation");
 }
 
 // 11 State diagram
