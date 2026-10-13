@@ -4,7 +4,7 @@
 1. ข้อความจาก Admin ต้องไปที่หน้าจอ (:*Screen) หรือคน/ระบบภายนอก ห้ามตรงไปที่ controller
 2. object ใน collaboration ต้องตรงกับ sequence
 3. ทุกเส้นใน collaboration มีเลขกำกับ
-4. query ทุกข้อของ UC (จาก report/content/usecases.json) ต้องอยู่ในทั้งสองรูป
+4. query ทุกข้อของ UC (จาก report-doc/content/usecases.json) ต้องอยู่ในทั้งสองรูป
 """
 import json
 import os
@@ -13,7 +13,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MMD = os.path.join(HERE, "mmd")
-UCS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "01418321-final-project", "report", "content", "usecases.json")
+UCS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "01418321-final-project", "report-doc", "content", "usecases.json")
 
 
 def queries_by_uc():
