@@ -108,6 +108,18 @@
         <mxCell id="IUlDWHCtPdss1lOngHSO-42" parent="lane-adm" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1BA1E2;fontStyle=1;fontSize=13;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="8A" vertex="1">
           <mxGeometry height="24" width="46" x="261" y="2146" as="geometry" />
         </mxCell>
+        <mxCell id="ring-4a" parent="lane-adm" style="ellipse;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#1BA1E2;strokeWidth=2;dashed=1;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="" vertex="1">
+          <mxGeometry height="118" width="278" x="141" y="346" as="geometry" />
+        </mxCell>
+        <mxCell id="ring-4a-label" parent="lane-adm" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1BA1E2;fontStyle=1;fontSize=13;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="4A" vertex="1">
+          <mxGeometry height="24" width="46" x="412" y="346" as="geometry" />
+        </mxCell>
+        <mxCell id="ring-2a" parent="lane-adm" style="ellipse;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#1BA1E2;strokeWidth=2;dashed=1;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="" vertex="1">
+          <mxGeometry height="118" width="278" x="141" y="486" as="geometry" />
+        </mxCell>
+        <mxCell id="ring-2a-label" parent="lane-adm" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1BA1E2;fontStyle=1;fontSize=13;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="2A" vertex="1">
+          <mxGeometry height="24" width="46" x="412" y="486" as="geometry" />
+        </mxCell>
         <mxCell id="lane-sys" parent="1" style="swimlane;html=1;startSize=40;horizontal=1;fillColor=#D5E8D4;strokeColor=#000000;fontStyle=1;fontSize=15;swimlaneFillColor=#D5E8D4;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="ระบบ (System)" vertex="1">
           <mxGeometry height="2620" width="560" x="980" as="geometry" />
         </mxCell>
