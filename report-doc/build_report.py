@@ -12,6 +12,7 @@ import re
 import struct
 import sys
 
+from docx.text.paragraph import Paragraph
 from docx import Document
 from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -81,7 +82,7 @@ def set_font(style, size, bold=False):
 S = doc.styles
 set_font(S["Normal"], 16)
 S["Normal"].paragraph_format.space_after = Pt(0); S["Normal"].paragraph_format.line_spacing = 1.0
-for name, size, before, after in (("Heading 1", 20, 12, 6), ("Heading 2", 18, 10, 4), ("Heading 3", 16, 8, 2), ("Title", 22, 0, 0)):
+for name, size, before, after in (("Heading 1", 20, 18, 10), ("Heading 2", 18, 18, 8), ("Heading 3", 16, 14, 6), ("Title", 22, 0, 0)):
     set_font(S[name], size, True)
     pf = S[name].paragraph_format; pf.space_before = Pt(before); pf.space_after = Pt(after); pf.keep_with_next = True
 set_font(S["Caption"], 16, True); S["Caption"].font.italic = False
@@ -153,10 +154,14 @@ def rich(par, text, size=None, bold=False):
         else: run(par, part, bold, size)
 
 
+BODY_LINE = 1.15
+
+
 def P(text, indent=True, align="j"):
     p = doc.add_paragraph()
     p.alignment = {"j": WD_ALIGN_PARAGRAPH.THAI_JUSTIFY, "c": WD_ALIGN_PARAGRAPH.CENTER, "l": WD_ALIGN_PARAGRAPH.LEFT}[align]
     if indent: p.paragraph_format.first_line_indent = Inches(0.5)
+    p.paragraph_format.space_after = Pt(6); p.paragraph_format.line_spacing = BODY_LINE
     rich(p, text); return p
 
 
@@ -167,6 +172,7 @@ def LI(text, marker="•", level=0):
     p = doc.add_paragraph(); pf = p.paragraph_format
     pf.left_indent = Inches(0.85 + 0.4 * level); pf.first_line_indent = Inches(-0.35)
     p.alignment = WD_ALIGN_PARAGRAPH.LEFT; pf.tab_stops.add_tab_stop(Inches(0.85 + 0.4 * level))
+    pf.space_after = Pt(4); pf.line_spacing = BODY_LINE
     rich(p, f"{marker}\t{text}"); return p
 
 
@@ -197,25 +203,49 @@ state = {"landscape": False}
 
 def set_orientation(landscape):
     if state["landscape"] == landscape: return
+    # ย่อ paragraph ว่างท้าย section (บรรทัดเว้นหลังตาราง และตัวที่ถือ section break) ให้เหลือ 1pt
+    # ไม่งั้นถ้าหน้าก่อนเต็มพอดีจะได้หน้าว่าง
+    tail = doc.element.body.xpath("./w:p[last()]")
     s = doc.add_section(WD_SECTION.NEW_PAGE)
+    for el in [e for e in tail if not e.xpath(".//w:t|.//w:drawing")] + doc.element.body.xpath("./w:p[last()]"):
+        pf = Paragraph(el, doc._body).paragraph_format
+        pf.space_before = pf.space_after = Pt(0); pf.line_spacing = Pt(1)
     s.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
     s.page_width, s.page_height = (Cm(29.7), Cm(21)) if landscape else (Cm(21), Cm(29.7))
-    state["landscape"] = landscape
+    state["landscape"] = landscape; _pb["on"] = False
 
 
 fig_no = {"n": {}}
 
 
-def FIG(path, caption, chapter, max_h=8.2, width=6.27, as_table=False):
+def best_landscape(path):
+    """รูปนี้วางแนวนอนแล้วใหญ่กว่าแนวตั้งหรือไม่"""
+    w, h = png_size(path)
+    return min(9.0 / w, 5.4 / h) > 1.1 * min(6.27 / w, 7.8 / h)
+
+
+def natural_w(path):
+    """ความกว้างสูงสุดของรูปจาก mermaid (scale 2, ตัวอักษร 16px) ไม่ให้ตัวอักษรใหญ่เกิน 10pt"""
+    return png_size(path)[0] / 2 * 10 / 16 / 72
+
+
+def AFIG(path, caption, chapter, **kw):
+    """ใส่รูปเต็มหน้า เลือกแนวกระดาษตามสัดส่วนรูป"""
+    set_orientation(best_landscape(path))
+    return FIG(path, caption, chapter, **{"max_h": 7.8, "land_h": 5.6, **kw})
+
+
+def FIG(path, caption, chapter, max_h=8.2, width=6.27, as_table=False, land_h=5.4, max_w=None):
     """as_table=True : รูปที่เป็นตาราง (CRUD) ใส่คำบรรยายแบบตารางไว้เหนือรูป"""
     if not os.path.exists(path):
         P(f"[ไม่พบรูป {os.path.basename(path)}]", indent=False, align="c"); return None
     if as_table: cap = CAPTION("ตารางที่", caption, chapter, tab_no)
     w, h = png_size(path)
-    mw, mh = (9.0, 5.6) if state["landscape"] else (width, max_h)
-    scale = min(mw / w, mh / h)
+    mw, mh = (9.0, land_h) if state["landscape"] else (width, max_h)
+    scale = min(mw / w, mh / h, (max_w or mw) / w)
     p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.keep_with_next = not as_table
+    p.paragraph_format.space_before = Pt(4 if as_table else 10)
     p.add_run().add_picture(shrink(path), width=Inches(w * scale))
     if as_table: doc.add_paragraph(); return cap
     return CAPTION("รูปที่", caption, chapter, fig_no)
@@ -224,8 +254,8 @@ def FIG(path, caption, chapter, max_h=8.2, width=6.27, as_table=False):
 def CAPTION(kind, caption, chapter, counter):
     k = counter["n"].get(chapter, 0) + 1; counter["n"][chapter] = k
     c = doc.add_paragraph(style="Caption"); c.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    if kind == "รูปที่": c.paragraph_format.space_after = Pt(6)
-    else: c.paragraph_format.space_before = Pt(8); c.paragraph_format.keep_with_next = True
+    if kind == "รูปที่": c.paragraph_format.space_before = Pt(6); c.paragraph_format.space_after = Pt(14)
+    else: c.paragraph_format.space_before = Pt(12); c.paragraph_format.space_after = Pt(4); c.paragraph_format.keep_with_next = True
     run(c, f"{kind} {chapter}-{k} {caption}")
     return f"{chapter}-{k}"
 
@@ -247,9 +277,20 @@ def cell_text(cell, text, size, bold=False):
         rich(par, line.strip(), size, bold)
 
 
-def TABLE(rows, widths, caption, chapter, size=14, header_fill="1868DB"):
+def cell_margins(tb, v, h):
+    """ระยะห่างข้อความกับเส้นตาราง หน่วย twip"""
+    tblPr = tb._tbl.tblPr; mar = OxmlElement("w:tblCellMar")
+    for side, val in (("top", v), ("left", h), ("bottom", v), ("right", h)):
+        e = OxmlElement(f"w:{side}"); e.set(qn("w:w"), str(val)); e.set(qn("w:type"), "dxa"); mar.append(e)
+    look = tblPr.find(qn("w:tblLook"))
+    if look is not None: look.addprevious(mar)
+    else: tblPr.append(mar)
+
+
+def TABLE(rows, widths, caption, chapter, size=14, header_fill="1868DB", pad=50):
     CAPTION("ตารางที่", caption, chapter, tab_no)
     tb = doc.add_table(rows=len(rows), cols=len(widths)); tb.style = "Table Grid"
+    cell_margins(tb, pad, 110)
     tb.alignment = WD_TABLE_ALIGNMENT.CENTER; tb.autofit = False
     for c, wd in enumerate(widths): tb.columns[c].width = Inches(wd)
     for r, row in enumerate(rows):
@@ -401,7 +442,8 @@ for t in ch2.BP_UC_NOTES: P(t)
 H(2, "2.8 Use Case Diagram ก่อนปรับปรุง")
 FIG(BP_IMG("2.8-use-case-diagram-as-is.png"), "Use Case Diagram ก่อนปรับปรุง", 2)
 H(2, "2.9 CRUD Table ก่อนปรับปรุง")
-FIG(BP_IMG("2.9-crud-table-as-is.png"), "CRUD Table ก่อนปรับปรุง", 2, as_table=True)
+TABLE(ch2.CRUD_ASIS, (0.6, 2.37, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55), "CRUD Table ก่อนปรับปรุง", 2, size=12)
+P(ch2.CRUD_ASIS_NOTE, indent=False, align="l")
 H(2, "2.10 คำอธิบาย CRUD Table ก่อนปรับปรุง")
 for t in ch2.CRUD_ASIS_DESC: P(t)
 H(2, "2.11 Use Case Diagram ที่ทบทวนปรับปรุงแล้ว")
@@ -418,7 +460,7 @@ rows = [head]
 for uc in UCS:
     cells = CRUD["crud"].get(uc["id"], {"cells": {}})["cells"]
     rows.append([f"{uc['id']} {uc['name']}"] + [cells.get(t, "") for t in tables])
-TABLE(rows, [1.9] + [round(7.5 / len(tables), 2)] * len(tables), "CRUD Table ที่ทบทวนแล้ว (สร้างจาก SQL ใน Use Case Description)", 2, size=10)
+TABLE(rows, [2.6] + [round(7.0 / len(tables), 2)] * len(tables), "CRUD Table ที่ทบทวนแล้ว (สร้างจาก SQL ใน Use Case Description)", 2, size=10, pad=15)
 set_orientation(False)
 
 # ------------------------------------------------------------------ 2.13
@@ -435,56 +477,60 @@ for uc in UCS:
     n += 1; H(3, f"2.13.{n} Use Case Description ที่ {uid}: {uname}")
     for label, key in (("Goal", "goal"), ("Pre-Condition", "pre"), ("Post-Condition", "post"), ("Actor", "actor")):
         p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.LEFT; rich(p, f"**{label}:** {uc[key]}")
+        p.paragraph_format.space_after = Pt(4); p.paragraph_format.line_spacing = BODY_LINE
     TABLE([("ลำดับ", "User Action", "System Response")] + uc["steps"], (0.75, 1.75, 3.77),
           f"Use Case Description ที่ {uid}: {uname}", 2, size=13)
+    seq, col = DIA_IMG(f"{uid}-sequence.png"), DIA_IMG(f"{uid}-collaboration.png")
+    set_orientation(best_landscape(seq))
     n += 1; H(3, f"2.13.{n} Sequence Diagram ของ Use Case Description ที่ {uid}")
-    FIG(DIA_IMG(f"{uid}-sequence.png"), f"Sequence Diagram ของ Use Case Description ที่ {uid}", 2)
+    FIG(seq, f"Sequence Diagram ของ Use Case Description ที่ {uid}", 2, max_h=7.6, land_h=5.2, max_w=natural_w(seq))
+    set_orientation(False)
     n += 1; H(3, f"2.13.{n} Collaboration Diagram ของ Use Case Description ที่ {uid}")
-    FIG(DIA_IMG(f"{uid}-collaboration.png"), f"Collaboration Diagram ของ Use Case Description ที่ {uid}", 2)
+    FIG(col, f"Collaboration Diagram ของ Use Case Description ที่ {uid}", 2, max_h=6.6, max_w=natural_w(col))
     n += 1; H(3, f"2.13.{n} User Interface ของ Use Case Description ที่ {uid}")
     if uid in UI: FIG(PLT_IMG(f"ui/{UI[uid]}.png"), f"User Interface ของ Use Case Description ที่ {uid} ({UI[uid].split('-')[-1]})", 2)
     else: P("Use Case นี้ระบบทำเองโดยไม่มีหน้าจอของตัวเอง ผลการทำงานแสดงเป็นข้อความแจ้งเตือนในหน้าที่ Admin เปิดอยู่")
     page_break()
 
 # ------------------------------------------------------------------ 2.14-2.19
+CLASS_PARTS = ["เข้าสู่ระบบ", "รับและตรวจสอบคำสั่งซื้อ", "จัดการสินค้าและสต๊อก", "คำนวณต้นทุนและสั่งซื้อเติม",
+               "จัดการใบปะ", "จัดส่งและแจ้งเลขติดตาม", "ลบข้อมูลเก่า", "คลาสข้อมูล (Entity)"]
+set_orientation(best_landscape(DB_IMG("class-1.png")))
 H(2, "2.14 Class Diagram")
 for t in ch2.DB_TEXT["2.14"]: P(t)
-CLASS_PARTS = ["เข้าสู่ระบบ", "รับและตรวจสอบคำสั่งซื้อ", "จัดการสินค้าและสต๊อก", "คำนวณต้นทุนและสั่งซื้อเติม",
-               "จัดการใบปะและจัดส่ง", "ลบข้อมูลเก่า", "คลาสข้อมูล (Entity)"]
-set_orientation(True)
 for i, title in enumerate(CLASS_PARTS, 1):
-    FIG(DB_IMG(f"class-{i}.png"), f"Class Diagram กลุ่ม{title} ({i}/{len(CLASS_PARTS)})", 2)
+    AFIG(DB_IMG(f"class-{i}.png"), f"Class Diagram กลุ่ม{title} ({i}/{len(CLASS_PARTS)})", 2, land_h=3.3 if i == 1 else 5.6)
 set_orientation(False)
 
 H(2, "2.15 Data Flow Diagram")
 for t in ch2.DB_TEXT["2.15"]: P(t)
 FIG(DB_IMG("dfd-context.png"), "Context Diagram ของระบบ", 2)
-set_orientation(True)
-FIG(DB_IMG("dfd-level0.png"), "Data Flow Diagram Level 0", 2)
+AFIG(DB_IMG("dfd-level0.png"), "Data Flow Diagram Level 0", 2)
 set_orientation(False)
 
 H(2, "2.16 State Diagram ของ Order")
 for t in ch2.DB_TEXT["2.16"]: P(t)
-FIG(DB_IMG("state.png"), "State Diagram ของ Order (Order.order_status)", 2, max_h=7.6)
+FIG(DB_IMG("state-1.png"), "State Diagram ของ Order ก่อนจัดส่ง (1/2)", 2, max_h=6.6, max_w=natural_w(DB_IMG("state-1.png")))
+FIG(DB_IMG("state-2.png"), "State Diagram ของ Order ช่วงจัดส่ง (2/2)", 2, max_h=7.8, max_w=natural_w(DB_IMG("state-2.png")))
 
-set_orientation(True)
+page_break()
 H(2, "2.17 Component Diagram")
 for t in ch2.DB_TEXT["2.17"]: P(t)
-FIG(DB_IMG("component.png"), "Component Diagram ของระบบ", 2)
+FIG(DB_IMG("component.png"), "Component Diagram ของระบบ", 2, max_h=7.0)
 
 page_break()
 H(2, "2.18 ER Diagram")
 for t in ch2.DB_TEXT["2.18"]: P(t)
-FIG(DB_IMG("er-0.png"), "ER Diagram ภาพรวมของระบบ", 2)
+FIG(DB_IMG("er-0.png"), "ER Diagram ภาพรวมของระบบ", 2, max_h=6.8)
 ER_PARTS = ["คำสั่งซื้อ (ORDERS)", "ผู้ใช้ การจัดส่ง และบันทึกการลบ", "สินค้า สต๊อก ต้นทุน และการสั่งซื้อเติม"]
 for i, title in enumerate(ER_PARTS, 1):
-    FIG(DB_IMG(f"er-{i}.png"), f"ER Diagram ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
+    AFIG(DB_IMG(f"er-{i}.png"), f"ER Diagram ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
 
-page_break()
+set_orientation(best_landscape(DB_IMG("er-query-1.png")))
 H(2, "2.19 ER Diagram พร้อม Query")
 for t in ch2.DB_TEXT["2.19"]: P(t)
 for i, title in enumerate(ER_PARTS, 1):
-    FIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
+    AFIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2, land_h=4.0 if i == 1 else 5.6)
 set_orientation(False)
 
 # ------------------------------------------------------------------ 2.20 Query Table
@@ -503,7 +549,7 @@ for i, d in enumerate(DICT, 1):
     rows = [("No.", "Attribute", "Description", "Data Type", "Key", "Not Null", "ช่วงข้อมูล / การตรวจสอบ")]
     for c in d["columns"]:
         rows.append((str(c["no"]), c["name"], c["desc"], c["type"], c["key"], c["notnull"], c["range"]))
-    TABLE(rows, (0.4, 1.15, 1.45, 0.95, 0.75, 0.55, 1.02), f"Data Dictionary ของ{d['title']}", 2, size=11)
+    TABLE(rows, (0.35, 1.05, 1.3, 0.9, 0.65, 0.5, 1.52), f"Data Dictionary ของ{d['title']}", 2, size=11)
     fields, sample = d["sample"]["fields"], d["sample"]["rows"]
     for k in range(0, len(fields), 6):
         cols = fields[k:k + 6]
