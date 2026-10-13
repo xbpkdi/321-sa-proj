@@ -6,15 +6,15 @@ Actor 4 ตัว: เจ้าของ, Delivery, Marketplace, Supplier.
 
 ## อ่านอะไรก่อน
 1. `00-project-docs/biz-requirement.md` — requirement จริง (source of truth)
-2. `01418321-final-project/report/รายละเอียดของคะแนนโครงงาน.xlsx` — เกณฑ์ให้คะแนน 36 ข้อ
+2. `01418321-final-project/report-doc/รายละเอียดของคะแนนโครงงาน.xlsx` — เกณฑ์ให้คะแนน 36 ข้อ
 3. `sa-ref.pdf` (72MB) — รายงานตัวอย่าง เลขหน้า PDF = เลขหน้าพิมพ์ + 18 เปิดเฉพาะ `pages` ที่ต้องการ
 
 ## แผนที่ไฟล์
-เนื้อหาเล่มทั้งหมดเขียนลง Word ผ่าน `01418321-final-project/report/` (repo แยก) ไม่มีไฟล์ md ของเนื้อหาแล้ว
-- `report/build_report.py` — สร้าง .docx, `report/export_pdf.sh` — สร้างทั้งเล่ม + อัปเดตสารบัญ + PDF ผ่าน Word
-- `report/content/ch1.py` — บทคัดย่อ + บทที่ 1, `content/ch2.py` — ข้อความ/ตารางบทที่ 2
-- `report/content/usecases.json` — Use Case Description ทั้ง 17 UC (source of truth ของ query `Q<UC>.n`)
-- `report/content/tables.json` — คำอธิบายตารางและ attribute สำหรับ 2.21
+เนื้อหาเล่มทั้งหมดเขียนลง Word ผ่าน `01418321-final-project/report-doc/` (repo แยก) ไม่มีไฟล์ md ของเนื้อหาแล้ว
+- `report-doc/build_report.py` — สร้าง .docx, `report-doc/export_pdf.sh` — สร้างทั้งเล่ม + อัปเดตสารบัญ + PDF ผ่าน Word
+- `report-doc/content/ch1.py` — บทคัดย่อ + บทที่ 1, `content/ch2.py` — ข้อความ/ตารางบทที่ 2
+- `report-doc/content/usecases.json` — Use Case Description ทั้ง 17 UC (source of truth ของ query `Q<UC>.n`)
+- `report-doc/content/tables.json` — คำอธิบายตารางและ attribute สำหรับ 2.21
 - `02-chapter2-business-process/src/*(fixed).drawio.xml` = ต้นฉบับ BP/UC, `img/final/` = รูปส่งเล่ม, `img/old/` = เก่า ไม่ต้องดู
 - `03-chapter2-use-case-descriptions/diagrams/mmd/*.mmd` = sequence/collab, `png/` = ผล render, `check_diagrams.py` = ตรวจตามเกณฑ์
 - `04-chapter2-diagrams-database/` — `npm i` แล้ว
@@ -25,7 +25,7 @@ Actor 4 ตัว: เจ้าของ, Delivery, Marketplace, Supplier.
 - `05-chapter2-platform-testing/img/` — รูปหน้าจอ/รายงาน/ผลทดสอบ จับจากเว็บจริง
 
 ## ลำดับการสร้างเล่มใหม่
-แก้ query ใน usecases.json → `npm run sql && npm run dict` → `python3 diagrams/gen_diagrams.py && npm run diagrams` → render mmd ที่แก้ → `python3 03-chapter2-use-case-descriptions/diagrams/check_diagrams.py` → `./01418321-final-project/report/export_pdf.sh`
+แก้ query ใน usecases.json → `npm run sql && npm run dict` → `python3 diagrams/gen_diagrams.py && npm run diagrams` → render mmd ที่แก้ → `python3 03-chapter2-use-case-descriptions/diagrams/check_diagrams.py` → `./01418321-final-project/report-doc/export_pdf.sh`
 
 ## ประหยัด token
 - ห้ามเปิด `.png`/`.pdf` ถ้าไม่ได้ถูกขอให้ดูภาพ — ใช้ `.mmd`/`.drawio.xml`/`.json` แทน
