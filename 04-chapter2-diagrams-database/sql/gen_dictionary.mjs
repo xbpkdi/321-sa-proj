@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
 const at = (p) => new URL(p, import.meta.url);
-const CONTENT = "../../01418321-final-project/report-doc/content/";
+const CONTENT = "../../report-doc/content/";
 const UCS = JSON.parse(readFileSync(at(CONTENT + "usecases.json"), "utf8"));
 // คำอธิบายตารางและ attribute
 const DESC = JSON.parse(readFileSync(at(CONTENT + "tables.json"), "utf8"));

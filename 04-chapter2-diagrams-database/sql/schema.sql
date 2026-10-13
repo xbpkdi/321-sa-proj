@@ -1,5 +1,5 @@
 -- ฐานข้อมูลระบบหลังบ้าน Colorado (PostgreSQL)
--- ชื่อตารางและคอลัมน์ตรงกับ query ใน 01418321-final-project/report-doc/content/usecases.json
+-- ชื่อตารางและคอลัมน์ตรงกับ query ใน report-doc/content/usecases.json
 
 CREATE SEQUENCE orders_seq START 24191;
 CREATE SEQUENCE purchase_orders_seq START 13;

@@ -13,7 +13,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MMD = os.path.join(HERE, "mmd")
-UCS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "01418321-final-project", "report-doc", "content", "usecases.json")
+UCS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "report-doc", "content", "usecases.json")
 
 
 def queries_by_uc():
