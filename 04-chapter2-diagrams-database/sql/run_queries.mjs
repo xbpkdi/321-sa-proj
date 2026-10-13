@@ -6,7 +6,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
-const UCS = JSON.parse(readFileSync(new URL("../../01418321-final-project/report-doc/content/usecases.json", import.meta.url), "utf8"));
+const UCS = JSON.parse(readFileSync(new URL("../../report-doc/content/usecases.json", import.meta.url), "utf8"));
 
 const queries = [];
 for (const uc of UCS)
