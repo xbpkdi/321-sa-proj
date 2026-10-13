@@ -383,9 +383,12 @@ FRONT("สมาชิกในกลุ่ม", toc=False)
 tb = doc.add_table(rows=2, cols=len(MEMBERS)); tb.alignment = WD_TABLE_ALIGNMENT.CENTER
 for c, (sid, nm) in enumerate(MEMBERS):
     ph = tb.cell(0, c).paragraphs[0]; ph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    for _ in range(6): ph.add_run().add_break()
-    run(ph, "[ใส่รูป]")
-    for _ in range(6): ph.add_run().add_break()
+    photo = next((f for f in (os.path.join(HERE, "assets", "members", sid + e) for e in (".jpg", ".jpeg", ".png")) if os.path.exists(f)), None)
+    if photo: ph.add_run().add_picture(photo, width=Inches(1.6))
+    else:
+        for _ in range(6): ph.add_run().add_break()
+        run(ph, "[ใส่รูป]")
+        for _ in range(6): ph.add_run().add_break()
     pn = tb.cell(1, c).paragraphs[0]; pn.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run(pn, nm, size=16); pn.add_run().add_break(); run(pn, f"{sid} {SECTION_NO}", size=16)
 page_break()
@@ -460,7 +463,7 @@ rows = [head]
 for uc in UCS:
     cells = CRUD["crud"].get(uc["id"], {"cells": {}})["cells"]
     rows.append([f"{uc['id']} {uc['name']}"] + [cells.get(t, "") for t in tables])
-TABLE(rows, [2.6] + [round(7.0 / len(tables), 2)] * len(tables), "CRUD Table ที่ทบทวนแล้ว (สร้างจาก SQL ใน Use Case Description)", 2, size=10, pad=15)
+TABLE(rows, [2.7] + [round(6.9 / len(tables), 2)] * len(tables), "CRUD Table ที่ทบทวนแล้ว (สร้างจาก SQL ใน Use Case Description)", 2, size=8, pad=0)
 set_orientation(False)
 
 # ------------------------------------------------------------------ 2.13
@@ -493,8 +496,10 @@ for uc in UCS:
     page_break()
 
 # ------------------------------------------------------------------ 2.14-2.19
-CLASS_PARTS = ["เข้าสู่ระบบ", "รับและตรวจสอบคำสั่งซื้อ", "จัดการสินค้าและสต๊อก", "คำนวณต้นทุนและสั่งซื้อเติม",
-               "จัดการใบปะ", "จัดส่งและแจ้งเลขติดตาม", "ลบข้อมูลเก่า", "คลาสข้อมูล (Entity)"]
+CLASS_PARTS = ["เข้าสู่ระบบ", "รับคำสั่งซื้อและจับคู่ SKU", "ตรวจสอบและยกเลิกคำสั่งซื้อ", "จัดการสินค้า", "ตรวจและตัดสต๊อก",
+               "คำนวณต้นทุน", "ตัดสินใจสั่งซื้อเติม stock", "สั่งซื้อเติม stock จาก supplier", "ส่ง Order เข้า RSL", "จัดการใบปะ",
+               "จัดส่งและแจ้งเลขติดตาม", "ลบข้อมูลเก่า", "คลาสข้อมูลคำสั่งซื้อ (Entity)", "คลาสข้อมูลผู้ใช้และการจัดส่ง (Entity)",
+               "คลาสข้อมูลสินค้าและสต๊อก (Entity)"]
 set_orientation(best_landscape(DB_IMG("class-1.png")))
 H(2, "2.14 Class Diagram")
 for t in ch2.DB_TEXT["2.14"]: P(t)
@@ -526,11 +531,10 @@ ER_PARTS = ["คำสั่งซื้อ (ORDERS)", "ผู้ใช้ ก�
 for i, title in enumerate(ER_PARTS, 1):
     AFIG(DB_IMG(f"er-{i}.png"), f"ER Diagram ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
 
-set_orientation(best_landscape(DB_IMG("er-query-1.png")))
 H(2, "2.19 ER Diagram พร้อม Query")
 for t in ch2.DB_TEXT["2.19"]: P(t)
 for i, title in enumerate(ER_PARTS, 1):
-    AFIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2, land_h=4.0 if i == 1 else 5.6)
+    AFIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
 set_orientation(False)
 
 # ------------------------------------------------------------------ 2.20 Query Table
