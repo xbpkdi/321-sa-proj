@@ -30,13 +30,6 @@ classDiagram
         +openUnmatchedOrderList()
         +selectOrder()
     }
-    class ShipmentScreen {
-        -controller
-        -messages: string[]
-        +clickSendTracking()
-        +confirmHandover()
-        +openReadyToShipList()
-    }
     class LabelFormatterController {
         -labelRepository: LabelRepository
         -orderRepository: OrderRepository
@@ -56,29 +49,6 @@ classDiagram
         -rslRepository: RslRepository
         +matchOrderWithRsl()
         +proceedToUseCase6S()
-    }
-    class ShipmentController {
-        -carrierTrackingRepository: CarrierTrackingRepository
-        -deliveryPartnerRepository: DeliveryPartnerRepository
-        -orderRepository: OrderRepository
-        +checkLabelStatus()
-        +recordHandover()
-    }
-    class TrackingNotifyController {
-        -orderRepository: OrderRepository
-        +proceedToUseCase7S()
-        +sendTrackingNotify()
-        +validateTrackingAndCarrierPresent()
-    }
-    class CarrierTrackingRepository {
-        -db: DBConnector
-        -table: string = "carrier_tracking"
-        +getCarrierStatus()
-    }
-    class DeliveryPartnerRepository {
-        -db: DBConnector
-        -table: string = "delivery_partners"
-        +getTrackingNumber()
     }
     class LabelRepository {
         -db: DBConnector
@@ -133,14 +103,9 @@ classDiagram
     }
     BaseScreen <|-- LabelPrintScreen
     BaseScreen <|-- RslMatchScreen
-    BaseScreen <|-- ShipmentScreen
     BaseController <|-- LabelFormatterController
     BaseController <|-- LabelPrintController
     BaseController <|-- RslMatchController
-    BaseController <|-- ShipmentController
-    BaseController <|-- TrackingNotifyController
-    BaseRepository <|-- CarrierTrackingRepository
-    BaseRepository <|-- DeliveryPartnerRepository
     BaseRepository <|-- LabelRepository
     BaseRepository <|-- OrderRepository
     BaseRepository <|-- RslRepository
@@ -148,8 +113,6 @@ classDiagram
     BaseRepository o-- DBConnector : db
     LabelPrintScreen "1" --> "1" LabelPrintController : uses
     RslMatchScreen "1" --> "1" RslMatchController : uses
-    ShipmentScreen "1" --> "1" ShipmentController : uses
-    ShipmentScreen "1" --> "1" TrackingNotifyController : uses
     LabelFormatterController ..> LabelRepository
     LabelFormatterController ..> OrderRepository
     LabelFormatterController ..> ShippingRuleRepository
@@ -159,7 +122,3 @@ classDiagram
     RslMatchController ..> LabelFormatterController : triggers
     RslMatchController ..> OrderRepository
     RslMatchController ..> RslRepository
-    ShipmentController ..> CarrierTrackingRepository
-    ShipmentController ..> DeliveryPartnerRepository
-    ShipmentController ..> OrderRepository
-    TrackingNotifyController ..> OrderRepository

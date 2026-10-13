@@ -75,7 +75,8 @@ CLASS_GROUPS = [  # แบ่งรูปตามกลุ่มงาน (ต�
     ("รับและตรวจสอบคำสั่งซื้อ", ["4A", "2A", "2S", "7A"]),
     ("จัดการสินค้าและสต๊อก", ["3A", "3S", "7S"]),
     ("คำนวณต้นทุนและสั่งซื้อเติม", ["4S", "5A", "6A"]),
-    ("จัดการใบปะและจัดส่ง", ["1S", "6S", "9A", "8A", "5S"]),
+    ("จัดการใบปะ", ["1S", "6S", "9A"]),
+    ("จัดส่งและแจ้งเลขติดตาม", ["8A", "5S"]),
     ("ลบข้อมูลเก่า", ["10A"]),
 ]
 for n, (title, group) in enumerate(CLASS_GROUPS, 1):
@@ -107,7 +108,8 @@ FK = []
 out = INIT + "classDiagram\n    direction TB\n"
 cname = lambda t: "".join(w.capitalize() for w in t.split("_"))
 for d in DICT:
-    cols = "\n".join(f"        -{c['name']}: {c['type']}" for c in d["columns"])
+    # mermaid มองบรรทัดที่มี () เป็น method จึงใช้วงเล็บ ❨❩ แทนใน type เช่น VARCHAR(10)
+    cols = "\n".join(f"        -{c['name']}: {c['type'].replace('(', '❨').replace(')', '❩')}" for c in d["columns"])
     out += f"    class {cname(d['table'])} {{\n{cols}\n    }}\n"
     for c in d["columns"]:
         for ref in re.findall(r"FK → (\w+)", c["key"]):
@@ -119,7 +121,7 @@ for ref, t, col in FK:
     one = t in ("stock", "product_cost", "delivery_partners", "carrier_tracking")
     out += f"    {cname(ref)} \"1\" -- \"{'1' if one else '0..*'}\" {cname(t)}\n"
 for r, t in REPO_TABLE.items(): pass
-write("class-7.mmd", out)
+write(f"class-{len(CLASS_GROUPS) + 1}.mmd", out)
 
 # ------------------------------------------------------------------ State Diagram ของ Order
 S = OrderedDict()
@@ -150,24 +152,32 @@ T = [
     ("จัดส่งสำเร็จ", "[*]", "[เก่ากว่า 12 เดือน] deleteOldData / 10A (Q10A.6)"),
     ("ยกเลิกแล้ว", "[*]", "[เก่ากว่า 12 เดือน] deleteOldData / 10A (Q10A.6)"),
 ]
-body = ""
-for a, b, lab in T:
-    x = "[*]" if a == "[*]" else st(a)
-    y = "[*]" if b == "[*]" else st(b)
-    body += f"        {x} --> {y} : {lab}\n"
-decl = "".join(f'        state "Order.{n}" as {i}\n' for n, i in S.items())
-write("state.mmd", "%%{init: {'themeVariables': {'fontSize': '15px'}}}%%\nstateDiagram-v2\n    direction TB\n"
-      f'    state "Order (order_status)" as Order {{\n{decl}{body}    }}\n')
+for a, b, _ in T: [st(n) for n in (a, b) if n != "[*]"]
+
+
+def state_mmd(name, title, rows):
+    used = [n for n in S if any(n in (a, b) for a, b, _ in rows)]
+    decl = "".join(f'        state "Order.{n}" as {S[n]}\n' for n in used)
+    body = "".join(f"        {S.get(a, a)} --> {S.get(b, b)} : {lab}\n" for a, b, lab in rows)
+    write(name, "%%{init: {'themeVariables': {'fontSize': '15px'}}}%%\nstateDiagram-v2\n    direction TB\n"
+          f'    state "{title}" as Order {{\n{decl}{body}    }}\n')
+
+
+# รูปรวมใช้ในสไลด์ ในเล่มแบ่ง 2 รูปที่สถานะ "ยังไม่ได้จับคู่" ให้ตัวหนังสืออ่านได้
+SHIP = T.index(next(t for t in T if t[0] == "ยังไม่ได้จับคู่" and t[1] != "ยกเลิกแล้ว"))
+after = [t for t in T[SHIP:] if t[0] != "ยกเลิกแล้ว"]
+state_mmd("state.mmd", "Order (order_status)", T)
+state_mmd("state-1.mmd", "Order (order_status) ก่อนจัดส่ง", [t for t in T if t not in after or t[0] == "ยังไม่ได้จับคู่" and t[1] == "ยกเลิกแล้ว"])
+state_mmd("state-2.mmd", "Order (order_status) ช่วงจัดส่ง", [("[*]", "ยังไม่ได้จับคู่", "ต่อจากรูปก่อนหน้า")] + [t for t in after if t[1] != "ยกเลิกแล้ว"])
 
 # ------------------------------------------------------------------ Component Diagram
-ui = "<br/>".join(screens)
-ct = "<br/>".join(ctrls)
-rp = "<br/>".join(repos)
-write("component.mmd", f"""%%{{init: {{'flowchart': {{'nodeSpacing': 40, 'rankSpacing': 70}}, 'themeVariables': {{'fontSize': '15px'}}}}}}%%
-flowchart LR
+pairs = lambda names: "<br/>".join(", ".join(names[i:i + 2]) for i in range(0, len(names), 2))
+ui, ct, rp = pairs(screens), pairs(ctrls), pairs(repos)
+write("component.mmd", f"""%%{{init: {{'flowchart': {{'nodeSpacing': 40, 'rankSpacing': 55, 'wrappingWidth': 700}}, 'themeVariables': {{'fontSize': '15px'}}}}}}%%
+flowchart TB
     Admin(["Admin"])
     subgraph FE["«component» FrontEnd (Next.js 16, React 19)"]
-        direction TB
+        direction LR
         Pages["«component» Screens<br/>{ui}"]
         UILib["«library» shadcn/ui, Radix UI<br/>TanStack Table, Recharts<br/>Tailwind CSS, Sonner, Lucide"]
     end
@@ -225,6 +235,7 @@ DOUBLE = 'color="black:invis:black"'
 
 
 import math
+import unicodedata
 
 # ตำแหน่ง entity (นิ้ว) วางเองให้เส้นตัดกันน้อย ใช้ทั้งรูปภาพรวมและรูปแยกส่วน
 POS = {
@@ -235,27 +246,37 @@ POS = {
 }
 
 
-def ring(center, n, avoid, r0, half_w):
-    """ตำแหน่ง attribute n ตัวรอบ entity เป็นวงรีซ้อนกัน เลี่ยงทิศที่มีเส้น relationship
-    half_w: ครึ่งความกว้างกล่อง entity (นิ้ว) ใช้ขยายวงด้านข้างไม่ให้ทับกล่อง"""
-    out, k, r = [], 0, r0
-    perim_of = lambda r: math.pi * (3 * (r + half_w + 0.5 + r * 0.85) - math.sqrt((3 * (r + half_w + 0.5) + r * 0.85) * (r + half_w + 0.5 + 3 * r * 0.85)))
-    while perim_of(r) / 1.8 < n + 2 * len(avoid) and r < (7.0 if n > 14 else 3.4):
+vis = lambda s: sum(1 for ch in s if unicodedata.category(ch) != "Mn")  # ไม่นับสระบน/ล่างและวรรณยุกต์
+hit = lambda a, b, pad=0.1: abs(a[0] - b[0]) < (a[2] + b[2]) / 2 + pad and abs(a[1] - b[1]) < (a[3] + b[3]) / 2 + pad
+
+
+def crosses(seg, box, pad=0.14):
+    (x1, y1), (x2, y2) = seg
+    return any(hit((x1 + (x2 - x1) * i / 80, y1 + (y2 - y1) * i / 80, 0, 0), box, pad) for i in range(81))
+
+
+def ring(center, sizes, half_w, taken, lines):
+    """วาง attribute รอบ entity ทีละวง ข้ามจุดที่ทับกล่อง/เส้น relationship หรือ attribute ที่วางไปแล้ว
+    sizes: (กว้าง, สูง) ของแต่ละ attribute  taken: กล่องที่วางแล้วทั้งรูป  lines: เส้น relationship"""
+    def fill(r, placed, left):
+        rx, ry = r + half_w + 0.4, r * 0.85
+        for s in range(360):
+            if not left: break
+            a = math.pi / 2 - 2 * math.pi * s / 360
+            box = (center[0] + rx * math.cos(a), center[1] + ry * math.sin(a), *left[0])
+            if any(hit(box, o) for o in taken + placed) or any(crosses(l, box) for l in lines): continue
+            placed.append(box); left.pop(0)
+    r = 1.0
+    while r <= (3.0 if len(sizes) <= 14 else 6.5):  # วงเดียวถ้าพอ
+        placed, left = [], list(sizes)
+        fill(r, placed, left)
+        if not left: return placed
         r += 0.2
-    while len(out) < n:
-        rx, ry = r + half_w + 0.5, r * 0.85
-        perim = math.pi * (3 * (rx + ry) - math.sqrt((3 * rx + ry) * (rx + 3 * ry)))
-        cap = max(6, int(perim / 1.8))
-        angles = [2 * math.pi * (s + 0.5 * k) / cap for s in range(cap)]
-        near = lambda a, b: abs((a - b + math.pi) % (2 * math.pi) - math.pi) < max(math.pi / cap, 0.24)
-        free = [a for a in angles if not any(near(a, v) for v in avoid)]
-        left = n - len(out)
-        step = max(1, len(free) // left) if left < len(free) else 1
-        take = free[::step][:left]
-        out += [(center[0] + rx * math.cos(a), center[1] + ry * math.sin(a)) for a in take]
-        k += 1
-        r += 1.0
-    return out
+    placed, left, r = [], list(sizes), 3.4
+    while left:
+        fill(r, placed, left)
+        r += 1.5
+    return placed
 
 
 def er(home, mode, scale=1.0, layout=None):
@@ -276,6 +297,22 @@ def er(home, mode, scale=1.0, layout=None):
     shown = set(home) | {r[0] for r in rels} | {r[1] for r in rels}
     P = {t: (x * scale, y * scale) for t, (x, y) in (layout or POS).items()}
     pos = lambda xy: f'pos="{xy[0]:.2f},{xy[1]:.2f}!"'
+    ent_w = lambda t: len(t) * 0.13 + 0.5
+    taken = [(*P[t], ent_w(t), 0.55) for t in shown]
+    lines = [(P[a], P[b]) for a, b, *_ in rels]
+    for i, (a, b, name, card, ta, tb) in enumerate(rels):
+        r = f"rel{i}"
+        ca, cb = card.split(":")
+        f0 = 0.5 if (a in home) == (b in home) else (0.64 if a in home else 0.36)
+        w = max(1.5, vis(name) * 0.15 + 0.4)
+        for f in (f0, f0 - 0.08, f0 + 0.08, f0 - 0.16, f0 + 0.16, f0 - 0.24, f0 + 0.24, f0):
+            mid = (P[a][0] + (P[b][0] - P[a][0]) * f, P[a][1] + (P[b][1] - P[a][1]) * f)
+            box = (*mid, w * 0.8, 0.7)
+            if not any(hit(box, o) for o in taken) and not any(crosses(l, box, 0.05) for j, l in enumerate(lines) if j != i): break
+        taken.append(box)
+        g.append(f'  "{r}" [{pos(mid)}, shape=diamond, style=filled, fillcolor="#fff7d6", label="{name}", fontsize=13, fixedsize=true, width={w:.2f}, height=0.7];')
+        g.append(f'  "{a}" -- "{r}" [label="{ca}"{", " + DOUBLE if ta else ""}];')
+        g.append(f'  "{r}" -- "{b}" [label="{cb}"{", " + DOUBLE if tb else ""}];')
     for d in DICT:
         t = d["table"]
         if t not in shown: continue
@@ -288,35 +325,31 @@ def er(home, mode, scale=1.0, layout=None):
             if mode == "none": continue
             if mode == "query" and not key and c["name"] not in upd[t]: continue
             cols.append(c)
-        avoid = [math.atan2(P[o][1] - P[t][1], P[o][0] - P[t][0]) for a, b, *_ in rels for o in ((b,) if a == t else (a,) if b == t else ())]
         if mode == "query" and by_table[t]: cols.append({"name": "__q", "key": ""})
-        spots = ring(P[t], len(cols), avoid, 1.1, len(t) * 0.055 + 0.15)
-        for c, xy in zip(cols, spots):
+        nodes = []
+        for c in cols:
             nid = f"{t}.{c['name']}"
             if c["name"] == "__q":
                 ids = by_table[t]
-                lines = "<br/>".join(", ".join(ids[i:i + 3]) for i in range(0, len(ids), 3))
-                g.append(f'  "{nid}" [{pos(xy)}, shape=note, color="#c9372c", fontcolor="#c9372c", fontsize=12, label=<{lines}>];')
-                g.append(f'  "{t}" -- "{nid}" [style=dashed, color="#c9372c"];')
+                rows = [", ".join(ids[i:i + 3]) for i in range(0, len(ids), 3)]
+                size = (max(map(len, rows)) * 0.085 + 0.35, len(rows) * 0.2 + 0.25)
+                nodes.append((size, f'  "{nid}" [{{}}, shape=note, color="#c9372c", fontcolor="#c9372c", fontsize=12, fixedsize=true, width={size[0]:.2f}, height={size[1]:.2f}, style=filled, fillcolor=white, label=<{"<br/>".join(rows)}>];\n'
+                                    f'  "{t}" -- "{nid}" [style=dashed, color="#c9372c"];'))
                 continue
             key = c["key"]
             label = f"<<u>{c['name']}</u>>" if "PK" in key else (f"<<i>{c['name']}</i>>" if "FK" in key else f'"{c["name"]}"')
-            extra = ""
+            extra, size = "", (len(c["name"]) * 0.095 + 0.4, 0.42)
             if mode == "query" and c["name"] in upd[t] and "PK" not in key:
                 ids = upd[t][c["name"]]
-                wrap = "<br/>".join(", ".join(ids[i:i + 3]) for i in range(0, len(ids), 3))
-                label = f'<{c["name"]}<br/><font color="#c9372c" point-size="11">{wrap}</font>>'
+                rows = [", ".join(ids[i:i + 3]) for i in range(0, len(ids), 3)]
+                label = f'<{c["name"]}<br/><font point-size="3"> </font><br/><font color="#c9372c" point-size="11">{"<br/>".join(rows)}</font>>'
                 extra = ', color="#c9372c"'
-            g.append(f'  "{nid}" [{pos(xy)}, shape=ellipse, label={label}, fontsize=12, margin="0.04,0.02"{extra}];')
-            g.append(f'  "{t}" -- "{nid}";')
-    for i, (a, b, name, card, ta, tb) in enumerate(rels):
-        r = f"rel{i}"
-        ca, cb = card.split(":")
-        f = 0.5 if (a in home) == (b in home) else (0.64 if a in home else 0.36)
-        mid = (P[a][0] + (P[b][0] - P[a][0]) * f, P[a][1] + (P[b][1] - P[a][1]) * f)
-        g.append(f'  "{r}" [{pos(mid)}, shape=diamond, style=filled, fillcolor="#fff7d6", label="{name}", fontsize=13, fixedsize=true, width={max(1.4, len(name) * 0.09):.2f}, height=0.6];')
-        g.append(f'  "{a}" -- "{r}" [label="{ca}"{", " + DOUBLE if ta else ""}];')
-        g.append(f'  "{r}" -- "{b}" [label="{cb}"{", " + DOUBLE if tb else ""}];')
+                size = (max(len(c["name"]) * 0.095, max(map(len, rows)) * 0.08) + 0.6, 0.56 + len(rows) * 0.2)
+            nodes.append((size, f'  "{nid}" [{{}}, shape=ellipse, style=filled, fillcolor=white, label={label}, fontsize=12, fixedsize=true, width={size[0]:.2f}, height={size[1]:.2f}{extra}];\n'
+                                f'  "{t}" -- "{nid}";'))
+        spots = ring(P[t], [n[0] for n in nodes], ent_w(t) / 2, taken, lines)
+        taken += spots
+        for (size, text), box in zip(nodes, spots): g.append(text.format(pos(box)))
     g.append("}")
     return "\n".join(g) + "\n"
 
@@ -325,8 +358,8 @@ ALL = [d["table"] for d in DICT]
 PART_POS = [
     {**POS, "orders": (0, 0), "products": (0, 10), "sku_rules": (8.5, 8), "purchase_orders": (-8.5, 8), "shipping_rules": (-13, 0),
      "users": (13, 0), "label": (-7.5, -9), "delivery_partners": (7.5, -9)},
-    {**POS, "orders": (0, 0), "shipping_rules": (-7, 0), "users": (8, 0), "label": (-4.5, -6), "delivery_partners": (3, -6),
-     "carrier_tracking": (3, -11.5), "deletion_log": (11, -6), "cost_calculation_log": (8, 6)},
+    {**POS, "orders": (0, 0), "shipping_rules": (-7, 0), "users": (9.5, 0), "label": (-4.5, -6), "delivery_partners": (3, -6),
+     "carrier_tracking": (3, -11.5), "deletion_log": (12.5, -6), "cost_calculation_log": (9.5, 6)},
     {**POS, "products": (0, 0), "stock": (-7, 6.5), "product_cost": (0, 8.5), "rsl_shipments": (7, 6.5), "sku_rules": (9, 0),
      "suppliers": (-9, 0), "purchase_orders": (-6, -6.5), "cost_calculation_log": (6, -6.5), "orders": (0, -10), "users": (10, -10)},
 ]
@@ -335,11 +368,12 @@ ER_PARTS = [
     ["users", "deletion_log", "label", "shipping_rules", "delivery_partners", "carrier_tracking"],
     ["products", "sku_rules", "stock", "product_cost", "cost_calculation_log", "purchase_orders", "suppliers", "rsl_shipments"],
 ]
+ER_SCALE = [1.0, 0.75, 0.8]  # ย่อระยะระหว่าง entity ในรูปที่ attribute น้อย
 write("er-0.dot", er(ALL, "none", 1.0))
 for n, part in enumerate(ER_PARTS, 1):
-    write(f"er-{n}.dot", er(part, "full", 1.0, PART_POS[n - 1]))
+    write(f"er-{n}.dot", er(part, "full", ER_SCALE[n - 1], PART_POS[n - 1]))
 for n, part in enumerate(ER_PARTS, 1):
-    write(f"er-query-{n}.dot", er(part, "query", 1.0, PART_POS[n - 1]))
+    write(f"er-query-{n}.dot", er(part, "query", ER_SCALE[n - 1], PART_POS[n - 1]))
 
 # ------------------------------------------------------------------ Data Flow Diagram
 EXT = 'shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6'
@@ -359,7 +393,7 @@ write("dfd-context.dot", f"""digraph DFD0 {{
 }}
 """)
 write("dfd-level0.dot", f"""digraph DFD1 {{
-  rankdir=TB; nodesep=0.35; ranksep=0.9; node [fontname="Helvetica", fontsize=13]; edge [fontname="Helvetica", fontsize=11];
+  rankdir=LR; nodesep=0.45; ranksep=2.2; node [fontname="Helvetica", fontsize=13]; edge [fontname="Helvetica", fontsize=11];
   Admin [{EXT}, label="Admin"]; RMS [{EXT}, label="Rakuten Ichiba\\n(RMS)"]; RSL [{EXT}, label="RSL"];
   Delivery [{EXT}, label="Delivery"]; Supplier [{EXT}, label="Supplier"];
   P1 [{PROC}, label="1.0\\nเข้าสู่ระบบ\\n(1A)"];
@@ -372,6 +406,7 @@ write("dfd-level0.dot", f"""digraph DFD1 {{
   D4 [{STORE}, label="D4 | stock, rsl_shipments"]; D5 [{STORE}, label="D5 | product_cost, cost_calculation_log"];
   D6 [{STORE}, label="D6 | suppliers, purchase_orders"]; D7 [{STORE}, label="D7 | shipping_rules, label"];
   D8 [{STORE}, label="D8 | delivery_partners, carrier_tracking"]; D9 [{STORE}, label="D9 | deletion_log"];
+  {{rank=min; Admin; RMS; RSL; Delivery; Supplier}} {{rank=same; P1; P2; P3; P4; P5; P6}} {{rank=max; D1; D2; D3; D4; D5; D6; D7; D8; D9}}
   Admin -> P1 [label="อีเมล, รหัสผ่าน"]; P1 -> D1 [label="fail_attempts, last_login"]; D1 -> P1 [label="ข้อมูลผู้ใช้"];
   RMS -> P2 [label="คำสั่งซื้อใหม่"]; Admin -> P2 [label="ยืนยัน/ยกเลิก Order"]; P2 -> D2 [label="Order, สถานะ"];
   D3 -> P2 [label="กฎ SKU"];

@@ -1,5 +1,5 @@
 digraph DFD1 {
-  rankdir=TB; nodesep=0.35; ranksep=0.9; node [fontname="Helvetica", fontsize=13]; edge [fontname="Helvetica", fontsize=11];
+  rankdir=LR; nodesep=0.45; ranksep=2.2; node [fontname="Helvetica", fontsize=13]; edge [fontname="Helvetica", fontsize=11];
   Admin [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Admin"]; RMS [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Rakuten Ichiba\n(RMS)"]; RSL [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="RSL"];
   Delivery [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Delivery"]; Supplier [shape=box, style=filled, fillcolor="#e9f2fe", color="#1868db", penwidth=1.6, label="Supplier"];
   P1 [shape=box, style="rounded,filled", fillcolor="#fff7d6", penwidth=1.4, label="1.0\nเข้าสู่ระบบ\n(1A)"];
@@ -12,6 +12,7 @@ digraph DFD1 {
   D4 [shape=record, style=filled, fillcolor="#f8f8f8", label="D4 | stock, rsl_shipments"]; D5 [shape=record, style=filled, fillcolor="#f8f8f8", label="D5 | product_cost, cost_calculation_log"];
   D6 [shape=record, style=filled, fillcolor="#f8f8f8", label="D6 | suppliers, purchase_orders"]; D7 [shape=record, style=filled, fillcolor="#f8f8f8", label="D7 | shipping_rules, label"];
   D8 [shape=record, style=filled, fillcolor="#f8f8f8", label="D8 | delivery_partners, carrier_tracking"]; D9 [shape=record, style=filled, fillcolor="#f8f8f8", label="D9 | deletion_log"];
+  {rank=min; Admin; RMS; RSL; Delivery; Supplier} {rank=same; P1; P2; P3; P4; P5; P6} {rank=max; D1; D2; D3; D4; D5; D6; D7; D8; D9}
   Admin -> P1 [label="อีเมล, รหัสผ่าน"]; P1 -> D1 [label="fail_attempts, last_login"]; D1 -> P1 [label="ข้อมูลผู้ใช้"];
   RMS -> P2 [label="คำสั่งซื้อใหม่"]; Admin -> P2 [label="ยืนยัน/ยกเลิก Order"]; P2 -> D2 [label="Order, สถานะ"];
   D3 -> P2 [label="กฎ SKU"];

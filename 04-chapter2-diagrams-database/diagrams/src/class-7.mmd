@@ -1,166 +1,85 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
-    direction TB
-    class Users {
-        -user_id: VARCHAR(10)
-        -user_email: VARCHAR(100)
-        -user_password: VARCHAR(100)
-        -fail_attempts: SMALLINT
-        -last_login: TIMESTAMPTZ
+    direction LR
+    class BaseScreen {
+        <<abstract>>
+        #showSuccess()
+        #showError()
     }
-    class Suppliers {
-        -supplier_id: VARCHAR(10)
-        -supplier_name: VARCHAR(100)
-        -contact_info: VARCHAR(150)
-        -lead_time: SMALLINT
+    class BaseController {
+        <<abstract>>
+        #currentUser: User
+        #validate()
     }
-    class Products {
-        -sku: VARCHAR(20)
-        -product_name: VARCHAR(150)
-        -variation: VARCHAR(50)
-        -sales_channel: VARCHAR(30)
-        -supplier_id: VARCHAR(10)
-        -reorder_threshold: INTEGER
-        -reorder_qty: INTEGER
-        -selling_price: NUMERIC(10,2)
-        -active: BOOLEAN
+    class BaseRepository {
+        <<abstract>>
+        #db: DBConnector
+        #executeQuery(queryId, params)
     }
-    class SkuRules {
-        -sku_rule_id: INTEGER
-        -channel_sku: VARCHAR(40)
-        -sales_channel: VARCHAR(30)
-        -sku: VARCHAR(20)
-        -variation: VARCHAR(50)
-        -product_name: VARCHAR(150)
+    class DataCleanupScreen {
+        -controller
+        -messages: string[]
+        +clickConfirmDelete()
+        +openDataCleanupPage()
+        +selectMethod()
+        +submitDateRangeForm()
     }
-    class Stock {
-        -sku: VARCHAR(20)
-        -variation: VARCHAR(50)
-        -in_house_qty: INTEGER
-        -rsl_qty: INTEGER
-        -updated_at: TIMESTAMPTZ
+    class DataCleanupController {
+        -deletionLogRepository: DeletionLogRepository
+        -orderRepository: OrderRepository
+        +executeDeleteByDateRange()
+        +executeDeleteClosedOrders()
+        +previewClosedOrders()
+        +previewDeleteByDateRange()
+        +rollbackTransaction()
+        +validateCutoffAtLeast12Months()
+        +validateDataTypesSelected()
     }
-    class ProductCost {
-        -sku: VARCHAR(20)
-        -purchase_price: NUMERIC(12,2)
-        -currency: CHAR(3)
-        -exchange_rate: NUMERIC(8,4)
-        -intl_freight: NUMERIC(10,2)
-        -duty_fee: NUMERIC(10,2)
-        -marketplace_fee: NUMERIC(10,2)
-        -domestic_shipping: NUMERIC(10,2)
-        -rsl_charge: NUMERIC(10,2)
-        -order_qty: INTEGER
+    class DeletionLogRepository {
+        -db: DBConnector
+        -table: string = "deletion_log"
+        +insertDeletionLog()
     }
-    class CostCalculationLog {
-        -cost_id: INTEGER
-        -sku: VARCHAR(20)
-        -unit_cost: NUMERIC(10,2)
-        -calculated_at: TIMESTAMPTZ
-        -calculated_by: VARCHAR(10)
+    class OrderRepository {
+        -db: DBConnector
+        -table: string = "orders"
+        +bindSkuRuleAndUpdateStatus()
+        +checkAlreadyPrinted()
+        +checkDuplicate()
+        +checkLabelStatus()
+        +checkStatus()
+        +deleteClosedOrders()
+        +deleteRecords()
+        +getChannelInfo()
+        +getClosedOrders()
+        +getCostAndMarginInfo()
+        +getDeletableRecords()
+        +getOrderDetail()
+        +getOrdersByStatus()
+        +getShippingInfo()
+        +getStatus()
+        +linkOrders()
+        +markPendingSync()
+        +markStockDeductedAndCompleted()
+        +markTrackingNotified()
+        +saveOrder()
+        +saveRslMatch()
+        +setManualReview()
+        +updateDispatched()
+        +updateOrderStatus()
+        +updateStatus()
+        +updateStatusCancelled()
+        +updateStatusIfChanged()
     }
-    class PurchaseOrders {
-        -po_id: VARCHAR(12)
-        -sku: VARCHAR(20)
-        -supplier_id: VARCHAR(10)
-        -order_qty: INTEGER
-        -order_date: TIMESTAMPTZ
-        -eta: TIMESTAMPTZ
-        -status: VARCHAR(20)
+    class DBConnector {
+        -pool: Pool
+        +executeQuery()
     }
-    class ShippingRules {
-        -rule_id: INTEGER
-        -shipping_method: VARCHAR(30)
-        -sales_channel: VARCHAR(30)
-        -label_template: VARCHAR(30)
-    }
-    class Orders {
-        -order_id: VARCHAR(12)
-        -marketplace_order_id: VARCHAR(30)
-        -sales_channel: VARCHAR(30)
-        -order_date: TIMESTAMPTZ
-        -channel_sku: VARCHAR(40)
-        -sku: VARCHAR(20)
-        -variation: VARCHAR(50)
-        -qty: INTEGER
-        -shipping_address: VARCHAR(255)
-        -shipping_method: VARCHAR(30)
-        -order_status: VARCHAR(30)
-        -verified_at: TIMESTAMPTZ
-        -verified_by: VARCHAR(10)
-        -sku_rule_id: INTEGER
-        -sku_matched_at: TIMESTAMPTZ
-        -decision: VARCHAR(10)
-        -decided_at: TIMESTAMPTZ
-        -decided_by: VARCHAR(10)
-        -po_id: VARCHAR(12)
-        -rsl_matched: BOOLEAN
-        -rsl_reference_id: VARCHAR(20)
-        -matched_at: TIMESTAMPTZ
-        -fulfill_source: VARCHAR(10)
-        -tracking_number: VARCHAR(20)
-        -carrier_name: VARCHAR(50)
-        -dispatched_at: TIMESTAMPTZ
-        -tracking_notified: BOOLEAN
-        -tracking_notified_at: TIMESTAMPTZ
-        -stock_deducted: BOOLEAN
-        -mp_stock_synced: BOOLEAN
-        -deducted_at: TIMESTAMPTZ
-        -cancel_reason: VARCHAR(255)
-        -cancelled_at: TIMESTAMPTZ
-        -cancelled_by: VARCHAR(10)
-    }
-    class Label {
-        -label_id: INTEGER
-        -order_id: VARCHAR(12)
-        -label_template: VARCHAR(30)
-        -rsl_reference_id: VARCHAR(20)
-        -parcel_seq: SMALLINT
-        -parcel_total: SMALLINT
-        -label_status: VARCHAR(10)
-        -created_at: TIMESTAMPTZ
-        -printed_at: TIMESTAMPTZ
-    }
-    class RslShipments {
-        -rsl_order_id: VARCHAR(20)
-        -rsl_sku: VARCHAR(20)
-        -rsl_variation: VARCHAR(50)
-        -rsl_stock_qty: INTEGER
-    }
-    class DeliveryPartners {
-        -tracking_number: VARCHAR(20)
-        -order_id: VARCHAR(12)
-        -carrier_name: VARCHAR(50)
-        -pickup_date: DATE
-    }
-    class CarrierTracking {
-        -tracking_number: VARCHAR(20)
-        -delivery_status: VARCHAR(12)
-        -last_location: VARCHAR(100)
-        -updated_at: TIMESTAMPTZ
-    }
-    class DeletionLog {
-        -log_id: INTEGER
-        -data_type: VARCHAR(10)
-        -record_id: VARCHAR(20)
-        -deleted_at: TIMESTAMPTZ
-        -deleted_by: VARCHAR(10)
-    }
-    Suppliers "1" -- "0..*" Products
-    Products "1" -- "0..*" SkuRules
-    Products "1" -- "1" Stock
-    Products "1" -- "1" ProductCost
-    Products "1" -- "0..*" CostCalculationLog
-    Users "1" -- "0..*" CostCalculationLog
-    Products "1" -- "0..*" PurchaseOrders
-    Suppliers "1" -- "0..*" PurchaseOrders
-    ShippingRules "1" -- "0..*" Orders
-    Products "1" -- "0..*" Orders
-    Users "1" -- "0..*" Orders
-    SkuRules "1" -- "0..*" Orders
-    PurchaseOrders "1" -- "0..*" Orders
-    Orders "1" -- "0..*" Label
-    Products "1" -- "0..*" RslShipments
-    Orders "1" -- "1" DeliveryPartners
-    DeliveryPartners "1" -- "1" CarrierTracking
-    Users "1" -- "0..*" DeletionLog
+    BaseScreen <|-- DataCleanupScreen
+    BaseController <|-- DataCleanupController
+    BaseRepository <|-- DeletionLogRepository
+    BaseRepository <|-- OrderRepository
+    BaseRepository o-- DBConnector : db
+    DataCleanupScreen "1" --> "1" DataCleanupController : uses
+    DataCleanupController ..> DeletionLogRepository
+    DataCleanupController ..> OrderRepository

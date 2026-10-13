@@ -1,0 +1,30 @@
+%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+stateDiagram-v2
+    direction TB
+    state "Order (order_status) ก่อนจัดส่ง" as Order {
+        state "Order.รอตรวจสอบคำสั่งซื้อ" as s1
+        state "Order.รอจับคู่กฎ SKU" as s2
+        state "Order.รอดำเนินการด้วยตนเอง" as s3
+        state "Order.รอตรวจสอบสต๊อก" as s4
+        state "Order.ยังไม่ได้จับคู่" as s5
+        state "Order.รอ Admin ตัดสินใจสั่งซื้อ" as s6
+        state "Order.รอสั่งซื้อจาก Supplier" as s7
+        state "Order.รอยกเลิก Order" as s8
+        state "Order.สั่งซื้อแล้ว" as s9
+        state "Order.ยกเลิกแล้ว" as s10
+        [*] --> s1 : importOrders / 4A (Q4A.2)
+        s1 --> s2 : [ข้อมูลครบ] confirmOrder / 2A (Q2A.4)
+        s1 --> s3 : [ข้อมูลไม่ครบ] confirmOrder / 2A
+        s2 --> s4 : [พบกฎ SKU] matchSku / 2S (Q2S.2)
+        s2 --> s3 : [ไม่พบกฎ SKU] matchSku / 2S
+        s3 --> s2 : saveSkuRule / 3A
+        s4 --> s5 : [สต๊อกพอ] checkStock / 3S (Q3S.2)
+        s4 --> s6 : [สต๊อกไม่พอ] checkStock / 3S, 4S (Q3S.2)
+        s6 --> s7 : [คุ้มค่า] approve / 5A (Q5A.4)
+        s6 --> s8 : [ไม่คุ้มค่า] reject / 5A (Q5A.5)
+        s7 --> s9 : [ส่งคำสั่งซื้อสำเร็จ] purchase / 6A (Q6A.4)
+        s9 --> s5 : [ได้รับสินค้า] restock / 3S (Q3S.2)
+        s8 --> s10 : confirmCancel / 7A (Q7A.1)
+        s5 --> s10 : [ยังไม่ส่งมอบ] cancelOrder / 7A (Q7A.1)
+        s10 --> [*] : [เก่ากว่า 12 เดือน] deleteOldData / 10A (Q10A.6)
+    }

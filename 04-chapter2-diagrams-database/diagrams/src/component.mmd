@@ -1,15 +1,15 @@
-%%{init: {'flowchart': {'nodeSpacing': 40, 'rankSpacing': 70}, 'themeVariables': {'fontSize': '15px'}}}%%
-flowchart LR
+%%{init: {'flowchart': {'nodeSpacing': 40, 'rankSpacing': 55, 'wrappingWidth': 700}, 'themeVariables': {'fontSize': '15px'}}}%%
+flowchart TB
     Admin(["Admin"])
     subgraph FE["«component» FrontEnd (Next.js 16, React 19)"]
-        direction TB
-        Pages["«component» Screens<br/>CancelOrderScreen<br/>CostCalculatorScreen<br/>DashboardScreen<br/>DataCleanupScreen<br/>LabelPrintScreen<br/>LoginScreen<br/>OrderVerifyScreen<br/>ProductScreen<br/>ReorderDecisionScreen<br/>RslMatchScreen<br/>ShipmentScreen<br/>StockCheckScreen"]
+        direction LR
+        Pages["«component» Screens<br/>CancelOrderScreen, CostCalculatorScreen<br/>DashboardScreen, DataCleanupScreen<br/>LabelPrintScreen, LoginScreen<br/>OrderVerifyScreen, ProductScreen<br/>ReorderDecisionScreen, RslMatchScreen<br/>ShipmentScreen, StockCheckScreen"]
         UILib["«library» shadcn/ui, Radix UI<br/>TanStack Table, Recharts<br/>Tailwind CSS, Sonner, Lucide"]
     end
     subgraph BE["«component» BackEnd (Next.js Server, TypeScript)"]
         direction TB
-        Ctrl["«component» Controllers<br/>AuthController<br/>CancelOrderController<br/>CostCalculatorController<br/>DataCleanupController<br/>LabelFormatterController<br/>LabelPrintController<br/>OrderIntakeController<br/>OrderVerifyController<br/>ProductController<br/>PurchaseOrderController<br/>ReorderDecisionController<br/>RslMatchController<br/>ShipmentController<br/>SkuMatchController<br/>StockCheckController<br/>StockDeductionController<br/>TrackingNotifyController"]
-        Repo["«component» Repositories<br/>CarrierTrackingRepository<br/>CostLogRepository<br/>DeletionLogRepository<br/>DeliveryPartnerRepository<br/>LabelRepository<br/>OrderRepository<br/>ProductCostRepository<br/>ProductRepository<br/>PurchaseOrderRepository<br/>RslRepository<br/>ShippingRuleRepository<br/>SkuRuleRepository<br/>StockRepository<br/>SupplierRepository<br/>UserRepository"]
+        Ctrl["«component» Controllers<br/>AuthController, CancelOrderController<br/>CostCalculatorController, DataCleanupController<br/>LabelFormatterController, LabelPrintController<br/>OrderIntakeController, OrderVerifyController<br/>ProductController, PurchaseOrderController<br/>ReorderDecisionController, RslMatchController<br/>ShipmentController, SkuMatchController<br/>StockCheckController, StockDeductionController<br/>TrackingNotifyController"]
+        Repo["«component» Repositories<br/>CarrierTrackingRepository, CostLogRepository<br/>DeletionLogRepository, DeliveryPartnerRepository<br/>LabelRepository, OrderRepository<br/>ProductCostRepository, ProductRepository<br/>PurchaseOrderRepository, RslRepository<br/>ShippingRuleRepository, SkuRuleRepository<br/>StockRepository, SupplierRepository<br/>UserRepository"]
         Conn["«component» DBConnector<br/>node-postgres (pg)"]
         Sched["«component» Scheduler"]
     end
