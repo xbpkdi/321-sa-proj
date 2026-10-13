@@ -12,11 +12,12 @@ Actor 4 ตัว: เจ้าของ, Delivery, Marketplace, Supplier.
 ## แผนที่ไฟล์
 เนื้อหาเล่มทั้งหมดเขียนลง Word ผ่าน `report-doc/` ไม่มีไฟล์ md ของเนื้อหาแล้ว โค้ดเว็บอยู่ที่ `01418321-final-project/` (repo แยก)
 - `report-doc/build_report.py` — สร้าง .docx, `report-doc/export_pdf.sh` — สร้างทั้งเล่ม + อัปเดตสารบัญ + PDF ผ่าน Word
+- `report-doc/output/รูป-diagram/` — สำเนารูป diagram ทุกรูป ตั้งชื่อตามหัวข้อ (ไม่อยู่ใน git)
 - `report-doc/content/ch1.py` — บทคัดย่อ + บทที่ 1, `content/ch2.py` — ข้อความ/ตารางบทที่ 2
 - `report-doc/content/usecases.json` — Use Case Description ทั้ง 17 UC (source of truth ของ query `Q<UC>.n`)
 - `report-doc/content/tables.json` — คำอธิบายตารางและ attribute สำหรับ 2.21
 - `02-chapter2-business-process/src/*(fixed).drawio.xml` = ต้นฉบับ BP/UC, `img/final/` = รูปส่งเล่ม, `img/old/` = เก่า ไม่ต้องดู
-- `03-chapter2-use-case-descriptions/diagrams/mmd/*.mmd` = sequence/collab, `png/` = ผล render, `check_diagrams.py` = ตรวจตามเกณฑ์
+- `03-chapter2-use-case-descriptions/diagrams/mmd/*.mmd` = sequence/collab, `png/` = ผล render, `./render.sh [UC]` = render ใหม่, `check_diagrams.py` = ตรวจตามเกณฑ์
 - `04-chapter2-diagrams-database/` — `npm i` แล้ว
   - `sql/schema.sql`, `sql/seed.sql` — ฐานข้อมูล 15 ตาราง + ข้อมูลตัวอย่าง
   - `npm run sql` รัน query ทุกข้อ → `sql/sql-results.json` (2.25)
