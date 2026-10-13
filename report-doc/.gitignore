@@ -1,0 +1,8 @@
+# ไฟล์ที่สร้างจากสคริปต์
+output/
+presentation/output/
+speaker_script/*.pdf
+qna_prep/*.pdf
+node_modules/
+__pycache__/
+~$*
