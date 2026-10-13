@@ -148,30 +148,6 @@
         <mxCell id="edge-10a" edge="1" parent="1" source="_Du93UHt1Al1Mdu0f5Wp-10" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=20;fontColor=default;endArrow=none;endFill=0;" target="uc-10a">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="sys-actor-1" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#d5e8d4;strokeColor=#82b366;" value="ระบบ (System)" vertex="1">
-          <mxGeometry height="120" width="60" x="600" y="1310" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-1" edge="1" parent="1" source="sys-actor-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="_Du93UHt1Al1Mdu0f5Wp-16">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-2" edge="1" parent="1" source="sys-actor-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="Qa4bFYBff4sOegOJk1tr-2">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-3" edge="1" parent="1" source="sys-actor-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="_Du93UHt1Al1Mdu0f5Wp-18">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-4" edge="1" parent="1" source="sys-actor-1" style="entryX=1;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="2D3TZmVRZwRgvM_RL9WR-36">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-5" edge="1" parent="1" source="sys-actor-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="_Du93UHt1Al1Mdu0f5Wp-26">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-6" edge="1" parent="1" source="sys-actor-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="2D3TZmVRZwRgvM_RL9WR-58">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="sys-edge-7" edge="1" parent="1" source="sys-actor-1" style="entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;endArrow=none;endFill=0;" target="sys-uc-7s">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
