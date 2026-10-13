@@ -1,5 +1,5 @@
 %%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
-graph LR
+graph TB
     Admin(["Admin"])
     Screen["ReorderDecisionScreen<br/>+openPendingDecisionList()<br/>+selectOrder()<br/>+clickApprove()<br/>+clickReject()"]
     RDC["ReorderDecisionController<br/>+loadDecisionData()<br/>+calculateExpectedMargin()<br/>+submitDecision()"]
@@ -10,12 +10,10 @@ graph LR
     Admin -->|"1: selectOrder(orderId)"| Screen
     Screen -->|"2: loadDecisionData(orderId)"| RDC
     RDC -->|"3: getCostAndMarginInfo(orderId)"| OrderRepo
-    OrderRepo -->|"4: executeQuery(Q5A.1)"| DB
-    DB -->|"5: return costInfo"| OrderRepo
+    OrderRepo <-->|"4: executeQuery(Q5A.1)<br/>5: return costInfo"| DB
     OrderRepo -->|"6: return costInfo"| RDC
     RDC -->|"7: getLatestUnitCost(sku)"| CostRepo
-    CostRepo -->|"8: executeQuery(Q5A.2)"| DB
-    DB -->|"9: return unitCost"| CostRepo
+    CostRepo <-->|"8: executeQuery(Q5A.2)<br/>9: return unitCost"| DB
     CostRepo -->|"10: return unitCost"| RDC
     RDC -->|"11: calculateExpectedMargin() [Q5A.3]"| RDC
     RDC -->|"12: displayCostAndMargin()"| Screen

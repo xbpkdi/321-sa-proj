@@ -1,5 +1,5 @@
 %%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
-graph LR
+graph TB
     FiveS["TrackingNotifyController (5S)"]
     SDC["StockDeductionController<br/>+onTrackingNotified()<br/>+calculateAvailableQty()"]
     StockRepo["StockRepository<br/>+getStockAndOrderInfo()<br/>+deductInHouseStock()<br/>+deductRslStock()"]

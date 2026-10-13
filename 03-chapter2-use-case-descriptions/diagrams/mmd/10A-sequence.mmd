@@ -42,7 +42,6 @@ sequenceDiagram
             end
         end
     else method == delete all closed orders
-        Admin->>Screen: clickConfirmDelete()
         Screen->>DCC: previewClosedOrders()
         DCC->>OrderRepo: getClosedOrders()
         OrderRepo->>DB: executeQuery(Q10A.10, Q10A.11)
@@ -52,7 +51,7 @@ sequenceDiagram
             DCC-->>Screen: showInfo("ไม่พบ Order ที่ปิดแล้วให้ลบ")
         else closed orders found
             DCC-->>Screen: displayPreview(closedOrderList)
-            Admin->>Screen: confirmDeleteClosedOrders()
+            Admin->>Screen: clickConfirmDelete()
             Screen->>DCC: executeDeleteClosedOrders(closedOrderList)
             DCC->>LogRepo: insertDeletionLog(closedOrderList)
             LogRepo->>DB: executeQuery(Q10A.12)
