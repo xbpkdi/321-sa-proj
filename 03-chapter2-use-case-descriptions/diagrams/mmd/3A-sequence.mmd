@@ -7,7 +7,7 @@ sequenceDiagram
     participant DB as :DBConnector
 
     Admin->>Screen: openProductList()
-    Screen->>Admin: displayProductList()
+    Screen-->>Admin: displayProductList()
     Admin->>Screen: clickAddOrEditProduct()
     Screen-->>Admin: showProductForm()
 

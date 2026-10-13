@@ -7,3 +7,8 @@
 .noteText, .noteText tspan {
   font-size: 13px !important;
 }
+
+/* ชื่อ participant ยาวกว่ากล่อง (กว้าง 200 ใน mermaid.json) ถ้าใช้ขนาดตัวอักษรปกติ */
+text.actor, text.actor > tspan {
+  font-size: 13px !important;
+}
