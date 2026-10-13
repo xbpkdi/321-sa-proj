@@ -165,7 +165,9 @@ def P(text, indent=True, align="j"):
     rich(p, text); return p
 
 
-def H(level, text): return doc.add_heading(brk(text), level)
+def H(level, text):
+    if level == 2 and text.startswith("2.") and not text.startswith("2.1 "): page_break()  # หัวข้อ 2.x ขึ้นหน้าใหม่ทุกหัวข้อ
+    return doc.add_heading(brk(text), level)
 
 
 def LI(text, marker="•", level=0):
@@ -310,6 +312,9 @@ def page_break(): _pb["on"] = True
 _add_par, _add_head = doc.add_paragraph, doc.add_heading
 def _wrap(fn):
     def inner(*a, **k):
+        if _pb["on"]:  # ลบบรรทัดว่างท้ายหน้าก่อน ไม่งั้นถ้าหน้าเต็มพอดีจะได้หน้าว่าง
+            for el in doc.element.body.xpath("./w:p[last()]"):
+                if not el.xpath(".//w:t|.//w:drawing|.//w:sectPr|.//w:br"): el.getparent().remove(el)
         p = fn(*a, **k)
         if _pb["on"]: p.paragraph_format.page_break_before = True; _pb["on"] = False
         return p
@@ -450,7 +455,7 @@ P(ch2.CRUD_ASIS_NOTE, indent=False, align="l")
 H(2, "2.10 คำอธิบาย CRUD Table ก่อนปรับปรุง")
 for t in ch2.CRUD_ASIS_DESC: P(t)
 H(2, "2.11 Use Case Diagram ที่ทบทวนปรับปรุงแล้ว")
-FIG(BP_IMG("2.11-use-case-diagram-to-be.png"), "Use Case Diagram ที่ทบทวนปรับปรุงแล้ว", 2)
+FIG(BP_IMG("2.11-use-case-diagram-to-be.png"), "Use Case Diagram ที่ทบทวนปรับปรุงแล้ว", 2, max_h=7.0)
 for t in ch2.UC_ACTORS: LI(t)
 
 H(2, "2.12 CRUD Table ที่ทบทวนแล้ว")
@@ -472,7 +477,6 @@ UI = {"1A": "1A-LoginScreen", "4A": "0-DashboardScreen", "2A": "2A-OrderVerifySc
       "5A": "5A-6A-ReorderDecisionScreen", "6A": "5A-6A-ReorderDecisionScreen", "7A": "7A-CancelOrderScreen",
       "8A": "8A-ShipmentScreen", "5S": "8A-ShipmentScreen", "9A": "9A-LabelPrintScreen", "10A": "10A-DataCleanupScreen"}
 
-page_break()
 H(2, "2.13 Use Case Description, Sequence Diagram, Collaboration Diagram และ User Interface")
 n = 0
 for uc in UCS:
@@ -484,12 +488,13 @@ for uc in UCS:
     TABLE([("ลำดับ", "User Action", "System Response")] + uc["steps"], (0.75, 1.75, 3.77),
           f"Use Case Description ที่ {uid}: {uname}", 2, size=13)
     seq, col = DIA_IMG(f"{uid}-sequence.png"), DIA_IMG(f"{uid}-collaboration.png")
-    set_orientation(best_landscape(seq))
+    set_orientation(best_landscape(seq)); page_break()
     n += 1; H(3, f"2.13.{n} Sequence Diagram ของ Use Case Description ที่ {uid}")
     FIG(seq, f"Sequence Diagram ของ Use Case Description ที่ {uid}", 2, max_h=7.6, land_h=5.2, max_w=natural_w(seq))
-    set_orientation(False)
+    set_orientation(False); page_break()
     n += 1; H(3, f"2.13.{n} Collaboration Diagram ของ Use Case Description ที่ {uid}")
     FIG(col, f"Collaboration Diagram ของ Use Case Description ที่ {uid}", 2, max_h=6.6, max_w=natural_w(col))
+    if uid in UI: page_break()
     n += 1; H(3, f"2.13.{n} User Interface ของ Use Case Description ที่ {uid}")
     if uid in UI: FIG(PLT_IMG(f"ui/{UI[uid]}.png"), f"User Interface ของ Use Case Description ที่ {uid} ({UI[uid].split('-')[-1]})", 2)
     else: P("Use Case นี้ระบบทำเองโดยไม่มีหน้าจอของตัวเอง ผลการทำงานแสดงเป็นข้อความแจ้งเตือนในหน้าที่ Admin เปิดอยู่")
@@ -518,12 +523,10 @@ for t in ch2.DB_TEXT["2.16"]: P(t)
 FIG(DB_IMG("state-1.png"), "State Diagram ของ Order ก่อนจัดส่ง (1/2)", 2, max_h=6.6, max_w=natural_w(DB_IMG("state-1.png")))
 FIG(DB_IMG("state-2.png"), "State Diagram ของ Order ช่วงจัดส่ง (2/2)", 2, max_h=7.8, max_w=natural_w(DB_IMG("state-2.png")))
 
-page_break()
 H(2, "2.17 Component Diagram")
 for t in ch2.DB_TEXT["2.17"]: P(t)
 FIG(DB_IMG("component.png"), "Component Diagram ของระบบ", 2, max_h=7.0)
 
-page_break()
 H(2, "2.18 ER Diagram")
 for t in ch2.DB_TEXT["2.18"]: P(t)
 FIG(DB_IMG("er-0.png"), "ER Diagram ภาพรวมของระบบ", 2, max_h=6.8)
@@ -531,10 +534,11 @@ ER_PARTS = ["คำสั่งซื้อ (ORDERS)", "ผู้ใช้ ก�
 for i, title in enumerate(ER_PARTS, 1):
     AFIG(DB_IMG(f"er-{i}.png"), f"ER Diagram ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
 
+set_orientation(best_landscape(DB_IMG("er-query-1.png")))
 H(2, "2.19 ER Diagram พร้อม Query")
 for t in ch2.DB_TEXT["2.19"]: P(t)
 for i, title in enumerate(ER_PARTS, 1):
-    AFIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
+    AFIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2, land_h=4.3 if i == 1 else 5.6)
 set_orientation(False)
 
 # ------------------------------------------------------------------ 2.20 Query Table
@@ -545,7 +549,6 @@ for q in QUERIES: rows.append((q["uc"], q["uc_name"], q["id"], f"`{q['sql']}`"))
 TABLE(rows, (0.7, 1.45, 0.8, 3.32), "Query Table", 2, size=12)
 
 # ------------------------------------------------------------------ 2.21 Table Structure
-page_break()
 H(2, "2.21 Table Structure")
 for t in ch2.DB_TEXT["2.21"]: P(t)
 for i, d in enumerate(DICT, 1):
@@ -562,13 +565,12 @@ for i, d in enumerate(DICT, 1):
         TABLE(rows, [round(6.27 / len(cols), 2)] * len(cols), f"ตัวอย่างข้อมูลของ{d['title']}{part}", 2, size=10)
 
 # ------------------------------------------------------------------ 2.22-2.24
-page_break()
 H(2, "2.22 Software Development Platform")
 FIG(PLT_IMG("2.22-software-platform.png"), "เครื่องมือที่ใช้พัฒนาระบบ (Stack of Tools)", 2)
 TABLE(ch2.PLATFORM, (1.2, 2.6, 2.47), "เครื่องมือที่ใช้พัฒนาระบบ", 2)
 
 H(2, "2.23 Site Map / UI Structure")
-FIG(PLT_IMG("sitemap.png"), "โครงสร้างหน้าจอของระบบ (Site Map)", 2)
+FIG(PLT_IMG("sitemap.png"), "โครงสร้างหน้าจอของระบบ (Site Map)", 2, max_h=3.6)
 P(ch2.SITEMAP_DESC[0]); P(ch2.SITEMAP_DESC[1])
 CODE(ch2.SITEMAP_TREE)
 P(ch2.SITEMAP_DESC[2])
@@ -591,7 +593,6 @@ CODE(ch2.UNIT_COST_FORMULA)
 TABLE(ch2.REPORT_COST, (1.6, 4.67), "โครงสร้างของรายงานต้นทุนต่อหน่วย", 2)
 
 # ------------------------------------------------------------------ 2.25 SQL Statement
-page_break()
 H(2, "2.25 SQL Statement ใน Use Case Description")
 for t in ch2.DB_TEXT["2.25"]: P(t)
 
@@ -617,7 +618,6 @@ for i, uc in enumerate(UCS, 1):
     TABLE(rows, (0.65, 2.55, 1.2, 1.87), f"SQL Statement และผลการทำงานของ Use Case {uc['id']}", 2, size=10)
 
 # ------------------------------------------------------------------ 2.26
-page_break()
 H(2, "2.26 การทดสอบโปรแกรมทำงานตาม Use Case Description")
 for t in ch2.TEST_INTRO: P(t)
 tests = ch2.TESTS[1:]
@@ -626,6 +626,7 @@ for r in tests:
     if r[0] not in order: order.append(r[0])
 for k, uid in enumerate(order, 1):
     rows = [r for r in tests if r[0] == uid]
+    if k > 1: page_break()
     H(3, f"2.26.{k} การทดสอบ Use Case {uid}: {rows[0][1]}")
     TABLE([("กรณีทดสอบ", "ผลที่คาดหวัง (ข้อความจาก UC)", "ผล")] + [(r[2], r[3], r[4]) for r in rows],
           (2.2, 3.37, 0.7), f"การทดสอบ Use Case {uid}: {rows[0][1]}", 2, size=14)
@@ -634,18 +635,18 @@ for k, uid in enumerate(order, 1):
         if r[5] in seen: continue
         seen.add(r[5])
         kind = "กรณีปกติ" if r[5].endswith("-ok.png") else "กรณีผิดพลาด"
-        FIG(PLT_IMG(r[5]), f"ผลการทดสอบ Use Case {uid} {kind}", 2, max_h=4.2)
+        FIG(PLT_IMG(r[5]), f"ผลการทดสอบ Use Case {uid} {kind}", 2, max_h=2.9)
 k = len(order) + 1
+page_break()
 H(3, f"2.26.{k} การทดสอบการออกรายงาน")
 TABLE([("รายงาน", "Use Case", "วิธีทดสอบ", "ผล"),
        ("ใบปะสินค้า", "6S, 9A", "จับคู่ ORD-24178 กับ RSL แล้วเปิดหน้าพิมพ์ใบปะ ข้อมูลบนใบปะต้องตรงกับ Order และเลข RSL", "ผ่าน"),
        ("รายงานต้นทุนต่อหน่วย", "4S", "คำนวณต้นทุนของ FSH-MLR-240 แล้วเปิดรายงาน ต้นทุนต่อหน่วยต้องตรงกับสูตร Q4S.2", "ผ่าน")],
       (1.5, 0.8, 3.27, 0.7), "การทดสอบการออกรายงาน", 2, size=14)
-FIG(PLT_IMG("report/label-ORD-24178.png"), "ผลการออกรายงานใบปะสินค้า", 2, max_h=4.2)
-FIG(PLT_IMG("report/unit-cost-FSH-MLR-240.png"), "ผลการออกรายงานต้นทุนต่อหน่วย", 2, max_h=4.2)
+FIG(PLT_IMG("report/label-ORD-24178.png"), "ผลการออกรายงานใบปะสินค้า", 2, max_h=2.9)
+FIG(PLT_IMG("report/unit-cost-FSH-MLR-240.png"), "ผลการออกรายงานต้นทุนต่อหน่วย", 2, max_h=2.9)
 
 # ------------------------------------------------------------------ 2.27 หน้าที่รับผิดชอบ
-page_break()
 H(2, "2.27 หน้าที่รับผิดชอบ")
 P("ตารางแสดงการแบ่งความรับผิดชอบงานตามรายการที่กำหนด งานใดที่ทำหลายคน หัวหน้าทีมระบุผู้รับผิดชอบหลัก")
 TABLE([("สมาชิก", "รวมงาน (ชิ้น)")] + [(f"{i}. {nm}", "") for i, (_, nm) in enumerate(MEMBERS, 1)],
