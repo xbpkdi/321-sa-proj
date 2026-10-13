@@ -16,30 +16,35 @@ classDiagram
         #db: DBConnector
         #executeQuery(queryId, params)
     }
-    class DataCleanupScreen {
+    class ShipmentScreen {
         -controller
         -messages: string[]
-        +clickConfirmDelete()
-        +confirmDeleteClosedOrders()
-        +openDataCleanupPage()
-        +selectMethod()
-        +submitDateRangeForm()
+        +clickSendTracking()
+        +confirmHandover()
+        +openReadyToShipList()
     }
-    class DataCleanupController {
-        -deletionLogRepository: DeletionLogRepository
+    class ShipmentController {
+        -carrierTrackingRepository: CarrierTrackingRepository
+        -deliveryPartnerRepository: DeliveryPartnerRepository
         -orderRepository: OrderRepository
-        +executeDeleteByDateRange()
-        +executeDeleteClosedOrders()
-        +previewClosedOrders()
-        +previewDeleteByDateRange()
-        +rollbackTransaction()
-        +validateCutoffAtLeast12Months()
-        +validateDataTypesSelected()
+        +checkLabelStatus()
+        +recordHandover()
     }
-    class DeletionLogRepository {
+    class TrackingNotifyController {
+        -orderRepository: OrderRepository
+        +proceedToUseCase7S()
+        +sendTrackingNotify()
+        +validateTrackingAndCarrierPresent()
+    }
+    class CarrierTrackingRepository {
         -db: DBConnector
-        -table: string = "deletion_log"
-        +insertDeletionLog()
+        -table: string = "carrier_tracking"
+        +getCarrierStatus()
+    }
+    class DeliveryPartnerRepository {
+        -db: DBConnector
+        -table: string = "delivery_partners"
+        +getTrackingNumber()
     }
     class OrderRepository {
         -db: DBConnector
@@ -76,11 +81,16 @@ classDiagram
         -pool: Pool
         +executeQuery()
     }
-    BaseScreen <|-- DataCleanupScreen
-    BaseController <|-- DataCleanupController
-    BaseRepository <|-- DeletionLogRepository
+    BaseScreen <|-- ShipmentScreen
+    BaseController <|-- ShipmentController
+    BaseController <|-- TrackingNotifyController
+    BaseRepository <|-- CarrierTrackingRepository
+    BaseRepository <|-- DeliveryPartnerRepository
     BaseRepository <|-- OrderRepository
     BaseRepository o-- DBConnector : db
-    DataCleanupScreen "1" --> "1" DataCleanupController : uses
-    DataCleanupController ..> DeletionLogRepository
-    DataCleanupController ..> OrderRepository
+    ShipmentScreen "1" --> "1" ShipmentController : uses
+    ShipmentScreen "1" --> "1" TrackingNotifyController : uses
+    ShipmentController ..> CarrierTrackingRepository
+    ShipmentController ..> DeliveryPartnerRepository
+    ShipmentController ..> OrderRepository
+    TrackingNotifyController ..> OrderRepository
