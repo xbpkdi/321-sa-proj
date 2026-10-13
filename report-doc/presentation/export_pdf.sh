@@ -8,9 +8,10 @@ NAME=Colorado-SA-presentation
 # ปิดไฟล์ชื่อเดียวกันที่ค้างอยู่ใน PowerPoint ก่อน ไม่งั้นจะ export ฉบับเก่า
 osascript -e "tell application \"Microsoft PowerPoint\" to if (exists presentation \"$NAME.pptx\") then close presentation \"$NAME.pptx\" saving no" 2>/dev/null
 cp "output/$NAME.pptx" "$G/$NAME.pptx"; rm -f "$G/$NAME.pdf"
-open -a "Microsoft PowerPoint" "$G/$NAME.pptx"; sleep 25
 # อ้างถึงไฟล์ด้วยชื่อ ไม่ใช้ active presentation เพราะอาจมีไฟล์อื่นเปิดอยู่
 osascript -e "tell application \"Microsoft PowerPoint\"
+open POSIX file \"$G/$NAME.pptx\"
+delay 8
 set p to presentation \"$NAME.pptx\"
 save p in (POSIX file \"$G/$NAME.pdf\") as save as PDF
 close p saving no
