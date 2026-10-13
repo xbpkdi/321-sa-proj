@@ -70,12 +70,17 @@ screens = [c for c in classes if kind(c) == "screen"]
 ctrls = [c for c in classes if kind(c) == "controller"]
 repos = [c for c in classes if kind(c) == "repo"]
 
-CLASS_GROUPS = [  # แบ่งรูปตามกลุ่มงาน (ตรงกับ process ใน DFD Level 0)
+CLASS_GROUPS = [  # แบ่งรูปตามกลุ่มงาน กลุ่มละไม่เกิน 2 Use Case ให้ตัวอักษรอ่านได้
     ("เข้าสู่ระบบ", ["1A"]),
-    ("รับและตรวจสอบคำสั่งซื้อ", ["4A", "2A", "2S", "7A"]),
-    ("จัดการสินค้าและสต๊อก", ["3A", "3S", "7S"]),
-    ("คำนวณต้นทุนและสั่งซื้อเติม", ["4S", "5A", "6A"]),
-    ("จัดการใบปะ", ["1S", "6S", "9A"]),
+    ("รับคำสั่งซื้อและจับคู่ SKU", ["4A", "2S"]),
+    ("ตรวจสอบและยกเลิกคำสั่งซื้อ", ["2A", "7A"]),
+    ("จัดการสินค้า", ["3A"]),
+    ("ตรวจและตัดสต๊อก", ["3S", "7S"]),
+    ("คำนวณต้นทุน", ["4S"]),
+    ("ตัดสินใจสั่งซื้อเติม stock", ["5A"]),
+    ("สั่งซื้อเติม stock จาก supplier", ["6A"]),
+    ("ส่ง Order เข้า RSL", ["1S"]),
+    ("จัดการใบปะ", ["6S", "9A"]),
     ("จัดส่งและแจ้งเลขติดตาม", ["8A", "5S"]),
     ("ลบข้อมูลเก่า", ["10A"]),
 ]
@@ -103,25 +108,30 @@ for n, (title, group) in enumerate(CLASS_GROUPS, 1):
             elif d in g_ctl: out += f"    {c} ..> {d} : triggers\n"
     write(f"class-{n}.mmd", out)
 
-# entity class (ตรงกับตารางในฐานข้อมูล)
-FK = []
-out = INIT + "classDiagram\n    direction TB\n"
+# entity class (ตรงกับตารางในฐานข้อมูล) แบ่งรูปเหมือน ER Diagram ตารางนอกกลุ่มแสดงแค่ชื่อ
+ENTITY_PARTS = [
+    ["orders"],
+    ["users", "deletion_log", "label", "shipping_rules", "delivery_partners", "carrier_tracking"],
+    ["products", "sku_rules", "stock", "product_cost", "cost_calculation_log", "purchase_orders", "suppliers", "rsl_shipments"],
+]
 cname = lambda t: "".join(w.capitalize() for w in t.split("_"))
+FK = []
 for d in DICT:
-    # mermaid มองบรรทัดที่มี () เป็น method จึงใช้วงเล็บ ❨❩ แทนใน type เช่น VARCHAR(10)
-    cols = "\n".join(f"        -{c['name']}: {c['type'].replace('(', '❨').replace(')', '❩')}" for c in d["columns"])
-    out += f"    class {cname(d['table'])} {{\n{cols}\n    }}\n"
     for c in d["columns"]:
         for ref in re.findall(r"FK → (\w+)", c["key"]):
-            FK.append((ref, d["table"], c["name"]))
-seen = set()
-for ref, t, col in FK:
-    if (ref, t) in seen: continue
-    seen.add((ref, t))
-    one = t in ("stock", "product_cost", "delivery_partners", "carrier_tracking")
-    out += f"    {cname(ref)} \"1\" -- \"{'1' if one else '0..*'}\" {cname(t)}\n"
-for r, t in REPO_TABLE.items(): pass
-write(f"class-{len(CLASS_GROUPS) + 1}.mmd", out)
+            if (ref, d["table"]) not in FK: FK.append((ref, d["table"]))
+for n, part in enumerate(ENTITY_PARTS, 1):
+    out = INIT + "classDiagram\n    direction " + ("LR" if n == 1 else "TB") + "\n"
+    for d in DICT:
+        if d["table"] not in part: continue
+        # mermaid มองบรรทัดที่มี () เป็น method จึงใช้วงเล็บ ❨❩ แทนใน type เช่น VARCHAR(10)
+        cols = "\n".join(f"        -{c['name']}: {c['type'].replace('(', '❨').replace(')', '❩')}" for c in d["columns"])
+        out += f"    class {cname(d['table'])} {{\n{cols}\n    }}\n"
+    for ref, t in FK:
+        if ref not in part and t not in part: continue
+        one = t in ("stock", "product_cost", "delivery_partners", "carrier_tracking")
+        out += f"    {cname(ref)} \"1\" -- \"{'1' if one else '0..*'}\" {cname(t)}\n"
+    write(f"class-{len(CLASS_GROUPS) + n}.mmd", out)
 
 # ------------------------------------------------------------------ State Diagram ของ Order
 S = OrderedDict()
@@ -356,8 +366,8 @@ def er(home, mode, scale=1.0, layout=None):
 
 ALL = [d["table"] for d in DICT]
 PART_POS = [
-    {**POS, "orders": (0, 0), "products": (0, 10), "sku_rules": (8.5, 8), "purchase_orders": (-8.5, 8), "shipping_rules": (-13, 0),
-     "users": (13, 0), "label": (-7.5, -9), "delivery_partners": (7.5, -9)},
+    {**POS, "orders": (0, 0), "products": (0, 7.6), "sku_rules": (9, 6.6), "purchase_orders": (-9, 6.6), "shipping_rules": (-12.5, 0),
+     "users": (12.5, 0), "label": (-8, -6.8), "delivery_partners": (8, -6.8)},
     {**POS, "orders": (0, 0), "shipping_rules": (-7, 0), "users": (9.5, 0), "label": (-4.5, -6), "delivery_partners": (3, -6),
      "carrier_tracking": (3, -11.5), "deletion_log": (12.5, -6), "cost_calculation_log": (9.5, 6)},
     {**POS, "products": (0, 0), "stock": (-7, 6.5), "product_cost": (0, 8.5), "rsl_shipments": (7, 6.5), "sku_rules": (9, 0),

@@ -16,81 +16,40 @@ classDiagram
         #db: DBConnector
         #executeQuery(queryId, params)
     }
-    class ShipmentScreen {
+    class CostCalculatorScreen {
         -controller
         -messages: string[]
-        +clickSendTracking()
-        +confirmHandover()
-        +openReadyToShipList()
+        +selectProduct()
+        +submitCostForm()
     }
-    class ShipmentController {
-        -carrierTrackingRepository: CarrierTrackingRepository
-        -deliveryPartnerRepository: DeliveryPartnerRepository
-        -orderRepository: OrderRepository
-        +checkLabelStatus()
-        +recordHandover()
+    class CostCalculatorController {
+        -costLogRepository: CostLogRepository
+        -productCostRepository: ProductCostRepository
+        +calculateUnitCost()
+        +computeUnitCost()
+        +loadCostComponents()
+        +validateNotEmptyOrNegative()
     }
-    class TrackingNotifyController {
-        -orderRepository: OrderRepository
-        +proceedToUseCase7S()
-        +sendTrackingNotify()
-        +validateTrackingAndCarrierPresent()
-    }
-    class CarrierTrackingRepository {
+    class CostLogRepository {
         -db: DBConnector
-        -table: string = "carrier_tracking"
-        +getCarrierStatus()
+        -table: string = "cost_calculation_log"
+        +getLatestUnitCost()
+        +saveCostLog()
     }
-    class DeliveryPartnerRepository {
+    class ProductCostRepository {
         -db: DBConnector
-        -table: string = "delivery_partners"
-        +getTrackingNumber()
-    }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+        -table: string = "product_cost"
+        +getCostComponents()
     }
     class DBConnector {
         -pool: Pool
         +executeQuery()
     }
-    BaseScreen <|-- ShipmentScreen
-    BaseController <|-- ShipmentController
-    BaseController <|-- TrackingNotifyController
-    BaseRepository <|-- CarrierTrackingRepository
-    BaseRepository <|-- DeliveryPartnerRepository
-    BaseRepository <|-- OrderRepository
+    BaseScreen <|-- CostCalculatorScreen
+    BaseController <|-- CostCalculatorController
+    BaseRepository <|-- CostLogRepository
+    BaseRepository <|-- ProductCostRepository
     BaseRepository o-- DBConnector : db
-    ShipmentScreen "1" --> "1" ShipmentController : uses
-    ShipmentScreen "1" --> "1" TrackingNotifyController : uses
-    ShipmentController ..> CarrierTrackingRepository
-    ShipmentController ..> DeliveryPartnerRepository
-    ShipmentController ..> OrderRepository
-    TrackingNotifyController ..> OrderRepository
+    CostCalculatorScreen "1" --> "1" CostCalculatorController : uses
+    CostCalculatorController ..> CostLogRepository
+    CostCalculatorController ..> ProductCostRepository

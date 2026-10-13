@@ -16,135 +16,43 @@ classDiagram
         #db: DBConnector
         #executeQuery(queryId, params)
     }
-    class CostCalculatorScreen {
+    class ProductScreen {
         -controller
         -messages: string[]
-        +selectProduct()
-        +submitCostForm()
+        +clickAddOrEditProduct()
+        +openProductList()
+        +submitProductForm()
     }
-    class ReorderDecisionScreen {
-        -controller
-        -messages: string[]
-        +clickApprove()
-        +clickPurchase()
-        +clickReject()
-        +openPendingDecisionList()
-        +openReorderList()
-        +selectOrder()
+    class ProductController {
+        -productRepository: ProductRepository
+        -skuRuleRepository: SkuRuleRepository
+        +retryUseCase2S()
+        +saveProduct()
+        +validateNotEmpty()
+        +validatePositiveInteger()
     }
-    class CostCalculatorController {
-        -costLogRepository: CostLogRepository
-        -productCostRepository: ProductCostRepository
-        +calculateUnitCost()
-        +computeUnitCost()
-        +loadCostComponents()
-        +validateNotEmptyOrNegative()
-    }
-    class PurchaseOrderController {
-        -orderRepository: OrderRepository
-        -purchaseOrderRepository: PurchaseOrderRepository
-        -stockRepository: StockRepository
-        -supplierRepository: SupplierRepository
-        +calculateEta()
-        +checkReorderThreshold()
-        +confirmPurchase()
-    }
-    class ReorderDecisionController {
-        -costLogRepository: CostLogRepository
-        -orderRepository: OrderRepository
-        +calculateExpectedMargin()
-        +loadDecisionData()
-        +loadPendingOrders()
-        +proceedToUseCase6A()
-        +proceedToUseCase7A()
-        +submitDecision()
-    }
-    class CostLogRepository {
+    class ProductRepository {
         -db: DBConnector
-        -table: string = "cost_calculation_log"
-        +getLatestUnitCost()
-        +saveCostLog()
+        -table: string = "products"
+        +checkSkuExists()
+        +insertProduct()
+        +updateProduct()
     }
-    class OrderRepository {
+    class SkuRuleRepository {
         -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
-    }
-    class ProductCostRepository {
-        -db: DBConnector
-        -table: string = "product_cost"
-        +getCostComponents()
-    }
-    class PurchaseOrderRepository {
-        -db: DBConnector
-        -table: string = "purchase_orders"
-        +createPurchaseOrder()
-    }
-    class StockRepository {
-        -db: DBConnector
-        -table: string = "stock"
-        +deductInHouseStock()
-        +deductRslStock()
-        +getLowStockSkus()
-        +getStockAndOrderInfo()
-        +getStockBySku()
-        +restockInventory()
-    }
-    class SupplierRepository {
-        -db: DBConnector
-        -table: string = "suppliers"
-        +getSupplierInfo()
+        -table: string = "sku_rules"
+        +findRuleByChannelSku()
+        +insertSkuRule()
     }
     class DBConnector {
         -pool: Pool
         +executeQuery()
     }
-    BaseScreen <|-- CostCalculatorScreen
-    BaseScreen <|-- ReorderDecisionScreen
-    BaseController <|-- CostCalculatorController
-    BaseController <|-- PurchaseOrderController
-    BaseController <|-- ReorderDecisionController
-    BaseRepository <|-- CostLogRepository
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- ProductCostRepository
-    BaseRepository <|-- PurchaseOrderRepository
-    BaseRepository <|-- StockRepository
-    BaseRepository <|-- SupplierRepository
+    BaseScreen <|-- ProductScreen
+    BaseController <|-- ProductController
+    BaseRepository <|-- ProductRepository
+    BaseRepository <|-- SkuRuleRepository
     BaseRepository o-- DBConnector : db
-    CostCalculatorScreen "1" --> "1" CostCalculatorController : uses
-    ReorderDecisionScreen "1" --> "1" PurchaseOrderController : uses
-    ReorderDecisionScreen "1" --> "1" ReorderDecisionController : uses
-    CostCalculatorController ..> CostLogRepository
-    CostCalculatorController ..> ProductCostRepository
-    PurchaseOrderController ..> OrderRepository
-    PurchaseOrderController ..> PurchaseOrderRepository
-    PurchaseOrderController ..> StockRepository
-    PurchaseOrderController ..> SupplierRepository
-    ReorderDecisionController ..> CostLogRepository
-    ReorderDecisionController ..> OrderRepository
+    ProductScreen "1" --> "1" ProductController : uses
+    ProductController ..> ProductRepository
+    ProductController ..> SkuRuleRepository
