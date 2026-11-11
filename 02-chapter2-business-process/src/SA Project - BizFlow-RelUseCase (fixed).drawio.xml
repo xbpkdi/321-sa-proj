@@ -135,7 +135,7 @@
         <mxCell id="step-5s" parent="lane-sys" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=13;align=center;verticalAlign=middle;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="5S) ส่งเลขติดตามสินค้าของ&#xa;Delivery ให้ลูกค้าผ่าน Marketplace" vertex="1">
           <mxGeometry height="110" width="260" x="30" y="2280" as="geometry" />
         </mxCell>
-        <mxCell id="step-7s" parent="lane-sys" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=13;align=center;verticalAlign=middle;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="7S) ตัดสต๊อกสินค้า และ&#xa;อัพเดทจำนวนสินค้า&#xa;ใน Marketplace" vertex="1">
+        <mxCell id="step-7s" parent="lane-sys" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=13;align=center;verticalAlign=middle;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="7S) ตัดสต๊อกสินค้า และ&#xa;อัปเดตจำนวนสินค้า&#xa;ใน Marketplace" vertex="1">
           <mxGeometry height="120" width="260" x="30" y="2460" as="geometry" />
         </mxCell>
         <mxCell id="e28" edge="1" parent="lane-sys" source="step-5s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="step-7s" value="">
@@ -271,10 +271,10 @@
         <mxCell id="e11" edge="1" parent="1" source="step-3s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="dec-stockok" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e12" edge="1" parent="1" source="dec-stockok" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="step-1s" value="มี">
+        <mxCell id="e12" edge="1" parent="1" source="dec-stockok" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="step-1s" value="RSL พอ">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e13" edge="1" parent="1" source="dec-stockok" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="step-4s" value="ไม่มี">
+        <mxCell id="e13" edge="1" parent="1" source="dec-stockok" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="step-4s" value="ไม่มีแหล่งใดพอ">
           <mxGeometry relative="1" x="-0.6735" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
@@ -376,6 +376,15 @@
         </mxCell>
         <mxCell id="IUlDWHCtPdss1lOngHSO-52" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontColor=#1BA1E2;fontStyle=1;fontSize=13;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="4S" vertex="1">
           <mxGeometry height="24" width="46" x="1509" y="1176" as="geometry" />
+        </mxCell>
+        <mxCell id="inhouse-route" edge="1" parent="1" source="dec-stockok" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;fontSize=12;fontColor=#000000;labelBackgroundColor=#ffffff;jettySize=auto;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" target="step-6s" value="คลังบริษัทพอ">
+          <mxGeometry relative="1" x="0.2" as="geometry">
+            <Array as="points">
+              <mxPoint x="995" y="1075" />
+              <mxPoint x="995" y="1340" />
+              <mxPoint x="1077" y="1340" />
+            </Array>
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

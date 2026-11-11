@@ -90,7 +90,7 @@
         <mxCell id="JPxfeVIN6Nmn7QqBt_JA-12" edge="1" parent="1" source="_Du93UHt1Al1Mdu0f5Wp-10" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;resizable=0;horizontal=1;endArrow=none;endFill=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="JPxfeVIN6Nmn7QqBt_JA-11">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="_Du93UHt1Al1Mdu0f5Wp-10" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFF2CC;strokeColor=#D6B656;" value="&lt;div&gt;เจ้าของ&lt;/div&gt;(Admin)" vertex="1">
+        <mxCell id="_Du93UHt1Al1Mdu0f5Wp-10" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#FFF2CC;strokeColor=#D6B656;" value="Super Admin" vertex="1">
           <mxGeometry height="120" width="60" x="80" y="520" as="geometry" />
         </mxCell>
         <mxCell id="JPxfeVIN6Nmn7QqBt_JA-15" edge="1" parent="1" source="_Du93UHt1Al1Mdu0f5Wp-12" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;resizable=0;horizontal=1;endArrow=none;endFill=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="JPxfeVIN6Nmn7QqBt_JA-11">
