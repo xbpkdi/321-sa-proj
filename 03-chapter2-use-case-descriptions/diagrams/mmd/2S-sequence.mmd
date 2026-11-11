@@ -1,29 +1,44 @@
 sequenceDiagram
-    participant Sched as Scheduler
-    participant SMC as :SkuMatchController
-    participant SkuRepo as :SkuRuleRepository
-    participant OrderRepo as :OrderRepository
-    participant DB as :DBConnector
+    participant VUC as :VerifyOrderUseCase (verify-order.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant UC as :MatchSkuUseCase (match-sku.ts)
+    participant OQ as :OrderQueries (orders.ts)
+    participant EQ as :AutoErrorLogQueries (auto-error-logs.ts)
+    participant DB as :DBConnector (db.ts)
 
-    Sched->>SMC: processPendingSkuMatch()
-    SMC->>OrderRepo: getOrdersByStatus("รอจับคู่กฎ SKU")
-    OrderRepo-->>SMC: return orderList
-
-    loop for each Order
-        SMC->>SkuRepo: findRuleByChannelSku(channelSku, salesChannel)
-        SkuRepo->>DB: executeQuery(Q2S.1)
-        DB-->>SkuRepo: return ruleResult
-        SkuRepo-->>SMC: return ruleResult
-        alt no matching rule found
-            SMC->>OrderRepo: setManualReview(orderId)
-            SMC-->>Sched: notify("ไม่พบกฎ SKU ที่ตรงกับสินค้านี้")
-        else multiple matches found
-            SMC-->>Sched: notify("พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ")
-        else single rule match found
-            SMC->>OrderRepo: bindSkuRuleAndUpdateStatus(orderId, ruleResult)
-            OrderRepo->>DB: executeQuery(Q2S.2)
-            DB-->>OrderRepo: return updateResult
-            SMC->>SMC: proceedToUseCase3S(orderId)
+    Note over VUC,WF: เริ่มจาก 2A: บันทึก Order เป็น "รอจับคู่กฎ SKU" แล้ว runAutomation ใน transaction เดียวกัน
+    VUC->>WF: executeWorkflow(saveVerifiedOrder, orderIds)
+    WF->>OQ: lockOrder(orderId)
+    OQ->>DB: query(Q2S.1)
+    DB-->>OQ: return order
+    OQ-->>WF: return order
+    WF->>UC: matchSkuUseCase(client, order)
+    alt fault skuRuleDb (อ่านกฎ SKU ไม่ได้)
+        UC->>EQ: insertAutoErrorLog("2S", orderId, external_unavailable)
+        EQ->>DB: query(Q2S.4)
+        UC-->>WF: return "db-unavailable"
+    else อ่านกฎ SKU ได้
+        UC->>OQ: findSkuRules(channelSku, salesChannel)
+        OQ->>DB: query(Q2S.2)
+        DB-->>OQ: return skuRows
+        OQ-->>UC: return skuRows
+        alt ไม่พบ หรือพบมากกว่า 1 รายการ
+            UC->>OQ: saveSkuMatch(orderId, null, "รอดำเนินการด้วยตนเอง", "sku-rule")
+            OQ->>DB: query(Q2S.3)
+            UC-->>WF: return "missing" / "multiple"
+        else พบ 1 รายการ
+            UC->>OQ: saveSkuMatch(orderId, skuId, "รอตรวจสอบสต๊อก", null)
+            OQ->>DB: query(Q2S.3)
+            UC-->>WF: return "ok"
+            WF->>WF: runAutomation() [UC 3S ต่อ]
         end
     end
-    SMC-->>Sched: showSummary(matchedCount)
+    opt มี Order ค้างที่ "รอจับคู่กฎ SKU" จากรอบก่อน
+        WF->>OQ: listSkuRetryOrderIds()
+        OQ->>DB: query(Q2S.5)
+        DB-->>OQ: return orderIds
+        OQ-->>WF: return orderIds
+        WF->>UC: matchSkuUseCase(client, order)
+    end
+    WF-->>VUC: return events (missing / multiple / db-unavailable / ok)
+    Note over VUC: ส่งผลกลับให้ OrderVerifyScreen แสดงข้อความตาม 2A

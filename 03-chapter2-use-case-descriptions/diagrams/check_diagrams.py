@@ -1,7 +1,11 @@
 """ตรวจ Sequence/Collaboration ทุก UC ให้ตรงเกณฑ์ข้อ 24-25 ของรูบริก
 ใช้: python3 03-chapter2-use-case-descriptions/diagrams/check_diagrams.py
 
-1. ข้อความจาก Admin ต้องไปที่หน้าจอ (:*Screen) หรือคน/ระบบภายนอก ห้ามตรงไปที่ controller
+1. ข้อความจาก Admin ต้องไปที่ Screen (:*Screen, ชั้น View ของ MVC) เท่านั้น
+1.0 ห้ามมี object ชื่อมีคำว่า View (รูบริกข้อ 24 ห้ามตั้งชื่อ object ข้าง actor ว่า view)
+1.1 ห้ามมีลูกศรเข้า actor (ทั้ง sequence และ collaboration) ให้ Screen แสดงผลเองด้วย self message
+1.2 MVC: Screen คุยกับ Controller (หรือตัวเอง) เท่านั้น ห้ามเรียก Model (UseCase/Queries) หรือ DB ตรง
+    และนอกจาก Controller ห้ามใครส่งข้อความเข้า Screen
 2. object ใน collaboration ต้องตรงกับ sequence
 3. ทุกเส้นใน collaboration มีเลขกำกับ
 4. query ทุกข้อของ UC (จาก report-doc/content/usecases.json) ต้องอยู่ในทั้งสองรูป
@@ -40,6 +44,10 @@ def seq_objects(text):
     return objs, alias
 
 
+def base(name):
+    return name.lstrip(":").split(" (")[0].strip()
+
+
 def collab_objects(text):
     names = set()
     for m in re.finditer(r'^\s*\w+(\(\[|\[)"([^"<]+)', text, re.M):
@@ -53,10 +61,23 @@ for uc in sorted(need, key=lambda u: (u[-1], int(u[:-1]))):
     seq = open(os.path.join(MMD, f"{uc}-sequence.mmd"), encoding="utf-8").read()
     col = open(os.path.join(MMD, f"{uc}-collaboration.mmd"), encoding="utf-8").read()
     objs, alias = seq_objects(seq)
-    for src, dst in re.findall(r"^\s*(\w+)-{1,2}>>[+-]?(\w+):", seq, re.M):
-        if alias.get(src) == "Admin" and alias.get(dst, "").startswith(":") and not alias[dst].endswith("Screen"):
-            errors.append(f"{uc}: Admin ส่งข้อความตรงไปที่ {alias[dst]} (ต้องผ่านหน้าจอ)")
+    actors = {k for k, v in alias.items() if objs.get(v.lstrip(":").split(" (")[0].strip()) == "actor"}
+    role = lambda k: "actor" if k in actors else "view" if base(alias.get(k, k)).endswith("Screen") \
+        else "controller" if base(alias.get(k, k)).endswith("Controller") else "model"
+    for src, dst in re.findall(r"^\s*(\w+)\s*-{1,2}>>[+-]?\s*(\w+)\s*:", seq, re.M):
+        a, b, name = role(src), role(dst), base(alias.get(dst, dst))
+        if b == "actor": errors.append(f"{uc}: sequence มีลูกศรเข้า actor ({src} -> {dst})")
+        elif a == "actor" and b != "view": errors.append(f"{uc}: Admin ส่งข้อความตรงไปที่ {name} (ต้องผ่าน Screen)")
+        elif a == "view" and b not in ("view", "controller"): errors.append(f"{uc}: Screen เรียก {name} ตรง (ต้องผ่าน Controller)")
+        elif b == "view" and a not in ("actor", "view", "controller"): errors.append(f"{uc}: {base(alias.get(src, src))} ส่งข้อความเข้า Screen ตรง")
+    if actors and not any(role(k) == "view" for k in alias) or actors and not any(role(k) == "controller" for k in alias):
+        errors.append(f"{uc}: มี actor แต่ไม่มี Screen/Controller")
+    cnode = {m.group(1): m.group(2) for m in re.finditer(r'^\s*(\w+)\(\["([^"<]+)', col, re.M)}
+    for dst in re.findall(r'-->\|"[^"]*"\|\s*(\w+)', col):
+        if dst in cnode: errors.append(f"{uc}: collaboration มีเส้นเข้า actor {cnode[dst]}")
     s_names = {n for n in objs}
+    for n in sorted(s_names | collab_objects(col)):
+        if "view" in n.lower(): errors.append(f"{uc}: object {n} มีคำว่า View (รูบริกข้อ 24)")
     c_names = collab_objects(col)
     if s_names != c_names:
         errors.append(f"{uc}: object ไม่ตรงกัน sequence-only={sorted(s_names - c_names)} collab-only={sorted(c_names - s_names)}")

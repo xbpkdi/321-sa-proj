@@ -1,44 +1,69 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :OrderVerifyScreen
-    participant OVC as :OrderVerifyController
-    participant OrderRepo as :OrderRepository
-    participant DB as :DBConnector
+    actor Admin as Super Admin
+    participant V as :OrderVerifyScreen (verify/page.tsx)
+    participant C as :OrderVerifyController (actions.ts)
+    participant UC as :VerifyOrderUseCase (verify-order.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant OQ as :OrderQueries (orders.ts)
+    participant MP as :RakutenAdapter (adapters)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: openPendingVerificationList()
-    Screen->>OVC: loadPendingOrders()
-    OVC->>OrderRepo: getOrdersByStatus("รอตรวจสอบคำสั่งซื้อ")
-    OrderRepo->>DB: executeQuery(Q2A.1)
-    DB-->>OrderRepo: return orderList
-    OrderRepo-->>OVC: return orderList
-    OVC-->>Screen: displayOrderList(orderList)
-
-    Admin->>Screen: selectOrder(orderId)
-    Screen->>OVC: getOrderDetail(orderId)
-    OVC->>OrderRepo: getOrderDetail(orderId)
-    OrderRepo->>DB: executeQuery(Q2A.2)
-    DB-->>OrderRepo: return orderDetail
-    OrderRepo-->>OVC: return orderDetail
-    OVC-->>Screen: displayOrderDetail(orderDetail)
-
-    Admin->>Screen: clickConfirmOrder()
-    Screen->>OVC: verifyOrder(orderId)
-    OVC->>OVC: validateRequiredFields(sku, qty, shippingAddress)
-    alt missing fields or qty not a positive integer
-        OVC-->>Screen: showError("ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ")
-        OVC->>OrderRepo: setManualReview(orderId)
-    else fields complete
-        OVC->>OrderRepo: checkStatus(orderId)
-        OrderRepo->>DB: executeQuery(Q2A.3)
-        DB-->>OrderRepo: return status
-        alt status != "รอตรวจสอบคำสั่งซื้อ"
-            OVC-->>Screen: showError("Order นี้ผ่านการตรวจสอบไปแล้ว")
-        else status valid
-            OVC->>OrderRepo: updateStatus(orderId, "รอจับคู่กฎ SKU")
-            OrderRepo->>DB: executeQuery(Q2A.4)
-            DB-->>OrderRepo: return updateResult
-            OrderRepo-->>OVC: return success
-            OVC-->>Screen: showSuccess("ยืนยันคำสั่งซื้อสำเร็จ")
-            OVC->>OVC: proceedToUseCase2S(orderId)
+    Admin->>V: openVerifyPage()
+    V->>C: loadAppState()
+    C->>OQ: listOrders()
+    OQ->>DB: query(Q2A.1)
+    DB-->>OQ: return orders
+    OQ-->>C: return orders
+    C-->>V: return state
+    V->>V: showOrdersWaitingVerify()
+    Admin->>V: selectOrder(order_id)
+    V->>V: showOrderDetail()
+    Admin->>V: clickConfirm(order_id, shipping_method)
+    V->>C: verifyOrderAction(orderId, shippingMethod)
+    C->>UC: verifyOrderUseCase(orderId, shippingMethod, adminId)
+    UC->>OQ: lockOrder(orderId)
+    OQ->>DB: query(Q2A.2)
+    DB-->>OQ: return snapshot
+    OQ-->>UC: return snapshot
+    alt status is not รอตรวจสอบคำสั่งซื้อ
+        UC-->>C: return already
+    else waiting verify
+        UC->>MP: fetchOrderState(marketplace_order_id)
+        MP-->>UC: return latest
+        alt RMS unavailable
+            UC-->>C: return marketplace
+        else data incomplete
+            UC->>OQ: saveVerifiedOrder(รอดำเนินการด้วยตนเอง, incomplete)
+            OQ->>DB: query(Q2A.3)
+            UC-->>C: return incomplete
+        else qty not positive
+            UC-->>C: return qty
+        else customer cancelled
+            UC->>OQ: saveVerifiedOrder(ยกเลิกแล้ว)
+            OQ->>DB: query(Q2A.3)
+            UC-->>C: return customer-cancelled
+        else data valid
+            UC->>WF: executeWorkflow(work, orderIds)
+            WF->>OQ: lockOrder(orderId)
+            OQ->>DB: query(Q2A.2)
+            WF->>OQ: saveVerifiedOrder(รอจับคู่กฎ SKU, verified_at)
+            OQ->>DB: query(Q2A.3)
+            WF->>WF: runAutomation() [UC 2S ต่อ]
+            WF-->>UC: return done
+            UC-->>C: return ok
         end
+    end
+    C-->>V: return result
+    alt already
+        V->>V: showError("Order นี้ผ่านการตรวจสอบไปแล้ว")
+    else marketplace
+        V->>V: showError("ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้")
+    else incomplete
+        V->>V: showError("ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ")
+    else qty
+        V->>V: showError("จำนวนสินค้าต้องมากกว่า 0")
+    else customer-cancelled
+        V->>V: showError("Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว")
+    else ok
+        V->>V: showSuccess("ยืนยันคำสั่งซื้อสำเร็จ")
     end

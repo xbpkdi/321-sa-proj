@@ -1,31 +1,80 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :StockCheckScreen
-    participant SCC as :StockCheckController
-    participant StockRepo as :StockRepository
-    participant OrderRepo as :OrderRepository
-    participant DB as :DBConnector
+    actor Admin as Super Admin
+    participant V as :StockCheckScreen (stock/page.tsx)
+    participant C as :StockCheckController (actions.ts)
+    participant SUC as :AdjustStockUseCase (stock.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant UC as :CheckStockUseCase (check-stock.ts)
+    participant RSL as :RslAdapter (adapters)
+    participant SQ as :StockQueries (stock.ts)
+    participant EQ as :AutoErrorLogQueries (auto-error-logs.ts)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: selectProduct(sku)
-    Screen->>SCC: checkStock(sku)
-    SCC->>StockRepo: getStockBySku(sku)
-    StockRepo->>DB: executeQuery(Q3S.1)
-    DB-->>StockRepo: return stockData
-    StockRepo-->>SCC: return stockData
-    alt SKU not found
-        SCC-->>Screen: showError("ไม่พบข้อมูลสินค้านี้ในระบบ")
-    else stock data found
-        SCC->>SCC: calculateTotalQty(inHouseQty, rslQty)
-        SCC->>SCC: compareWithReorderThreshold(totalQty)
-        alt totalQty <= reorderThreshold
-            SCC-->>Screen: showStatus("สต๊อกต่ำกว่าเกณฑ์")
-            SCC->>OrderRepo: updateOrderStatus(orderId, "รอ Admin ตัดสินใจสั่งซื้อ")
-            OrderRepo->>DB: executeQuery(Q3S.2)
-            SCC->>SCC: proceedToUseCase4S(sku)
-        else totalQty > reorderThreshold
-            SCC-->>Screen: showStatus("สต๊อกปกติ")
-            SCC->>OrderRepo: updateOrderStatus(orderId, "ยังไม่ได้จับคู่")
-            OrderRepo->>DB: executeQuery(Q3S.2)
-            SCC->>SCC: proceedToUseCase1S(sku)
+    Note over WF,UC: ต่อจาก 2S ใน transaction เดียวกัน (Order อยู่ที่ "รอตรวจสอบสต๊อก")
+    WF->>UC: checkStockUseCase(client, order, rsl)
+    UC->>SQ: getOrderStock(sku) lock row
+    SQ->>DB: query(Q3S.1)
+    DB-->>SQ: return stockRow
+    SQ-->>UC: return stockRow
+    alt ไม่พบแถวสต๊อก
+        UC->>EQ: insertAutoErrorLog("3S", orderId, stock_missing)
+        EQ->>DB: query(Q3S.5)
+        UC-->>WF: return "missing-stock"
+    else พบแถวสต๊อก
+        UC->>RSL: getStock(sku, client)
+        RSL->>SQ: getRslQuantity(sku)
+        SQ->>DB: query(Q3S.2)
+        DB-->>SQ: return rslQty
+        SQ-->>RSL: return rslQty
+        RSL-->>UC: return result
+        opt RSL ขัดข้อง หรือไม่มียอด RSL
+            UC->>EQ: insertAutoErrorLog("3S", orderId, external_unavailable)
+            EQ->>DB: query(Q3S.5)
+        end
+        UC->>SQ: getReservedQuantity(skuId, orderId)
+        SQ->>DB: query(Q3S.3)
+        DB-->>SQ: return reserved
+        SQ-->>UC: return reserved
+        UC->>UC: chooseStockRoute(qty, inHouse - reserved, rsl - reserved)
+        UC->>SQ: saveStockRoute(stockId, rslQty, orderId, status, source)
+        SQ->>DB: query(Q3S.4)
+        alt RSL พอ
+            UC-->>WF: return "rsl" (ยังไม่ได้จับคู่ ไป 1S)
+        else RSL ไม่พอ คลังบริษัทพอ
+            UC-->>WF: return "in_house" (รอจัดรูปแบบใบปะสินค้า)
+            WF->>WF: formatLabels() [UC 6S ใน transaction เดียวกัน]
+        else ไม่มีแหล่งใดพอ
+            UC-->>WF: return "low" (รอ Admin ตัดสินใจสั่งซื้อ)
+        end
+    end
+    Admin->>V: selectProduct(sku), clickCheckStock()
+    V->>C: loadAppState()
+    C->>SQ: listStock()
+    SQ->>DB: query(Q3S.6)
+    DB-->>SQ: return stockRows
+    SQ-->>C: return stockRows
+    C-->>V: return state
+    V->>V: showStock(inHouse, rsl, total, threshold status)
+    opt Admin ปรับยอดสต๊อก
+        Admin->>V: submitAdjust(inHouseQty, rslQty, reason)
+        V->>C: adjustStockAction(input)
+        C->>SUC: adjustStockUseCase(input)
+        alt ข้อมูลไม่ถูกต้อง
+            SUC-->>C: return invalid
+            C-->>V: return result
+            V->>V: showError("กรอกจำนวนเต็มตั้งแต่ 0 ขึ้นไปและระบุเหตุผล")
+        else ข้อมูลถูกต้อง
+            SUC->>WF: executeWorkflow(adjust)
+            WF->>SQ: lockStock(sku)
+            SQ->>DB: query(Q3S.7)
+            WF->>SQ: adjustStock(stockId, inHouseQty, rslQty)
+            SQ->>DB: query(Q3S.8)
+            WF->>SQ: insertStockAdjustmentHistory(history)
+            SQ->>DB: query(Q3S.9)
+            WF->>WF: runAutomation() [UC 7S ซิงก์สต๊อก Rakuten]
+            WF-->>SUC: return done
+            SUC-->>C: return ok
+            C-->>V: return result
+            V->>V: showSuccess("บันทึกยอดสต๊อกและประวัติแล้ว")
         end
     end

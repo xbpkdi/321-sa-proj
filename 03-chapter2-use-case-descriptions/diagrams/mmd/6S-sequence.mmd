@@ -1,35 +1,76 @@
 sequenceDiagram
-    participant OneS as :RslMatchController (1S)
-    participant LFC as :LabelFormatterController
-    participant RuleRepo as :ShippingRuleRepository
-    participant LabelRepo as :LabelRepository
-    participant OrderRepo as :OrderRepository
-    participant DB as :DBConnector
+    actor Admin as Super Admin
+    participant V as :LabelPrintScreen (label/page.tsx)
+    participant C as :LabelPrintController (actions.ts)
+    participant UC as :FormatLabelsUseCase (format-labels.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant OQ as :OrderQueries (orders.ts)
+    participant SQ as :ShippingQueries (shipping.ts)
+    participant EQ as :AutoErrorLogQueries (auto-error-logs.ts)
+    participant LS as :LabelServiceAdapter (adapters)
+    participant DB as :DBConnector (db.ts)
 
-    OneS->>LFC: onRslMatched(orderId)
-    LFC->>OrderRepo: getShippingInfo(orderId)
-    OrderRepo-->>LFC: return shippingInfo
-    alt shipping address incomplete
-        LFC-->>OneS: notify("ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน")
-    else address complete
-        LFC->>RuleRepo: getLabelTemplate(shippingMethod, salesChannel)
-        RuleRepo->>DB: executeQuery(Q6S.1)
-        DB-->>RuleRepo: return template
-        RuleRepo-->>LFC: return template
-        alt label template not found
-            LFC->>OrderRepo: setManualReview(orderId)
-            LFC-->>OneS: notify("ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม")
-        else template found
-            alt label already exists
-                LFC-->>OneS: confirmRecreateLabel()
+    opt (ก) ระบบเรียกเองใน runAutomation หลัง 1S จับคู่ RSL หรือ 3S เลือกคลังบริษัท
+        WF->>OQ: lockOrder(orderId)
+        OQ->>DB: query(Q6S.1)
+        DB-->>OQ: return order
+        OQ-->>WF: return order
+        WF->>WF: findLabelRule(method, channel, fulfill_source)
+        alt address or method empty
+            WF->>SQ: markLabelManual(orderId, "address")
+            SQ->>DB: query(Q6S.3)
+        else no label rule
+            WF->>SQ: markLabelManual(orderId, "template")
+            SQ->>DB: query(Q6S.3)
+        else rule found
+            WF->>LS: generateLabels(order, labelRules)
+            alt adapter failed
+                LS-->>WF: return error
+                WF->>EQ: insertAutoErrorLog(6S, orderId, errorCode)
+                EQ->>DB: query(Q6S.7)
+            else invalid response
+                LS-->>WF: return labels
+                WF->>SQ: recordLabelServiceError(orderId, "invalid_response")
+                SQ->>DB: query(Q6S.6)
+            else labels valid
+                LS-->>WF: return labels
+                WF->>SQ: saveGeneratedLabels(orderId, labels)
+                SQ->>DB: query(Q6S.4)
+                SQ->>DB: query(Q6S.5)
             end
-            LFC->>LabelRepo: createLabel(orderId, template, parcelSeq, parcelTotal)
-            LabelRepo->>DB: executeQuery(Q6S.2)
-            DB-->>LabelRepo: return labelId
-            LabelRepo-->>LFC: return labelId
-            LFC->>OrderRepo: updateStatus(orderId, "รอพิมพ์ใบปะสินค้า")
-            OrderRepo->>DB: executeQuery(Q6S.3)
-            DB-->>OrderRepo: return updateResult
-            LFC->>LFC: proceedToUseCase9A(orderId)
         end
+    end
+    opt (ข) Admin เปิดหน้าพิมพ์ใบปะสินค้า
+        Admin->>V: openLabelPage()
+        V->>C: formatLabelsAction()
+        C->>UC: formatLabelsUseCase()
+        UC->>SQ: listPendingLabelOrders()
+        SQ->>DB: query(Q6S.2)
+        DB-->>SQ: return orders
+        SQ-->>UC: return orders
+        loop each Order
+            UC->>UC: findLabelRule(method, channel, fulfill_source)
+            alt address or method empty
+                UC->>SQ: markLabelManual(orderId, "address")
+                SQ->>DB: query(Q6S.3)
+            else no label rule
+                UC->>SQ: markLabelManual(orderId, "template")
+                SQ->>DB: query(Q6S.3)
+            else rule found
+                UC->>LS: generateLabels(order, labelRules)
+                alt failed or invalid
+                    LS-->>UC: return error
+                    UC->>SQ: recordLabelServiceError(orderId, errorCode)
+                    SQ->>DB: query(Q6S.6)
+                else labels valid
+                    LS-->>UC: return labels
+                    UC->>SQ: saveGeneratedLabels(orderId, labels)
+                    SQ->>DB: query(Q6S.4)
+                    SQ->>DB: query(Q6S.5)
+                end
+            end
+        end
+        UC-->>C: return events
+        C-->>V: return events
+        V->>V: showEvents("สร้างใบปะสินค้าสำเร็จ [จำนวน] ใบ")
     end

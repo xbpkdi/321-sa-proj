@@ -1,21 +1,25 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["ShipmentScreen<br/>+clickSendTracking()"]
-    TNC["TrackingNotifyController<br/>+sendTrackingNotify()<br/>+validateTrackingAndCarrierPresent()"]
-    OrderRepo["OrderRepository<br/>+getChannelInfo()<br/>+markTrackingNotified()"]
-    DB["DBConnector<br/>+executeQuery()"]
-    MP(["Marketplace"])
+    Admin(["Super Admin"])
+    V["ShippingScreen (shipping/page.tsx)<br/>+openShippingPage()<br/>+showShippedOrders()<br/>+clickNotify()<br/>+showResendDialog()<br/>+showError()<br/>+showSuccess()"]
+    C["ShippingController (actions.ts)<br/>+notifyTrackingAction()"]
+    UC["NotifyTrackingUseCase (notify-tracking.ts)<br/>+notifyTrackingUseCase()<br/>+notify()"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+executeWorkflow()<br/>+runAutomation()"]
+    SQ["ShippingQueries (shipping.ts)<br/>+lockNotificationOrder()<br/>+findRetryableNotificationAttempt()<br/>+saveNotificationAttempt()<br/>+completeNotificationAttempt()"]
+    MP["RakutenAdapter (adapters)<br/>+notifyTracking()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: clickSendTracking(orderId)"| Screen
-    Screen -->|"2: sendTrackingNotify(orderId)"| TNC
-    TNC -->|"3: getChannelInfo(orderId)"| OrderRepo
-    OrderRepo -->|"4: executeQuery(Q5S.1)"| DB
-    DB -->|"5: return channelInfo"| OrderRepo
-    OrderRepo -->|"6: return channelInfo"| TNC
-    TNC -->|"7: validateTrackingAndCarrierPresent()"| TNC
-    TNC -->|"8: sendTrackingNumber(marketplaceOrderId, trackingNumber)"| MP
-    MP -->|"9: return ackResult"| TNC
-    TNC -->|"10: markTrackingNotified(orderId)"| OrderRepo
-    OrderRepo -->|"11: executeQuery(Q5S.2)"| DB
-    TNC -->|"12: showSuccess()"| Screen
+    Admin -->|"1: openShippingPage()<br/>3: clickNotify(orderId)"| V
+    V -->|"2: showShippedOrders()<br/>29: [already] showResendDialog('Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่')<br/>30: [incomplete] showError('ข้อมูลหมายเลขติดตามไม่ครบถ้วน')<br/>31: [failed] showError('ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง')<br/>32: [ok] showSuccess('แจ้งเลขติดตามให้ลูกค้าสำเร็จ')"| V
+    V -->|"4: notifyTrackingAction(orderId, confirmResend)"| C
+    C -->|"5: notifyTrackingUseCase(orderId, confirmResend, adminId)"| UC
+    UC -->|"6: executeWorkflow(notify, orderIds)<br/>12: [tracking incomplete] return incomplete<br/>13: [already notified and not confirmResend] return already<br/>24: return ok or failed"| WF
+    WF -->|"7: notify(client)<br/>26: return result"| UC
+    UC -->|"8: lockNotificationOrder(orderId)<br/>14: [not notified yet] findRetryableNotificationAttempt(orderId, trackingNumber)<br/>18: saveNotificationAttempt(attemptId, orderId, trackingNumber, adminId)<br/>22: completeNotificationAttempt(attemptId, sent, errorCode)"| SQ
+    SQ -->|"9: query(Q5S.1)<br/>15: query(Q5S.2)<br/>19: query(Q5S.3)<br/>23: query(Q5S.4)"| DB
+    DB -->|"10: return order<br/>16: return attemptId"| SQ
+    SQ -->|"11: return order<br/>17: return attemptId"| UC
+    UC -->|"20: notifyTracking(marketplaceOrderId, trackingNumber, attemptId)"| MP
+    MP -->|"21: return ok or error"| UC
+    WF -->|"25: runAutomation(orderIds) [UC 7S]"| WF
+    UC -->|"27: return result"| C
+    C -->|"28: return result"| V

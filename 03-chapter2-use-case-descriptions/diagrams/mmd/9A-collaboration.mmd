@@ -1,23 +1,24 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["LabelPrintScreen<br/>+openReadyToPrintList()<br/>+clickPrintLabel()"]
-    LPC["LabelPrintController<br/>+printLabel()<br/>+validateAddressAndMethod()"]
-    RuleRepo["ShippingRuleRepository<br/>+getLabelTemplate()"]
-    OrderRepo["OrderRepository<br/>+checkAlreadyPrinted()<br/>+updateOrderStatus()"]
-    LabelRepo["LabelRepository<br/>+updateLabelStatus()"]
-    DB["DBConnector<br/>+executeQuery()"]
-    Printer(["Printer"])
+    Admin(["Super Admin"])
+    V["LabelPrintScreen (label/page.tsx)<br/>+openLabelPage()<br/>+showPrintQueue()<br/>+clickPrint()<br/>+showReprintDialog()<br/>+showError()<br/>+showSuccess()"]
+    C["LabelPrintController (actions.ts)<br/>+formatLabelsAction()<br/>+loadAppState()<br/>+printLabelsAction()"]
+    UC["PrintLabelUseCase (print-label.ts)<br/>+printLabelsUseCase()<br/>+printLabelUseCase()"]
+    SQ["ShippingQueries (shipping.ts)<br/>+listLabels()<br/>+listPrintableLabels()<br/>+recordPrintAttempt()<br/>+completeLabelPrint()"]
+    Printer["PrinterAdapter (adapters)<br/>+printLabel()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: selectOrder()/clickPrintLabel()"| Screen
-    Screen -->|"2: printLabel(orderId)"| LPC
-    LPC -->|"3: checkAlreadyPrinted(orderId)"| OrderRepo
-    LPC -->|"4: getLabelTemplate(method, channel)"| RuleRepo
-    RuleRepo -->|"5: executeQuery(Q9A.1)"| DB
-    LPC -->|"6: sendToPrinter(template, orderData)"| Printer
-    Printer -->|"7: printResult"| LPC
-    LPC -->|"8: updateLabelStatus(orderId, พิมพ์แล้ว)"| LabelRepo
-    LabelRepo -->|"9: executeQuery(Q9A.2)"| DB
-    LPC -->|"10: updateOrderStatus(orderId)"| OrderRepo
-    OrderRepo -->|"11: executeQuery(Q9A.3)"| DB
-    LPC -->|"12: showSuccess()"| Screen
+    Admin -->|"1: openLabelPage()<br/>10: clickPrint(orderIds)"| V
+    V -->|"2: formatLabelsAction()<br/>3: loadAppState()<br/>11: printLabelsAction(orderIds, reprint)"| C
+    C -->|"4: listLabels()"| SQ
+    SQ -->|"5: query(Q9A.1)<br/>15: query(Q9A.2)<br/>24: query(Q9A.3)<br/>26: query(Q9A.4)"| DB
+    DB -->|"6: return labels<br/>16: return labels"| SQ
+    SQ -->|"7: return labels"| C
+    C -->|"8: return state<br/>28: return results"| V
+    V -->|"9: showPrintQueue()<br/>29: [already] showReprintDialog('Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่')<br/>30: [printer error] showError('พิมพ์ใบปะสินค้าไม่สำเร็จ กรุณาตรวจสอบเครื่องพิมพ์')<br/>31: [ok] showSuccess('ส่งใบปะสินค้า [Order ID] ไปยังเครื่องพิมพ์แล้ว')"| V
+    C -->|"12: printLabelsUseCase(orderIds, reprint, adminId)"| UC
+    UC -->|"13: *[each Order] printLabelUseCase(orderId, reprint, adminId)"| UC
+    UC -->|"14: listPrintableLabels(orderId)<br/>23: *[each printed label] recordPrintAttempt(attemptId, labelId, adminId, reprint, outcome)<br/>25: [all printed and not reprint] completeLabelPrint(orderId)"| SQ
+    SQ -->|"17: return labels"| UC
+    UC -->|"18: [no labels or wrong status] return no-template<br/>19: [address incomplete] return no-address<br/>20: [already printed and not reprint] return already<br/>27: return ok or printer"| C
+    UC -->|"21: *[each label by parcel_seq] printLabel(label, attemptId)"| Printer
+    Printer -->|"22: return ok or error"| UC

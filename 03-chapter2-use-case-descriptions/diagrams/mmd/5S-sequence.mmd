@@ -1,30 +1,53 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :ShipmentScreen
-    participant TNC as :TrackingNotifyController
-    participant OrderRepo as :OrderRepository
-    participant DB as :DBConnector
-    participant MP as Marketplace
+    actor Admin as Super Admin
+    participant V as :ShippingScreen (shipping/page.tsx)
+    participant C as :ShippingController (actions.ts)
+    participant UC as :NotifyTrackingUseCase (notify-tracking.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant SQ as :ShippingQueries (shipping.ts)
+    participant MP as :RakutenAdapter (adapters)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: clickSendTracking(orderId)
-    Screen->>TNC: sendTrackingNotify(orderId)
-    TNC->>OrderRepo: getChannelInfo(orderId)
-    OrderRepo->>DB: executeQuery(Q5S.1)
-    DB-->>OrderRepo: return channelInfo
-    OrderRepo-->>TNC: return channelInfo
-    TNC->>TNC: validateTrackingAndCarrierPresent(channelInfo)
-    alt missing tracking number or carrier
-        TNC-->>Screen: showError("ข้อมูลหมายเลขติดตามไม่ครบถ้วน")
-    else fields complete
-        TNC->>MP: sendTrackingNumber(marketplaceOrderId, trackingNumber)
-        MP-->>TNC: return ackResult
-        alt send succeeded
-            TNC->>OrderRepo: markTrackingNotified(orderId)
-            OrderRepo->>DB: executeQuery(Q5S.2)
-            DB-->>OrderRepo: return updateResult
-            TNC-->>Screen: showSuccess("แจ้งเลขติดตามให้ลูกค้าสำเร็จ")
-            TNC->>TNC: proceedToUseCase7S(orderId)
-        else send failed
-            TNC-->>Screen: showError("ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง")
+    Admin->>V: openShippingPage()
+    V->>V: showShippedOrders()
+    Admin->>V: clickNotify(orderId)
+    V->>C: notifyTrackingAction(orderId, confirmResend)
+    C->>UC: notifyTrackingUseCase(orderId, confirmResend, adminId)
+    UC->>WF: executeWorkflow(notify, orderIds)
+    WF->>UC: notify(client)
+    UC->>SQ: lockNotificationOrder(orderId)
+    SQ->>DB: query(Q5S.1)
+    DB-->>SQ: return order
+    SQ-->>UC: return order
+    alt tracking incomplete
+        UC-->>WF: return incomplete
+    else already notified and not confirmResend
+        UC-->>WF: return already
+    else send
+        opt not notified yet
+            UC->>SQ: findRetryableNotificationAttempt(orderId, trackingNumber)
+            SQ->>DB: query(Q5S.2)
+            DB-->>SQ: return attemptId
+            SQ-->>UC: return attemptId
         end
+        UC->>SQ: saveNotificationAttempt(attemptId, orderId, trackingNumber, adminId)
+        SQ->>DB: query(Q5S.3)
+        UC->>MP: notifyTracking(marketplaceOrderId, trackingNumber, attemptId)
+        MP-->>UC: return ok or error
+        UC->>SQ: completeNotificationAttempt(attemptId, sent, errorCode)
+        SQ->>DB: query(Q5S.4)
+        UC-->>WF: return ok or failed
+    end
+    WF->>WF: runAutomation(orderIds) [UC 7S]
+    WF-->>UC: return result
+    UC-->>C: return result
+    C-->>V: return result
+    alt already
+        V->>V: showResendDialog("Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่")
+    else incomplete
+        V->>V: showError("ข้อมูลหมายเลขติดตามไม่ครบถ้วน")
+    else failed
+        V->>V: showError("ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง")
+    else ok
+        V->>V: showSuccess("แจ้งเลขติดตามให้ลูกค้าสำเร็จ")
     end

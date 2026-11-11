@@ -1,48 +1,83 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :LoginScreen
-    participant AuthC as :AuthController
-    participant UserRepo as :UserRepository
-    participant DB as :DBConnector
+    actor Admin as Super Admin
+    participant V as :LoginScreen (login/page.tsx)
+    participant Shell as :AppShellScreen (layout.tsx)
+    participant C as :LoginController (login/actions.ts)
+    participant Auth as :SessionAuth (auth/sessions.ts)
+    participant AQ as :AdminQueries (admin.ts)
+    participant SQ as :SessionQueries (sessions.ts)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: submitLogin(email, password)
-    Screen->>AuthC: authenticate(email, password)
-    AuthC->>AuthC: validateNotEmpty(email, password)
-    alt email/password empty
-        AuthC-->>Screen: showError("ข้อมูลที่กรอกมาไม่ครบ")
-    else fields provided
-        AuthC->>AuthC: validateEmailFormat(email)
-        alt invalid email format
-            AuthC-->>Screen: showError("รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง")
-        else valid format
-            AuthC->>UserRepo: getUserByEmail(email)
-            UserRepo->>DB: executeQuery(Q1A.1)
-            DB-->>UserRepo: return userData
-            UserRepo-->>AuthC: return userData
-            alt failAttempts >= 5
-                AuthC-->>Screen: showError("คุณพยายามเข้าสู่ระบบบ่อยเกินไป")
-            else failAttempts < 5
-                AuthC->>AuthC: verifyPassword(password, userData.passwordHash)
-                alt email not found or password mismatch
-                    AuthC->>UserRepo: incrementFailAttempts(email)
-                    UserRepo->>DB: executeQuery(Q1A.2)
-                    AuthC-->>Screen: showError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
-                else email and password correct
-                    AuthC->>UserRepo: resetFailAttemptsAndSetLastLogin(email)
-                    UserRepo->>DB: executeQuery(Q1A.3)
-                    AuthC->>AuthC: createSession(userId)
-                    AuthC-->>Screen: showSuccess("เข้าสู่ระบบสำเร็จ")
-                    Screen-->>Admin: redirectToDashboard()
-                end
+    Admin->>V: openLoginPage()
+    V->>V: showLoginForm()
+    Admin->>V: submitLogin(user_email, user_password)
+    V->>C: loginAction(formData)
+    C->>C: validateInput(user_email, user_password)
+    alt empty field or wrong email format
+        C-->>V: return incomplete / email-format
+        V->>V: showError("ข้อมูลที่กรอกมาไม่ครบ / รูปแบบอีเมลไม่ถูกต้อง")
+    else input valid
+        C->>AQ: findAdminByEmail(email)
+        AQ->>DB: query(Q1A.1)
+        DB-->>AQ: return admin
+        AQ-->>C: return admin
+        alt email not found
+            C-->>V: return wrong
+            V->>V: showError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
+        else locked_until > now
+            C-->>V: return locked, retryMinutes
+            V->>V: showError("บัญชีถูกล็อกชั่วคราว กรุณารออีก N นาที")
+        else lock expired
+            C->>AQ: unlockAdmin(admin_id)
+            AQ->>DB: query(Q1A.2)
+        end
+        C->>C: verifyPassword(password, hash)
+        alt wrong password
+            C->>AQ: recordFailedLogin(admin_id, now)
+            AQ->>DB: query(Q1A.3)
+            DB-->>AQ: return fail_attempts, locked_until
+            AQ-->>C: return fail_attempts, locked_until
+            alt 5th failure
+                C-->>V: return locked, retryMinutes = 15
+                V->>V: showError("บัญชีถูกล็อกชั่วคราว กรุณารออีก 15 นาที")
+            else
+                C-->>V: return wrong
+                V->>V: showError("อีเมลหรือรหัสผ่านไม่ถูกต้อง")
             end
+        else password correct
+            C->>AQ: recordSuccessfulLogin(admin_id, now)
+            AQ->>DB: query(Q1A.4)
+            C->>Auth: createSessionRecord(admin_id)
+            Auth->>SQ: insertSession(session)
+            SQ->>DB: query(Q1A.5)
+            Auth-->>C: return token, expiresAt
+            C->>Auth: setSessionCookie(session)
+            C-->>V: redirect("/dashboard")
+            V->>V: showDashboard()
         end
     end
-
-    Admin->>Screen: clickLogout()
-    opt มีงานที่ยังไม่ได้บันทึก
-        Screen-->>Admin: confirmLogout("ต้องการออกจากระบบหรือไม่")
+    Admin->>Shell: openProtectedPage()
+    Shell->>C: requireSession()
+    C->>Auth: getSession()
+    Auth->>SQ: findActiveSession(tokenHash, now)
+    SQ->>DB: query(Q1A.6)
+    DB-->>SQ: return session
+    SQ-->>Auth: return session
+    Auth-->>C: return session
+    alt no active session
+        C-->>Shell: redirect("/login")
+        Shell->>Shell: showLoginPage()
+    else session valid
+        C-->>Shell: return session
+        Shell->>Shell: showPage()
     end
-    Screen->>AuthC: logout()
-    AuthC->>AuthC: destroySession(userId)
-    AuthC-->>Screen: showSuccess("ออกจากระบบแล้ว")
-    Screen-->>Admin: redirectToLogin()
+    Admin->>Shell: clickLogout()
+    Shell->>Shell: showConfirm("ต้องการออกจากระบบหรือไม่")
+    Admin->>Shell: confirmLogout()
+    Shell->>C: logoutAction()
+    C->>Auth: revokeCurrentSession()
+    Auth->>SQ: revokeSession(tokenHash, now)
+    SQ->>DB: query(Q1A.7)
+    Auth->>Auth: deleteCookie()
+    C-->>Shell: redirect("/login")
+    Shell->>Shell: showMessage("ออกจากระบบแล้ว")

@@ -1,53 +1,51 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :ReorderDecisionScreen
-    participant RDC as :ReorderDecisionController
-    participant OrderRepo as :OrderRepository
-    participant CostRepo as :CostLogRepository
-    participant DB as :DBConnector
+    actor Admin as Super Admin
+    participant V as :ReorderScreen (reorder/page.tsx)
+    participant C as :ReorderController (actions.ts)
+    participant UC as :ReordersUseCase (reorders.ts)
+    participant RQ as :ReorderQueries (reorders.ts)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: openPendingDecisionList()
-    Screen->>RDC: loadPendingOrders()
-    RDC->>OrderRepo: getOrdersByStatus("รอ Admin ตัดสินใจสั่งซื้อ")
-    OrderRepo-->>RDC: return orderList
-    RDC-->>Screen: displayOrderList(orderList)
-
-    Admin->>Screen: selectOrder(orderId)
-    Screen->>RDC: loadDecisionData(orderId)
-    RDC->>OrderRepo: getCostAndMarginInfo(orderId)
-    OrderRepo->>DB: executeQuery(Q5A.1)
-    DB-->>OrderRepo: return costInfo
-    OrderRepo-->>RDC: return costInfo
-    RDC->>CostRepo: getLatestUnitCost(sku)
-    CostRepo->>DB: executeQuery(Q5A.2)
-    DB-->>CostRepo: return unitCost
-    CostRepo-->>RDC: return unitCost
-    RDC->>RDC: calculateExpectedMargin(costInfo, unitCost)
-    Note right of RDC: Q5A.3 Expected Margin =<br/>selling_price - unit_cost
-    alt selling price not found
-        RDC-->>Screen: showError("ไม่พบราคาขายของสินค้านี้")
-        RDC->>OrderRepo: setManualReview(orderId)
-    else data complete
-        RDC-->>Screen: displayCostAndMargin(costInfo)
-        Admin->>Screen: clickApprove() / clickReject()
-        Screen->>RDC: submitDecision(orderId, decision)
-        RDC->>OrderRepo: checkStatus(orderId)
-        OrderRepo-->>RDC: return status
-        alt status != "รอ Admin ตัดสินใจสั่งซื้อ"
-            RDC-->>Screen: showError("Order นี้ได้รับการตัดสินใจไปแล้ว")
-        else status valid
-            alt decision == คุ้มค่า
-                RDC->>OrderRepo: updateStatus(orderId, "รอสั่งซื้อจาก Supplier", "คุ้มค่า")
-                OrderRepo->>DB: executeQuery(Q5A.4)
-                DB-->>OrderRepo: return updateResult
-                RDC-->>Screen: showSuccess("บันทึกผลการตัดสินใจสำเร็จ")
-                RDC->>RDC: proceedToUseCase6A(orderId)
-            else decision == ไม่คุ้มค่า
-                RDC->>OrderRepo: updateStatus(orderId, "รอยกเลิก Order", "ไม่คุ้มค่า")
-                OrderRepo->>DB: executeQuery(Q5A.5)
-                DB-->>OrderRepo: return updateResult
-                RDC-->>Screen: showSuccess("บันทึกผลการตัดสินใจสำเร็จ")
-                RDC->>RDC: proceedToUseCase7A(orderId)
-            end
+    Admin->>V: openDecideTab()
+    V->>V: showDecisionList(orders, unitCost, sellingPrice, margin)
+    Admin->>V: chooseDecision(orderId, decision)
+    V->>V: showConfirmDialog(defaultQty)
+    Admin->>V: confirmDecision(qty)
+    V->>C: decideReorderAction(orderId, decision, qty)
+    C->>UC: decideReorderUseCase(input)
+    alt qty ไม่ใช่จำนวนเต็มบวก
+        UC-->>C: return "invalid-qty"
+    else qty ถูกต้อง
+        UC->>RQ: lockDecisionContext(client, orderId)
+        RQ->>DB: query(Q5A.1)
+        DB-->>RQ: return row
+        RQ-->>UC: return row
+        alt รอดำเนินการด้วยตนเอง และ manual_reason = price
+            UC-->>C: return "no-price"
+        else สถานะไม่ใช่ รอ Admin ตัดสินใจสั่งซื้อ
+            UC-->>C: return "not-pending"
+        else ไม่มี selling_price
+            UC->>RQ: markDecisionMissingPrice(client, orderId)
+            RQ->>DB: query(Q5A.3)
+            DB-->>RQ: return ok
+            UC-->>C: return "no-price"
+        else ไม่มี unit_cost
+            UC-->>C: return "no-cost"
+        else fault db
+            UC-->>C: return "db"
+        else ข้อมูลครบ
+            UC->>RQ: saveReorderDecision(client, decision, qty, status)
+            RQ->>DB: query(Q5A.2)
+            DB-->>RQ: return ok
+            RQ-->>UC: return ok
+            UC-->>C: return "ok"
         end
+    end
+    C-->>V: return result
+    alt result = ok และ คุ้มค่า
+        V->>V: showSuccess("บันทึกผลสำเร็จ ส่ง Order เข้าสู่การสั่งซื้อจาก Supplier")
+    else result = ok และ ไม่คุ้มค่า
+        V->>V: showSuccess("บันทึกผลสำเร็จ ส่ง Order เข้าสู่การยกเลิก Order")
+    else result อื่น
+        V->>V: showError(message)
     end

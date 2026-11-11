@@ -1,24 +1,24 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["ProductScreen<br/>+openProductList()<br/>+clickAddOrEditProduct()<br/>+submitProductForm()"]
-    PC["ProductController<br/>+saveProduct()<br/>+validateNotEmpty()<br/>+validatePositiveInteger()"]
-    ProdRepo["ProductRepository<br/>+checkSkuExists()<br/>+insertProduct()<br/>+updateProduct()"]
-    SkuRepo["SkuRuleRepository<br/>+insertSkuRule()"]
-    DB["DBConnector<br/>+executeQuery()"]
+    Admin(["Super Admin"])
+    V["ProductScreen (products/page.tsx)<br/>+openProductList()<br/>+showProductList()<br/>+clickAddOrEditProduct()<br/>+showProductForm()<br/>+submitProductForm()<br/>+showError()<br/>+showSuccess()<br/>+toggleActive()<br/>+clickDelete()<br/>+uploadCsv()<br/>+showImportResult()"]
+    C["ProductController (actions.ts)<br/>+loadAppState()<br/>+saveProductAction()<br/>+setProductActiveAction()<br/>+deleteProductAction()<br/>+importProductsAction()"]
+    UC["ProductsUseCase (products.ts)<br/>+saveProductUseCase()<br/>+validateProduct()<br/>+saveCostDraft()<br/>+setProductActiveUseCase()<br/>+deleteProductUseCase()<br/>+importProductsUseCase()<br/>+saveProductInTransaction()"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+runAutomation()"]
+    SQ["SkuQueries (skus.ts)<br/>+listSkus()<br/>+listSuppliers()<br/>+lockSku()<br/>+findSkuConflict()<br/>+supplierExists()<br/>+insertSku()<br/>+updateSku()<br/>+requeueOrdersForSku()<br/>+setSkuStatus()<br/>+skuHasRelatedRecords()<br/>+deleteSku()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: openProductList()"| Screen
-    Admin -->|"2: submitProductForm(productData)"| Screen
-    Screen -->|"3: saveProduct(productData)"| PC
-    PC -->|"4: checkSkuExists(sku)"| ProdRepo
-    ProdRepo -->|"5: executeQuery(Q3A.1)"| DB
-    DB -->|"6: return exists"| ProdRepo
-    ProdRepo -->|"7: return exists"| PC
-    PC -->|"8: insertProduct() / updateProduct()"| ProdRepo
-    ProdRepo -->|"9: executeQuery(Q3A.2 / Q3A.3)"| DB
-    DB -->|"10: return result"| ProdRepo
-    ProdRepo -->|"11: return result"| PC
-    PC -->|"12: insertSkuRule(channelSku, sku) [ถ้ากำหนด mapping]"| SkuRepo
-    SkuRepo -->|"13: executeQuery(Q3A.4)"| DB
-    PC -->|"14: showSuccess()"| Screen
-    PC -->|"15: retryUseCase2S(sku) [ถ้ามาจาก 2S]"| PC
+    Admin -->|"1: openProductList()<br/>11: clickAddOrEditProduct()<br/>13: submitProductForm(product, costForm)<br/>45: [toggle เปิดขาย / ปิดการขาย] toggleActive(sku)<br/>55: [delete product] clickDelete(sku)<br/>70: [import CSV] uploadCsv(csv)"| V
+    V -->|"2: loadAppState()<br/>14: saveProductAction(draft, originalSku, costForm)<br/>46: setProductActiveAction(sku, active)<br/>56: deleteProductAction(sku)<br/>71: importProductsAction(csv)"| C
+    C -->|"3: listSkus()<br/>5: listSuppliers()"| SQ
+    SQ -->|"4: query(Q3A.1)<br/>6: query(Q3A.2)<br/>20: query(Q3A.3)<br/>22: query(Q3A.4)<br/>27: query(Q3A.5)<br/>29: query(Q3A.6)<br/>31: query(Q3A.7)<br/>34: query(Q3A.8)<br/>49: query(Q3A.3)<br/>51: query(Q3A.9)<br/>59: query(Q3A.3)<br/>61: query(Q3A.10)<br/>66: query(Q3A.11)"| DB
+    DB -->|"7: return rows<br/>23: return conflict<br/>35: return requeued"| SQ
+    SQ -->|"8: return skus, suppliers"| C
+    C -->|"9: return state<br/>40: return result<br/>53: return result<br/>63: return result<br/>68: return result<br/>76: return result"| V
+    V -->|"10: showProductList()<br/>12: showProductForm()<br/>41: [incomplete] showError('กรุณากรอกข้อมูลให้ครบถ้วน')<br/>42: [invalid-number] showError('Reorder Threshold และ Reorder Quantity ต้องเป็นจำนวนเต็มบวก')<br/>43: [duplicate] showError('SKU นี้มีอยู่ในระบบแล้ว')<br/>44: [ok] showSuccess('บันทึกข้อมูลสินค้าสำเร็จ')<br/>54: showProductList()<br/>64: showError('ไม่สามารถลบสินค้านี้ได้')<br/>69: showSuccess('ลบสินค้า [SKU] แล้ว')<br/>77: showImportResult(rows)"| V
+    C -->|"15: saveProductUseCase(draft, originalSku, costForm, adminId)<br/>47: setProductActiveUseCase(sku, active)<br/>57: deleteProductUseCase(sku)<br/>72: importProductsUseCase(csv, adminId)"| UC
+    UC -->|"16: validateProduct(draft)<br/>32: saveCostDraft(sku, costForm) [UC 4S]<br/>73: saveProductInTransaction(row) [Q3A.3-8 ทีละแถว]"| UC
+    UC -->|"17: [required field empty] return incomplete<br/>18: [threshold or qty not positive integer] return invalid-number<br/>25: [duplicate SKU or channel_sku] return duplicate<br/>39: return ok, requeued<br/>52: return ok<br/>62: [has related Order or reorder] return has-related<br/>67: return ok<br/>75: return rowResults"| C
+    UC -->|"19: [edit existing product] lockSku(originalSku)<br/>21: findSkuConflict(sku, channel_sku, sku_id)<br/>26: [unique] supplierExists(supplier_id)<br/>28: [add new product] insertSku(product, skuId, stockId)<br/>30: [edit existing product] updateSku(skuId, product)<br/>33: requeueOrdersForSku(skuId, sku, channelSku)<br/>48: lockSku(sku)<br/>50: setSkuStatus(skuId, active)<br/>58: lockSku(sku)<br/>60: skuHasRelatedRecords(skuId)<br/>65: [no related record] deleteSku(skuId)"| SQ
+    SQ -->|"24: return conflict<br/>36: return requeuedOrderIds"| UC
+    UC -->|"37: [มี Order คืนคิว] runAutomation(requeuedOrderIds) [UC 2S, 3S, 6S ต่อ]<br/>74: runAutomation(requeuedOrderIds) [UC 2S, 3S, 6S ต่อ]"| WF
+    WF -->|"38: return done"| UC

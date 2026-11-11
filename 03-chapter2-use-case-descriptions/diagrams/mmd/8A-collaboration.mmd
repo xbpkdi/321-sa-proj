@@ -1,22 +1,38 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["ShipmentScreen<br/>+openReadyToShipList()<br/>+confirmHandover()"]
-    SC["ShipmentController<br/>+recordHandover()<br/>+checkLabelStatus()"]
-    OrderRepo["OrderRepository<br/>+checkLabelStatus()<br/>+updateDispatched()<br/>+updateStatusIfChanged()"]
-    DelRepo["DeliveryPartnerRepository<br/>+getTrackingNumber()"]
-    TrackRepo["CarrierTrackingRepository<br/>+getCarrierStatus()"]
-    DB["DBConnector<br/>+executeQuery()"]
-    Del(["Delivery"])
+    Admin(["Super Admin"])
+    V["ShippingScreen (shipping/page.tsx)<br/>+openShippingPage()<br/>+showCarrierEvents()<br/>+showDispatchQueue()<br/>+clickDispatch()<br/>+showConfirmDialog()<br/>+confirmDispatch()<br/>+showResult()"]
+    C["ShippingController (actions.ts)<br/>+pollCarrierAction()<br/>+dispatchOrdersAction()"]
+    PUC["PollCarrierUseCase (poll-carrier.ts)<br/>+pollCarrierUseCase()"]
+    DUC["DispatchOrderUseCase (dispatch-order.ts)<br/>+dispatchOrdersUseCase()"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+executeWorkflow()<br/>+runAutomation()"]
+    SQ["ShippingQueries (shipping.ts)<br/>+listCarrierPollOrders()<br/>+saveCarrierStatus()<br/>+completeDeliveredOrder()<br/>+lockDispatchOrder()<br/>+markAwaitingCarrier()<br/>+saveDispatch()"]
+    STQ["StockQueries (stock.ts)<br/>+restoreCancelledOrderStock()"]
+    Carrier["CarrierAdapter (adapters)<br/>+getDeliveryStatus()<br/>+getTrackingInfo()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: handOverPackage()"| Del
-    Admin -->|"2: confirmHandover(orderId)"| Screen
-    Screen -->|"3: recordHandover(orderId)"| SC
-    SC -->|"4: checkLabelStatus(orderId)"| OrderRepo
-    SC -->|"5: getTrackingNumber(orderId)"| DelRepo
-    DelRepo -->|"6: executeQuery(Q8A.1)"| DB
-    SC -->|"7: updateDispatched(orderId, trackingInfo)"| OrderRepo
-    OrderRepo -->|"8: executeQuery(Q8A.2)"| DB
-    SC -->|"9: getCarrierStatus(trackingNumber)"| TrackRepo
-    TrackRepo -->|"10: executeQuery(Q8A.3)"| DB
-    SC -->|"11: updateStatusIfChanged(orderId, status)"| OrderRepo
+    Admin -->|"1: openShippingPage()<br/>26: clickDispatch(selectedOrders)<br/>28: confirmDispatch()"| V
+    V -->|"2: pollCarrierAction()<br/>29: dispatchOrdersAction(orderIds)"| C
+    C -->|"3: pollCarrierUseCase()"| PUC
+    PUC -->|"4: listCarrierPollOrders()"| SQ
+    SQ -->|"5: query(Q8A.3)<br/>17: query(Q8A.4)<br/>20: query(Q8A.5)<br/>32: query(Q8A.1)<br/>39: query(Q8A.6)<br/>43: query(Q8A.1)<br/>45: query(Q8A.2)<br/>52: query(Q8A.5)"| DB
+    DB -->|"6: return rows<br/>33: return order<br/>46: return result"| SQ
+    SQ -->|"7: return rows"| PUC
+    PUC -->|"8: *[each tracked Order] getDeliveryStatus(trackingNumber)"| Carrier
+    Carrier -->|"9: [connection failed] return error<br/>10: [status changed] return status"| PUC
+    PUC -->|"11: executeWorkflow(work, delivered ? [orderId] : [])"| WF
+    WF -->|"12: [returned and stock deducted] restoreCancelledOrderStock(orderId, skuId, source, qty)"| STQ
+    STQ -->|"13: query(Q8A.7)"| DB
+    DB -->|"14: return qty"| STQ
+    STQ -->|"15: return restocked"| WF
+    WF -->|"16: saveCarrierStatus(orderId, status)<br/>19: completeDeliveredOrder(orderId)<br/>51: [หลัง 5S และ 7S ใน transaction เดียวกัน (ขนส่งยืนยันส่งถึงก่อนแจ้งเลขติดตาม)] completeDeliveredOrder(orderId)"| SQ
+    WF -->|"18: [delivered] runAutomation(orderId) [UC 7S ตัดสต๊อกที่ค้าง]"| WF
+    WF -->|"21: return done"| PUC
+    PUC -->|"22: return events"| C
+    C -->|"23: return events<br/>49: return results"| V
+    V -->|"24: showCarrierEvents('จัดส่งไม่สำเร็จ / ตีกลับ / ดึงสถานะไม่ได้')<br/>25: showDispatchQueue()<br/>27: showConfirmDialog('ยืนยันรายการพัสดุที่ส่งมอบ')<br/>50: showResult('ส่งมอบ [Order ID] ให้ [ผู้ขนส่ง] แล้ว')"| V
+    C -->|"30: dispatchOrdersUseCase(orderIds)"| DUC
+    DUC -->|"31: *[each Order] lockDispatchOrder(orderId)<br/>38: markAwaitingCarrier(orderId)<br/>42: lockDispatchOrder(orderId)<br/>44: saveDispatch(orderId, trackingNumber, carrierName)"| SQ
+    SQ -->|"34: return order<br/>47: return result"| DUC
+    DUC -->|"35: [not printed] return not-printed<br/>40: return no-tracking<br/>48: return ok"| C
+    DUC -->|"36: [printed] getTrackingInfo(orderId)"| Carrier
+    Carrier -->|"37: [no tracking number] return error or empty<br/>41: [tracking found] return trackingNumber, carrierName"| DUC

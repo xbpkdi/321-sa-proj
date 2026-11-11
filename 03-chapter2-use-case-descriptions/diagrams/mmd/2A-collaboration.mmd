@@ -1,27 +1,28 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["OrderVerifyScreen<br/>+openPendingVerificationList()<br/>+selectOrder()<br/>+clickConfirmOrder()"]
-    OVC["OrderVerifyController<br/>+loadPendingOrders()<br/>+getOrderDetail()<br/>+verifyOrder()"]
-    OrderRepo["OrderRepository<br/>+getOrdersByStatus()<br/>+getOrderDetail()<br/>+checkStatus()<br/>+updateStatus()"]
-    DB["DBConnector<br/>+executeQuery()"]
+    Admin(["Super Admin"])
+    V["OrderVerifyScreen (verify/page.tsx)<br/>+openVerifyPage()<br/>+showOrdersWaitingVerify()<br/>+selectOrder()<br/>+showOrderDetail()<br/>+clickConfirm()<br/>+showError()<br/>+showSuccess()"]
+    C["OrderVerifyController (actions.ts)<br/>+loadAppState()<br/>+verifyOrderAction()"]
+    UC["VerifyOrderUseCase (verify-order.ts)<br/>+verifyOrderUseCase()"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+executeWorkflow()<br/>+runAutomation()"]
+    OQ["OrderQueries (orders.ts)<br/>+listOrders()<br/>+lockOrder()<br/>+saveVerifiedOrder()"]
+    MP["RakutenAdapter (adapters)<br/>+fetchOrderState()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: openPendingVerificationList()"| Screen
-    Screen -->|"2: loadPendingOrders()"| OVC
-    OVC -->|"3: getOrdersByStatus()"| OrderRepo
-    OrderRepo -->|"4: executeQuery(Q2A.1)"| DB
-    DB -->|"5: return orderList"| OrderRepo
-    OrderRepo -->|"6: return orderList"| OVC
-    Admin -->|"7: selectOrder(orderId)"| Screen
-    Screen -->|"8: getOrderDetail(orderId)"| OVC
-    OVC -->|"9: getOrderDetail(orderId)"| OrderRepo
-    OrderRepo -->|"10: executeQuery(Q2A.2)"| DB
-    Admin -->|"11: clickConfirmOrder()"| Screen
-    Screen -->|"12: verifyOrder(orderId)"| OVC
-    OVC -->|"13: checkStatus(orderId)"| OrderRepo
-    OrderRepo -->|"14: executeQuery(Q2A.3)"| DB
-    DB -->|"15: return status"| OrderRepo
-    OrderRepo -->|"16: return status"| OVC
-    OVC -->|"17: updateStatus(orderId, 'รอจับคู่กฎ SKU')"| OrderRepo
-    OrderRepo -->|"18: executeQuery(Q2A.4)"| DB
-    OVC -->|"19: showSuccess()"| Screen
+    Admin -->|"1: openVerifyPage()<br/>9: selectOrder(order_id)<br/>11: clickConfirm(order_id, shipping_method)"| V
+    V -->|"2: loadAppState()<br/>12: verifyOrderAction(orderId, shippingMethod)"| C
+    C -->|"3: listOrders()"| OQ
+    OQ -->|"4: query(Q2A.1)<br/>15: query(Q2A.2)<br/>23: query(Q2A.3)<br/>27: query(Q2A.3)<br/>31: query(Q2A.2)<br/>33: query(Q2A.3)"| DB
+    DB -->|"5: return orders<br/>16: return snapshot"| OQ
+    OQ -->|"6: return orders"| C
+    C -->|"7: return state<br/>37: return result"| V
+    V -->|"8: showOrdersWaitingVerify()<br/>10: showOrderDetail()<br/>38: [already] showError('Order นี้ผ่านการตรวจสอบไปแล้ว')<br/>39: [marketplace] showError('ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้')<br/>40: [incomplete] showError('ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ')<br/>41: [qty] showError('จำนวนสินค้าต้องมากกว่า 0')<br/>42: [customer-cancelled] showError('Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว')<br/>43: [ok] showSuccess('ยืนยันคำสั่งซื้อสำเร็จ')"| V
+    C -->|"13: verifyOrderUseCase(orderId, shippingMethod, adminId)"| UC
+    UC -->|"14: lockOrder(orderId)<br/>22: [data incomplete] saveVerifiedOrder(รอดำเนินการด้วยตนเอง, incomplete)<br/>26: [customer cancelled] saveVerifiedOrder(ยกเลิกแล้ว)"| OQ
+    OQ -->|"17: return snapshot"| UC
+    UC -->|"18: [status is not รอตรวจสอบคำสั่งซื้อ] return already<br/>21: [RMS unavailable] return marketplace<br/>24: return incomplete<br/>25: [qty not positive] return qty<br/>28: return customer-cancelled<br/>36: return ok"| C
+    UC -->|"19: [waiting verify] fetchOrderState(marketplace_order_id)"| MP
+    MP -->|"20: return latest"| UC
+    UC -->|"29: [data valid] executeWorkflow(work, orderIds)"| WF
+    WF -->|"30: lockOrder(orderId)<br/>32: saveVerifiedOrder(รอจับคู่กฎ SKU, verified_at)"| OQ
+    WF -->|"34: runAutomation() [UC 2S ต่อ]"| WF
+    WF -->|"35: return done"| UC

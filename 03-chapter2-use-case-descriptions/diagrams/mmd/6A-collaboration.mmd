@@ -1,28 +1,37 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["ReorderDecisionScreen<br/>+openReorderList()<br/>+clickPurchase()"]
-    POC["PurchaseOrderController<br/>+checkReorderThreshold()<br/>+confirmPurchase()<br/>+calculateEta()"]
-    StockRepo["StockRepository<br/>+getLowStockSkus()"]
-    SupRepo["SupplierRepository<br/>+getSupplierInfo()"]
-    PORepo["PurchaseOrderRepository<br/>+createPurchaseOrder()"]
-    OrderRepo["OrderRepository<br/>+linkOrders()"]
-    DB["DBConnector<br/>+executeQuery()"]
-    Sup(["Supplier"])
+    Admin(["Super Admin"])
+    V["ReorderScreen (reorder/page.tsx)<br/>+openPurchaseTab()<br/>+purchaseQueue()<br/>+showPurchaseQueue()<br/>+purchase()<br/>+showSuccess()<br/>+showDuplicateConfirm()<br/>+showError()<br/>+receive()<br/>+showReceiveDialog()<br/>+confirmReceive()"]
+    C["ReorderController (actions.ts)<br/>+loadAppState()<br/>+purchaseReorderAction()<br/>+receiveReorderAction()"]
+    UC["ReordersUseCase (reorders.ts)<br/>+purchaseReorderUseCase()<br/>+receiveReorderUseCase()"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+executeWorkflow()<br/>+runAutomation()"]
+    RQ["ReorderQueries (reorders.ts)<br/>+listReorders()<br/>+lockPurchaseContext()<br/>+markLinkedReorderOrders()<br/>+findPendingReorder()<br/>+findRetryReorder()<br/>+nextReorderNumber()<br/>+insertReorderAttempt()<br/>+completeReorderAttempt()<br/>+lockReceiveContext()<br/>+markReorderReceived()<br/>+releaseReceivedOrders()"]
+    SQ["SkuQueries (skus.ts)<br/>+listSuppliers()"]
+    STQ["StockQueries (stock.ts)<br/>+adjustStock()<br/>+insertStockAdjustmentHistory()"]
+    SUP["SupplierAdapter (adapters)<br/>+sendPurchaseOrder()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: openReorderList()"| Screen
-    Screen -->|"2: checkReorderThreshold()"| POC
-    POC -->|"3: getLowStockSkus()"| StockRepo
-    StockRepo -->|"4: executeQuery(Q6A.1)"| DB
-    POC -->|"5: displayReorderList(skuList)"| Screen
-    Admin -->|"6: clickPurchase(sku, orderQty)"| Screen
-    Screen -->|"7: confirmPurchase(sku, orderQty)"| POC
-    POC -->|"8: getSupplierInfo(sku)"| SupRepo
-    SupRepo -->|"9: executeQuery(Q6A.2)"| DB
-    POC -->|"10: calculateEta(leadTime)"| POC
-    POC -->|"11: createPurchaseOrder(...)"| PORepo
-    PORepo -->|"12: executeQuery(Q6A.3)"| DB
-    POC -->|"13: sendPurchaseOrder(poId)"| Sup
-    POC -->|"14: linkOrders(poId, sku)"| OrderRepo
-    OrderRepo -->|"15: executeQuery(Q6A.4)"| DB
-    POC -->|"16: showSuccess()"| Screen
+    Admin -->|"1: openPurchaseTab()<br/>14: purchase(sku, qty)<br/>57: receive(reorderId)<br/>59: confirmReceive(reorderId, qty)"| V
+    V -->|"2: loadAppState()<br/>15: purchaseReorderAction(sku, qty, confirmDuplicate)<br/>60: receiveReorderAction(reorderId, qty)"| C
+    C -->|"3: listReorders()"| RQ
+    RQ -->|"4: query(Q6A.1)<br/>18: query(Q6A.3)<br/>22: query(Q6A.8)<br/>25: query(Q6A.4)<br/>30: query(Q6A.5)<br/>34: query(Q6A.6)<br/>38: query(Q6A.7)<br/>40: query(Q6A.8)<br/>44: query(Q6A.9)<br/>46: query(Q6A.8)<br/>49: query(Q6A.9)<br/>51: query(Q6A.8)<br/>65: query(Q6A.10)<br/>70: query(Q6A.11)<br/>76: query(Q6A.14)"| DB
+    DB -->|"5: return reorders<br/>19: return context<br/>26: return pending<br/>31: return attempt<br/>35: return reorder_no<br/>66: return reorder, stock<br/>77: return orderIds"| RQ
+    RQ -->|"6: return reorders"| C
+    C -->|"7: listSuppliers()"| SQ
+    SQ -->|"8: query(Q6A.2)"| DB
+    DB -->|"9: return suppliers"| SQ
+    SQ -->|"10: return suppliers"| C
+    C -->|"11: return state<br/>53: return result<br/>82: return result"| V
+    V -->|"12: purchaseQueue(state)<br/>13: showPurchaseQueue(rows)<br/>54: [ok] showSuccess('ส่งคำสั่งซื้อไปยัง Supplier แล้ว', eta)<br/>55: [pending-po] showDuplicateConfirm('มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งเพิ่มหรือไม่')<br/>56: [not-configured หรือ send-failed] showError(message)<br/>58: showReceiveDialog(order_qty)<br/>83: [ok] showSuccess('เพิ่ม [SKU] เข้าสต๊อกในบริษัท [จำนวน] ชิ้นแล้ว')<br/>84: [invalid-qty / already / not-ordered] showError(message)"| V
+    C -->|"16: purchaseReorderUseCase(input)<br/>61: receiveReorderUseCase(reorderId, qty, adminId)"| UC
+    UC -->|"17: lockPurchaseContext(client, sku)<br/>21: [ไม่มี Supplier หรือ Lead Time] markLinkedReorderOrders(client, skuId, 'รอดำเนินการด้วยตนเอง', 'supplier')<br/>24: [ตั้งค่าครบ] findPendingReorder(client, skuId)<br/>29: [สั่งซื้อได้] findRetryReorder(client, skuId)<br/>33: [ไม่มีคำสั่งซื้อที่ส่งไม่สำเร็จ] nextReorderNumber(client)<br/>37: [ไม่มีคำสั่งซื้อที่ส่งไม่สำเร็จ] insertReorderAttempt(client, attempt)<br/>39: markLinkedReorderOrders(client, skuId, 'รอส่งคำสั่งซื้อ', reorderId)<br/>43: [ส่งสำเร็จ] completeReorderAttempt(client, 'สั่งซื้อแล้ว', supplierReference)<br/>45: markLinkedReorderOrders(client, skuId, 'สั่งซื้อแล้ว', reorderId)<br/>48: [ส่งไม่สำเร็จ] completeReorderAttempt(client, 'รอส่งคำสั่งซื้อ', errorCode)<br/>50: markLinkedReorderOrders(client, skuId, 'รอส่งคำสั่งซื้อ')"| RQ
+    RQ -->|"20: return context<br/>27: return pending<br/>32: return attempt<br/>36: return reorderNo"| UC
+    UC -->|"23: return not-configured<br/>28: [มีคำสั่งซื้อค้างและยังไม่ยืนยันสั่งซ้ำ] return pending-po(eta)<br/>47: return ok(po, supplier)<br/>52: return send-failed<br/>62: [qty ไม่ใช่จำนวนเต็มบวก] return invalid-qty<br/>81: return result"| C
+    UC -->|"41: sendPurchaseOrder(po, requestId)"| SUP
+    SUP -->|"42: return result"| UC
+    UC -->|"63: [qty ถูกต้อง] executeWorkflow(work, orderIds)"| WF
+    WF -->|"64: lockReceiveContext(client, reorderId)<br/>69: [สั่งซื้อแล้ว] markReorderReceived(client, reorderId, qty)<br/>75: releaseReceivedOrders(client, reorderId)"| RQ
+    RQ -->|"67: return reorder, stock<br/>78: return orderIds"| WF
+    WF -->|"68: [ได้รับสินค้าแล้ว หรือไม่ใช่ สั่งซื้อแล้ว] return already / not-ordered<br/>80: return ok(sku, qty, orderIds)"| UC
+    WF -->|"71: adjustStock(client, stockId, in_house_qty + qty, rsl_qty)<br/>73: insertStockAdjustmentHistory(client, history)"| STQ
+    STQ -->|"72: query(Q6A.12)<br/>74: query(Q6A.13)"| DB
+    WF -->|"79: runAutomation(orderIds) [UC 3S, 6S, 7S ต่อ]"| WF

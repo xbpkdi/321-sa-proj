@@ -1,16 +1,21 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Sched(["Scheduler"])
-    SMC["SkuMatchController<br/>+processPendingSkuMatch()"]
-    SkuRepo["SkuRuleRepository<br/>+findRuleByChannelSku()"]
-    OrderRepo["OrderRepository<br/>+getOrdersByStatus()<br/>+bindSkuRuleAndUpdateStatus()<br/>+setManualReview()"]
-    DB["DBConnector<br/>+executeQuery()"]
+    VUC["VerifyOrderUseCase (verify-order.ts)"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+executeWorkflow()<br/>+runAutomation()"]
+    UC["MatchSkuUseCase (match-sku.ts)<br/>+matchSkuUseCase()"]
+    OQ["OrderQueries (orders.ts)<br/>+lockOrder()<br/>+findSkuRules()<br/>+saveSkuMatch()<br/>+listSkuRetryOrderIds()"]
+    EQ["AutoErrorLogQueries (auto-error-logs.ts)<br/>+insertAutoErrorLog()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Sched -->|"1: processPendingSkuMatch()"| SMC
-    SMC -->|"2: getOrdersByStatus()"| OrderRepo
-    SMC -->|"3: findRuleByChannelSku(channelSku, salesChannel)"| SkuRepo
-    SkuRepo <-->|"4: executeQuery(Q2S.1)<br/>5: return ruleResult"| DB
-    SkuRepo -->|"6: return ruleResult"| SMC
-    SMC -->|"7: bindSkuRuleAndUpdateStatus(orderId, rule)"| OrderRepo
-    OrderRepo -->|"8: executeQuery(Q2S.2)"| DB
-    SMC -->|"9: showSummary()"| Sched
+    VUC -->|"1: executeWorkflow(saveVerifiedOrder, orderIds)"| WF
+    WF -->|"2: lockOrder(orderId)<br/>21: [มี Order ค้างที่ 'รอจับคู่กฎ SKU' จากรอบก่อน] listSkuRetryOrderIds()"| OQ
+    OQ -->|"3: query(Q2S.1)<br/>11: query(Q2S.2)<br/>15: query(Q2S.3)<br/>18: query(Q2S.3)<br/>22: query(Q2S.5)"| DB
+    DB -->|"4: return order<br/>12: return skuRows<br/>23: return orderIds"| OQ
+    OQ -->|"5: return order<br/>24: return orderIds"| WF
+    WF -->|"6: matchSkuUseCase(client, order)<br/>25: matchSkuUseCase(client, order)"| UC
+    UC -->|"7: [fault skuRuleDb (อ่านกฎ SKU ไม่ได้)] insertAutoErrorLog('2S', orderId, external_unavailable)"| EQ
+    EQ -->|"8: query(Q2S.4)"| DB
+    UC -->|"9: return 'db-unavailable'<br/>16: return 'missing' / 'multiple'<br/>19: return 'ok'"| WF
+    UC -->|"10: [อ่านกฎ SKU ได้] findSkuRules(channelSku, salesChannel)<br/>14: [ไม่พบ หรือพบมากกว่า 1 รายการ] saveSkuMatch(orderId, null, 'รอดำเนินการด้วยตนเอง', 'sku-rule')<br/>17: [พบ 1 รายการ] saveSkuMatch(orderId, skuId, 'รอตรวจสอบสต๊อก', null)"| OQ
+    OQ -->|"13: return skuRows"| UC
+    WF -->|"20: runAutomation() [UC 3S ต่อ]"| WF
+    WF -->|"26: return events (missing / multiple / db-unavailable / ok)"| VUC

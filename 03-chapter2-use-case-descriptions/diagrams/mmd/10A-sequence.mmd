@@ -1,63 +1,70 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :DataCleanupScreen
-    participant DCC as :DataCleanupController
-    participant OrderRepo as :OrderRepository
-    participant LogRepo as :DeletionLogRepository
-    participant DB as :DBConnector
+    actor Admin as Super Admin
+    participant V as :CleanupScreen (cleanup/page.tsx)
+    participant C as :CleanupController (actions.ts)
+    participant UC as :CleanupOrdersUseCase (cleanup-orders.ts)
+    participant CQ as :CleanupQueries (cleanup.ts)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: openDataCleanupPage()
-    Screen-->>Admin: showMethodOptions()
-    Admin->>Screen: selectMethod()
-
-    alt method == delete by date range
-        Admin->>Screen: submitDateRangeForm(dataTypes, cutoffDate)
-        Screen->>DCC: previewDeleteByDateRange(dataTypes, cutoffDate)
-        DCC->>DCC: validateDataTypesSelected(dataTypes)
-        DCC->>DCC: validateCutoffAtLeast12Months(cutoffDate)
-        alt no data type selected or cutoffDate < 12 months
-            DCC-->>Screen: showValidationError()
-        else validation passed
-            DCC->>OrderRepo: getDeletableRecords(dataTypes, cutoffDate)
-            OrderRepo->>DB: executeQuery(Q10A.1, Q10A.2, Q10A.3, Q10A.4)
-            DB-->>OrderRepo: return recordList
-            OrderRepo-->>DCC: return recordList
-            alt no deletable records found
-                DCC-->>Screen: showInfo("ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก")
-            else records found
-                DCC-->>Screen: displayPreview(recordList)
-                Admin->>Screen: clickConfirmDelete()
-                Screen->>DCC: executeDeleteByDateRange(recordList)
-                DCC->>LogRepo: insertDeletionLog(recordList)
-                LogRepo->>DB: executeQuery(Q10A.5)
-                DCC->>OrderRepo: deleteRecords(recordList)
-                OrderRepo->>DB: executeQuery(Q10A.6, Q10A.7, Q10A.8, Q10A.9)
-                DB-->>OrderRepo: return deleteResult
-                alt delete succeeded
-                    DCC-->>Screen: showSuccess("ลบข้อมูลสำเร็จ")
-                else delete failed
-                    DCC->>DCC: rollbackTransaction()
-                    DCC-->>Screen: showError("ลบข้อมูลไม่สำเร็จ")
-                end
-            end
+    Admin->>V: openCleanupPage()
+    V->>V: showTabs("ลบตามช่วงวันที่", "ลบ Order ที่ปิดแล้ว")
+    alt ลบตามช่วงวันที่
+        Admin->>V: selectTypes(types), selectCutoff(date), clickReview()
+        alt ไม่เลือกประเภท
+            V->>V: showError("กรุณาเลือกประเภทข้อมูลที่ต้องการลบ")
+        else วันที่ไม่ถึง 12 เดือน
+            V->>V: showError("สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น")
+        else ค่าถูกต้อง
+            V->>V: planRangeCleanup(state, types, cutoff)
         end
-    else method == delete all closed orders
-        Screen->>DCC: previewClosedOrders()
-        DCC->>OrderRepo: getClosedOrders()
-        OrderRepo->>DB: executeQuery(Q10A.10, Q10A.11)
-        DB-->>OrderRepo: return closedOrderList
-        OrderRepo-->>DCC: return closedOrderList
-        alt no closed orders found
-            DCC-->>Screen: showInfo("ไม่พบ Order ที่ปิดแล้วให้ลบ")
-        else closed orders found
-            DCC-->>Screen: displayPreview(closedOrderList)
-            Admin->>Screen: clickConfirmDelete()
-            Screen->>DCC: executeDeleteClosedOrders(closedOrderList)
-            DCC->>LogRepo: insertDeletionLog(closedOrderList)
-            LogRepo->>DB: executeQuery(Q10A.12)
-            DCC->>OrderRepo: deleteClosedOrders(closedOrderList)
-            OrderRepo->>DB: executeQuery(Q10A.13, Q10A.14)
-            DB-->>OrderRepo: return deleteResult
-            DCC-->>Screen: showSuccess("ลบ Order ที่ปิดแล้วสำเร็จ")
+    else ลบ Order ที่ปิดแล้ว
+        Admin->>V: clickReviewClosed()
+        V->>V: planClosedCleanup(state)
+    end
+    alt ไม่พบข้อมูลที่ลบได้
+        V->>V: showError("ไม่พบข้อมูลที่ลบได้")
+    else พบข้อมูล
+        V->>V: showReview(items, blocked)
+        opt สำรองข้อมูลก่อนลบ
+            Admin->>V: clickBackup()
+            V->>V: downloadCsv()
+        end
+        Admin->>V: clickConfirmDelete()
+        V->>C: cleanupOrdersAction(items)
+        C->>UC: cleanupOrdersUseCase(items, adminId)
+        loop แต่ละรายการ (Order ก่อน)
+            alt Order
+                UC->>CQ: deleteClosedOrder(orderId, historyId, adminId)
+                CQ->>DB: query(Q10A.1)
+            else Label
+                UC->>CQ: deleteClosedLabels(orderId)
+                CQ->>DB: query(Q10A.2)
+            else Cost
+                UC->>CQ: deleteHistoricalCost(sku@changedAt)
+                CQ->>DB: query(Q10A.3)
+            else Reorder
+                UC->>CQ: deleteFinishedReorder(reorderId)
+                CQ->>DB: query(Q10A.4)
+            end
+            DB-->>CQ: return rowCount
+            CQ-->>UC: return removed
+        end
+        alt ฐานข้อมูลขัดข้อง
+            UC-->>C: throw error (rollback ทั้งชุด)
+            C-->>V: return databaseError
+            V->>V: showError(databaseError)
+        else สำเร็จ
+            UC-->>C: return deleted, skipped
+            C-->>V: return result
+            V->>C: loadAppState()
+            C->>CQ: listDeletionHistory()
+            CQ->>DB: query(Q10A.5)
+            DB-->>CQ: return history
+            CQ-->>C: return history
+            C-->>V: return state
+            V->>V: showSuccess("ลบข้อมูลสำเร็จ [n] รายการ")
+            opt มีรายการที่ลบไม่ได้หรือถูกข้าม
+                V->>V: showWarning("ไม่สามารถลบข้อมูลนี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้อง")
+            end
         end
     end

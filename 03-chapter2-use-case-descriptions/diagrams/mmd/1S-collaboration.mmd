@@ -1,18 +1,27 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["RslMatchScreen<br/>+openUnmatchedOrderList()<br/>+clickMatchWithRsl()"]
-    RMC["RslMatchController<br/>+matchOrderWithRsl()"]
-    RslRepo["RslRepository<br/>+findRslBySkuAndVariation()"]
-    OrderRepo["OrderRepository<br/>+saveRslMatch()<br/>+setManualReview()"]
-    DB["DBConnector<br/>+executeQuery()"]
+    Admin(["Super Admin"])
+    V["RslMatchScreen (rsl-match/page.tsx)<br/>+openRslMatchPage()<br/>+showUnmatchedOrders()<br/>+clickMatchAll()<br/>+clickMatch()<br/>+showChooseDialog()<br/>+showError()<br/>+showSuccess()<br/>+clickUnmatch()"]
+    C["RslMatchController (actions.ts)<br/>+matchAllRslAction()<br/>+matchRslAction()<br/>+unmatchRslAction()"]
+    UC["MatchOrderUseCase (match-order.ts)<br/>+matchAllRslUseCase()<br/>+matchRslUseCase()<br/>+chooseRslMatch()<br/>+unmatchRslUseCase()"]
+    WF["ExecuteWorkflow (execute-workflow.ts)<br/>+executeWorkflow()<br/>+runAutomation()"]
+    OQ["OrderQueries (orders.ts)<br/>+listRslQueueIds()<br/>+lockOrder()<br/>+saveRslMatch()<br/>+clearRslMatch()"]
+    RSL["RslAdapter (adapters)<br/>+matchOrder()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: selectOrder()/clickMatchWithRsl()"| Screen
-    Screen -->|"2: matchOrderWithRsl(orderId, sku, variation)"| RMC
-    RMC -->|"3: findRslBySkuAndVariation(sku, variation)"| RslRepo
-    RslRepo -->|"4: executeQuery(Q1S.1)"| DB
-    DB -->|"5: return rslResults"| RslRepo
-    RslRepo -->|"6: return rslResults"| RMC
-    RMC -->|"7: saveRslMatch(orderId, rslReferenceId)"| OrderRepo
-    OrderRepo -->|"8: executeQuery(Q1S.2)"| DB
-    RMC -->|"9: showSuccess()"| Screen
+    Admin -->|"1: openRslMatchPage()<br/>3: [match all] clickMatchAll()<br/>10: [one Order] clickMatch(orderId, chosen)<br/>40: [unmatch] clickUnmatch(orderId)"| V
+    V -->|"2: showUnmatchedOrders()<br/>36: [multiple] showChooseDialog('พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ')<br/>37: [not found] showError('ไม่พบสินค้านี้ในระบบ RSL')<br/>38: [connection] showError('ไม่สามารถเชื่อมต่อกับระบบ RSL ได้')<br/>39: [ok] showSuccess('จับคู่ Order กับ RSL สำเร็จ')<br/>51: showSuccess('ยกเลิกการจับคู่ [Order ID] แล้ว')"| V
+    V -->|"4: matchAllRslAction()<br/>11: matchRslAction(orderId, chosen)<br/>41: unmatchRslAction(orderId)"| C
+    C -->|"5: matchAllRslUseCase()<br/>12: matchRslUseCase(orderId, chosen)<br/>42: unmatchRslUseCase(orderId)"| UC
+    UC -->|"6: listRslQueueIds()<br/>13: lockOrder(orderId)<br/>23: [not found] saveRslMatch(orderId, null, 'รอดำเนินการด้วยตนเอง', 'rsl')<br/>43: lockOrder(orderId)<br/>45: clearRslMatch(orderId)"| OQ
+    OQ -->|"7: query(Q1S.1)<br/>14: query(Q1S.2)<br/>24: query(Q1S.3)<br/>29: query(Q1S.2)<br/>31: query(Q1S.3)<br/>44: query(Q1S.2)<br/>46: query(Q1S.4)"| DB
+    DB -->|"8: return orderIds<br/>15: return order<br/>47: return orderId"| OQ
+    OQ -->|"9: return orderIds<br/>16: return order<br/>48: return true"| UC
+    UC -->|"17: [in-house Order (fulfill_source = in_house) or wrong status] return not-allowed<br/>20: return connection<br/>25: return not-found<br/>26: [multiple] return multiple(options)<br/>34: return ok(reference)<br/>49: return true"| C
+    UC -->|"18: matchOrder(sku, variation)"| RSL
+    RSL -->|"19: [connection failed] return error<br/>21: [candidates] return matches"| UC
+    UC -->|"22: chooseRslMatch(matches, chosen)"| UC
+    UC -->|"27: [matched] executeWorkflow(saveMatch, orderIds)"| WF
+    WF -->|"28: lockOrder(orderId)<br/>30: saveRslMatch(orderId, rslNo, 'รอจัดรูปแบบใบปะสินค้า', null)"| OQ
+    WF -->|"32: runAutomation(orderIds) [UC 6S]"| WF
+    WF -->|"33: return committed"| UC
+    C -->|"35: return result<br/>50: return true"| V

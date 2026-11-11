@@ -1,1 +1,4 @@
-{ "sequence": { "useMaxWidth": false, "width": 200, "actorMargin": 20 }, "flowchart": { "useMaxWidth": false } }
+{ "theme": "base",
+  "themeVariables": { "fontFamily": "Tahoma, sans-serif", "actorBkg": "#ffffff", "actorBorder": "#000000", "actorTextColor": "#000000", "actorLineColor": "#555555", "signalColor": "#000000", "signalTextColor": "#000000", "labelBoxBkgColor": "#ffffff", "labelBoxBorderColor": "#555555", "labelTextColor": "#000000", "loopTextColor": "#000000", "noteBkgColor": "#fff8c4", "noteBorderColor": "#999999", "noteTextColor": "#000000" },
+  "sequence": { "useMaxWidth": false, "wrap": true, "width": 180, "actorMargin": 12, "messageFontSize": 20, "actorFontSize": 18, "noteFontSize": 18, "messageFontFamily": "Tahoma, sans-serif", "actorFontFamily": "Tahoma, sans-serif", "noteFontFamily": "Tahoma, sans-serif", "boxMargin": 6, "noteMargin": 8, "messageMargin": 24, "mirrorActors": true },
+  "flowchart": { "useMaxWidth": false } }

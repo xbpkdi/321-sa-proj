@@ -1,37 +1,83 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :ShipmentScreen
-    participant SC as :ShipmentController
-    participant OrderRepo as :OrderRepository
-    participant DelRepo as :DeliveryPartnerRepository
-    participant TrackRepo as :CarrierTrackingRepository
-    participant DB as :DBConnector
-    participant Del as Delivery
+    actor Admin as Super Admin
+    participant V as :ShippingScreen (shipping/page.tsx)
+    participant C as :ShippingController (actions.ts)
+    participant PUC as :PollCarrierUseCase (poll-carrier.ts)
+    participant DUC as :DispatchOrderUseCase (dispatch-order.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant SQ as :ShippingQueries (shipping.ts)
+    participant STQ as :StockQueries (stock.ts)
+    participant Carrier as :CarrierAdapter (adapters)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: openReadyToShipList()
-    Screen-->>Admin: displayOrderList()
-    Admin->>Del: handOverPackage()
-    Admin->>Screen: confirmHandover(orderId)
-    Screen->>SC: recordHandover(orderId)
-    SC->>OrderRepo: checkLabelStatus(orderId)
-    OrderRepo-->>SC: return labelStatus
-    alt label not printed yet
-        SC-->>Screen: showError("Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า")
-    else label printed
-        SC->>DelRepo: getTrackingNumber(orderId)
-        DelRepo->>DB: executeQuery(Q8A.1)
-        DB-->>DelRepo: return trackingInfo
-        DelRepo-->>SC: return trackingInfo
-        SC->>OrderRepo: updateDispatched(orderId, trackingInfo)
-        OrderRepo->>DB: executeQuery(Q8A.2)
-        DB-->>OrderRepo: return updateResult
-        SC-->>Screen: showTrackingNumber(trackingInfo)
-
-        loop track shipment status
-            SC->>TrackRepo: getCarrierStatus(trackingNumber)
-            TrackRepo->>DB: executeQuery(Q8A.3)
-            DB-->>TrackRepo: return carrierStatus
-            TrackRepo-->>SC: return carrierStatus
-            SC->>OrderRepo: updateStatusIfChanged(orderId, carrierStatus)
+    Admin->>V: openShippingPage()
+    V->>C: pollCarrierAction()
+    C->>PUC: pollCarrierUseCase()
+    PUC->>SQ: listCarrierPollOrders()
+    SQ->>DB: query(Q8A.3)
+    DB-->>SQ: return rows
+    SQ-->>PUC: return rows
+    loop each tracked Order
+        PUC->>Carrier: getDeliveryStatus(trackingNumber)
+        alt connection failed
+            Carrier-->>PUC: return error
+        else status changed
+            Carrier-->>PUC: return status
+            PUC->>WF: executeWorkflow(work, delivered ? [orderId] : [])
+            opt returned and stock deducted
+                WF->>STQ: restoreCancelledOrderStock(orderId, skuId, source, qty)
+                STQ->>DB: query(Q8A.7)
+                DB-->>STQ: return qty
+                STQ-->>WF: return restocked
+            end
+            WF->>SQ: saveCarrierStatus(orderId, status)
+            SQ->>DB: query(Q8A.4)
+            opt delivered
+                WF->>WF: runAutomation(orderId) [UC 7S ตัดสต๊อกที่ค้าง]
+                WF->>SQ: completeDeliveredOrder(orderId)
+                SQ->>DB: query(Q8A.5)
+            end
+            WF-->>PUC: return done
         end
+    end
+    PUC-->>C: return events
+    C-->>V: return events
+    V->>V: showCarrierEvents("จัดส่งไม่สำเร็จ / ตีกลับ / ดึงสถานะไม่ได้")
+    V->>V: showDispatchQueue()
+    Admin->>V: clickDispatch(selectedOrders)
+    V->>V: showConfirmDialog("ยืนยันรายการพัสดุที่ส่งมอบ")
+    Admin->>V: confirmDispatch()
+    V->>C: dispatchOrdersAction(orderIds)
+    C->>DUC: dispatchOrdersUseCase(orderIds)
+    loop each Order
+        DUC->>SQ: lockDispatchOrder(orderId)
+        SQ->>DB: query(Q8A.1)
+        DB-->>SQ: return order
+        SQ-->>DUC: return order
+        alt not printed
+            DUC-->>C: return not-printed
+        else printed
+            DUC->>Carrier: getTrackingInfo(orderId)
+            alt no tracking number
+                Carrier-->>DUC: return error or empty
+                DUC->>SQ: markAwaitingCarrier(orderId)
+                SQ->>DB: query(Q8A.6)
+                DUC-->>C: return no-tracking
+            else tracking found
+                Carrier-->>DUC: return trackingNumber, carrierName
+                DUC->>SQ: lockDispatchOrder(orderId)
+                SQ->>DB: query(Q8A.1)
+                DUC->>SQ: saveDispatch(orderId, trackingNumber, carrierName)
+                SQ->>DB: query(Q8A.2)
+                DB-->>SQ: return result
+                SQ-->>DUC: return result
+                DUC-->>C: return ok
+            end
+        end
+    end
+    C-->>V: return results
+    V->>V: showResult("ส่งมอบ [Order ID] ให้ [ผู้ขนส่ง] แล้ว")
+    opt หลัง 5S และ 7S ใน transaction เดียวกัน (ขนส่งยืนยันส่งถึงก่อนแจ้งเลขติดตาม)
+        WF->>SQ: completeDeliveredOrder(orderId)
+        SQ->>DB: query(Q8A.5)
     end

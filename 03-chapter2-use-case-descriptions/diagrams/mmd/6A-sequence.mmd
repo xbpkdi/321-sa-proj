@@ -1,43 +1,120 @@
 sequenceDiagram
-    actor Admin
-    participant Screen as :ReorderDecisionScreen
-    participant POC as :PurchaseOrderController
-    participant StockRepo as :StockRepository
-    participant SupRepo as :SupplierRepository
-    participant PORepo as :PurchaseOrderRepository
-    participant OrderRepo as :OrderRepository
-    participant DB as :DBConnector
-    participant Sup as Supplier
+    actor Admin as Super Admin
+    participant V as :ReorderScreen (reorder/page.tsx)
+    participant C as :ReorderController (actions.ts)
+    participant UC as :ReordersUseCase (reorders.ts)
+    participant WF as :ExecuteWorkflow (execute-workflow.ts)
+    participant RQ as :ReorderQueries (reorders.ts)
+    participant SQ as :SkuQueries (skus.ts)
+    participant STQ as :StockQueries (stock.ts)
+    participant SUP as :SupplierAdapter (adapters)
+    participant DB as :DBConnector (db.ts)
 
-    Admin->>Screen: openReorderList()
-    Screen->>POC: checkReorderThreshold()
-    POC->>StockRepo: getLowStockSkus()
-    StockRepo->>DB: executeQuery(Q6A.1)
-    DB-->>StockRepo: return skuList
-    StockRepo-->>POC: return skuList
-    POC-->>Screen: displayReorderList(skuList)
-
-    Admin->>Screen: clickPurchase(sku, orderQty)
-    Screen->>POC: confirmPurchase(sku, orderQty)
-    POC->>SupRepo: getSupplierInfo(sku)
-    SupRepo->>DB: executeQuery(Q6A.2)
-    DB-->>SupRepo: return supplierInfo
-    SupRepo-->>POC: return supplierInfo
-    alt Supplier/Reorder Qty not configured
-        POC-->>Screen: showError("ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ")
-    else configuration complete
-        POC->>POC: calculateEta(leadTime)
-        POC->>PORepo: createPurchaseOrder(poId, sku, supplierId, orderQty, eta)
-        PORepo->>DB: executeQuery(Q6A.3)
-        DB-->>PORepo: return insertResult
-        PORepo-->>POC: return poId
-        POC->>Sup: sendPurchaseOrder(poId)
-        alt send failed
-            POC-->>Screen: showError("ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่")
-        else sent
-            POC->>OrderRepo: linkOrders(poId, sku)
-            OrderRepo->>DB: executeQuery(Q6A.4)
-            DB-->>OrderRepo: return updateResult
-            POC-->>Screen: showSuccess("สั่งซื้อแล้ว พร้อมวันที่คาดว่าจะได้รับ")
+    Admin->>V: openPurchaseTab()
+    V->>C: loadAppState()
+    C->>RQ: listReorders()
+    RQ->>DB: query(Q6A.1)
+    DB-->>RQ: return reorders
+    RQ-->>C: return reorders
+    C->>SQ: listSuppliers()
+    SQ->>DB: query(Q6A.2)
+    DB-->>SQ: return suppliers
+    SQ-->>C: return suppliers
+    C-->>V: return state
+    V->>V: purchaseQueue(state)
+    V->>V: showPurchaseQueue(rows)
+    Admin->>V: purchase(sku, qty)
+    V->>C: purchaseReorderAction(sku, qty, confirmDuplicate)
+    C->>UC: purchaseReorderUseCase(input)
+    UC->>RQ: lockPurchaseContext(client, sku)
+    RQ->>DB: query(Q6A.3)
+    DB-->>RQ: return context
+    RQ-->>UC: return context
+    alt ไม่มี Supplier หรือ Lead Time
+        UC->>RQ: markLinkedReorderOrders(client, skuId, "รอดำเนินการด้วยตนเอง", "supplier")
+        RQ->>DB: query(Q6A.8)
+        UC-->>C: return not-configured
+    else ตั้งค่าครบ
+        UC->>RQ: findPendingReorder(client, skuId)
+        RQ->>DB: query(Q6A.4)
+        DB-->>RQ: return pending
+        RQ-->>UC: return pending
+        alt มีคำสั่งซื้อค้างและยังไม่ยืนยันสั่งซ้ำ
+            UC-->>C: return pending-po(eta)
+        else สั่งซื้อได้
+            UC->>RQ: findRetryReorder(client, skuId)
+            RQ->>DB: query(Q6A.5)
+            DB-->>RQ: return attempt
+            RQ-->>UC: return attempt
+            opt ไม่มีคำสั่งซื้อที่ส่งไม่สำเร็จ
+                UC->>RQ: nextReorderNumber(client)
+                RQ->>DB: query(Q6A.6)
+                DB-->>RQ: return reorder_no
+                RQ-->>UC: return reorderNo
+                UC->>RQ: insertReorderAttempt(client, attempt)
+                RQ->>DB: query(Q6A.7)
+            end
+            UC->>RQ: markLinkedReorderOrders(client, skuId, "รอส่งคำสั่งซื้อ", reorderId)
+            RQ->>DB: query(Q6A.8)
+            UC->>SUP: sendPurchaseOrder(po, requestId)
+            SUP-->>UC: return result
+            alt ส่งสำเร็จ
+                UC->>RQ: completeReorderAttempt(client, "สั่งซื้อแล้ว", supplierReference)
+                RQ->>DB: query(Q6A.9)
+                UC->>RQ: markLinkedReorderOrders(client, skuId, "สั่งซื้อแล้ว", reorderId)
+                RQ->>DB: query(Q6A.8)
+                UC-->>C: return ok(po, supplier)
+            else ส่งไม่สำเร็จ
+                UC->>RQ: completeReorderAttempt(client, "รอส่งคำสั่งซื้อ", errorCode)
+                RQ->>DB: query(Q6A.9)
+                UC->>RQ: markLinkedReorderOrders(client, skuId, "รอส่งคำสั่งซื้อ")
+                RQ->>DB: query(Q6A.8)
+                UC-->>C: return send-failed
+            end
         end
+    end
+    C-->>V: return result
+    alt ok
+        V->>V: showSuccess("ส่งคำสั่งซื้อไปยัง Supplier แล้ว", eta)
+    else pending-po
+        V->>V: showDuplicateConfirm("มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งเพิ่มหรือไม่")
+    else not-configured หรือ send-failed
+        V->>V: showError(message)
+    end
+    Admin->>V: receive(reorderId)
+    V->>V: showReceiveDialog(order_qty)
+    Admin->>V: confirmReceive(reorderId, qty)
+    V->>C: receiveReorderAction(reorderId, qty)
+    C->>UC: receiveReorderUseCase(reorderId, qty, adminId)
+    alt qty ไม่ใช่จำนวนเต็มบวก
+        UC-->>C: return invalid-qty
+    else qty ถูกต้อง
+        UC->>WF: executeWorkflow(work, orderIds)
+        WF->>RQ: lockReceiveContext(client, reorderId)
+        RQ->>DB: query(Q6A.10)
+        DB-->>RQ: return reorder, stock
+        RQ-->>WF: return reorder, stock
+        alt ได้รับสินค้าแล้ว หรือไม่ใช่ สั่งซื้อแล้ว
+            WF-->>UC: return already / not-ordered
+        else สั่งซื้อแล้ว
+            WF->>RQ: markReorderReceived(client, reorderId, qty)
+            RQ->>DB: query(Q6A.11)
+            WF->>STQ: adjustStock(client, stockId, in_house_qty + qty, rsl_qty)
+            STQ->>DB: query(Q6A.12)
+            WF->>STQ: insertStockAdjustmentHistory(client, history)
+            STQ->>DB: query(Q6A.13)
+            WF->>RQ: releaseReceivedOrders(client, reorderId)
+            RQ->>DB: query(Q6A.14)
+            DB-->>RQ: return orderIds
+            RQ-->>WF: return orderIds
+            WF->>WF: runAutomation(orderIds) [UC 3S, 6S, 7S ต่อ]
+            WF-->>UC: return ok(sku, qty, orderIds)
+        end
+        UC-->>C: return result
+    end
+    C-->>V: return result
+    alt ok
+        V->>V: showSuccess("เพิ่ม [SKU] เข้าสต๊อกในบริษัท [จำนวน] ชิ้นแล้ว")
+    else invalid-qty / already / not-ordered
+        V->>V: showError(message)
     end

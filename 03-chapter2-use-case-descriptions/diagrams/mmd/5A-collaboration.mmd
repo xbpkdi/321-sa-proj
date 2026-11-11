@@ -1,25 +1,18 @@
-%%{init: {'flowchart': {'nodeSpacing': 50, 'rankSpacing': 90, 'curve': 'linear'}}}%%
 graph TB
-    Admin(["Admin"])
-    Screen["ReorderDecisionScreen<br/>+openPendingDecisionList()<br/>+selectOrder()<br/>+clickApprove()<br/>+clickReject()"]
-    RDC["ReorderDecisionController<br/>+loadDecisionData()<br/>+calculateExpectedMargin()<br/>+submitDecision()"]
-    OrderRepo["OrderRepository<br/>+getOrdersByStatus()<br/>+getCostAndMarginInfo()<br/>+checkStatus()<br/>+updateStatus()"]
-    CostRepo["CostLogRepository<br/>+getLatestUnitCost()"]
-    DB["DBConnector<br/>+executeQuery()"]
+    Admin(["Super Admin"])
+    V["ReorderScreen (reorder/page.tsx)<br/>+openDecideTab()<br/>+showDecisionList()<br/>+chooseDecision()<br/>+showConfirmDialog()<br/>+confirmDecision()<br/>+showSuccess()<br/>+showError()"]
+    C["ReorderController (actions.ts)<br/>+decideReorderAction()"]
+    UC["ReordersUseCase (reorders.ts)<br/>+decideReorderUseCase()"]
+    RQ["ReorderQueries (reorders.ts)<br/>+lockDecisionContext()<br/>+markDecisionMissingPrice()<br/>+saveReorderDecision()"]
+    DB["DBConnector (db.ts)<br/>+query()"]
 
-    Admin -->|"1: selectOrder(orderId)"| Screen
-    Screen -->|"2: loadDecisionData(orderId)"| RDC
-    RDC -->|"3: getCostAndMarginInfo(orderId)"| OrderRepo
-    OrderRepo <-->|"4: executeQuery(Q5A.1)<br/>5: return costInfo"| DB
-    OrderRepo -->|"6: return costInfo"| RDC
-    RDC -->|"7: getLatestUnitCost(sku)"| CostRepo
-    CostRepo <-->|"8: executeQuery(Q5A.2)<br/>9: return unitCost"| DB
-    CostRepo -->|"10: return unitCost"| RDC
-    RDC -->|"11: calculateExpectedMargin() [Q5A.3]"| RDC
-    RDC -->|"12: displayCostAndMargin()"| Screen
-    Admin -->|"13: clickApprove()/clickReject()"| Screen
-    Screen -->|"14: submitDecision(orderId, decision)"| RDC
-    RDC -->|"15: checkStatus(orderId)"| OrderRepo
-    RDC -->|"16: updateStatus(orderId, status, decision)"| OrderRepo
-    OrderRepo -->|"17: executeQuery(Q5A.4 / Q5A.5)"| DB
-    RDC -->|"18: showSuccess()"| Screen
+    Admin -->|"1: openDecideTab()<br/>3: chooseDecision(orderId, decision)<br/>5: confirmDecision(qty)"| V
+    V -->|"2: showDecisionList(orders, unitCost, sellingPrice, margin)<br/>4: showConfirmDialog(defaultQty)<br/>27: [result = ok และ คุ้มค่า] showSuccess('บันทึกผลสำเร็จ ส่ง Order เข้าสู่การสั่งซื้อจาก Supplier')<br/>28: [result = ok และ ไม่คุ้มค่า] showSuccess('บันทึกผลสำเร็จ ส่ง Order เข้าสู่การยกเลิก Order')<br/>29: [result อื่น] showError(message)"| V
+    V -->|"6: decideReorderAction(orderId, decision, qty)"| C
+    C -->|"7: decideReorderUseCase(input)"| UC
+    UC -->|"8: [qty ไม่ใช่จำนวนเต็มบวก] return 'invalid-qty'<br/>13: [รอดำเนินการด้วยตนเอง และ manual_reason = price] return 'no-price'<br/>14: [สถานะไม่ใช่ รอ Admin ตัดสินใจสั่งซื้อ] return 'not-pending'<br/>18: return 'no-price'<br/>19: [ไม่มี unit_cost] return 'no-cost'<br/>20: [fault db] return 'db'<br/>25: return 'ok'"| C
+    UC -->|"9: [qty ถูกต้อง] lockDecisionContext(client, orderId)<br/>15: [ไม่มี selling_price] markDecisionMissingPrice(client, orderId)<br/>21: [ข้อมูลครบ] saveReorderDecision(client, decision, qty, status)"| RQ
+    RQ -->|"10: query(Q5A.1)<br/>16: query(Q5A.3)<br/>22: query(Q5A.2)"| DB
+    DB -->|"11: return row<br/>17: return ok<br/>23: return ok"| RQ
+    RQ -->|"12: return row<br/>24: return ok"| UC
+    C -->|"26: return result"| V
