@@ -18,3 +18,6 @@ design-ref/
 
 # python
 __pycache__/
+
+# คู่มือ backend ส่วนตัว ไม่ push
+backend-guide/

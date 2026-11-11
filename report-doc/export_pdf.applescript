@@ -9,12 +9,10 @@ on run argv
 			open inPath
 			set d to active document
 			if outPath is "update" then
+				-- อัปเดตเฉพาะสารบัญทั้ง 3 (สารบัญ, รูปภาพ, ตาราง) ไม่ไล่ทุก field เพราะอัปเดตสารบัญแล้วมี PAGEREF เพิ่ม เลข field เลื่อนจนสารบัญตารางหลุดรอบ
 				repeat 2 times
-					set n to count of fields of d
-					repeat with i from 1 to n
-						try
-							update field (field i of d)
-						end try
+					repeat with i from 1 to (count of tables of contents of d)
+						update (table of contents i of d)
 					end repeat
 				end repeat
 				save d

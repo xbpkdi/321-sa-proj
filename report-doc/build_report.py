@@ -3,7 +3,7 @@
 แล้วอัปเดตสารบัญและสร้าง PDF ด้วย:  ./report-doc/export_pdf.sh
 
 เนื้อหาอยู่ใน content/ (ch1.py, ch2.py, usecases.json, tables.json)
-รูปอยู่ในโฟลเดอร์ของแต่ละบท ส่วน SQL และ diagram ของ 2.14-2.21, 2.25 สร้างจาก 04-chapter2-diagrams-database
+รูปอยู่ในโฟลเดอร์ของแต่ละบท ส่วน SQL และ diagram ของ 2.14-2.19, 2.23 สร้างจาก 04-chapter2-diagrams-database
 """
 import io
 import json
@@ -43,7 +43,7 @@ DB_IMG = lambda n: os.path.join(ROOT, "04-chapter2-diagrams-database", "diagrams
 DB_DATA = lambda n: os.path.join(ROOT, "04-chapter2-diagrams-database", "sql", n)
 PLT_IMG = lambda n: os.path.join(ROOT, "05-chapter2-platform-testing", "img", n)
 LOGO = os.path.join(HERE, "assets", "ku_logo.png")
-RUBRIC = os.path.join(HERE, "รายละเอียดของคะแนนโครงงาน.xlsx")
+RUBRIC = os.path.join(HERE, "รายละเอียดของคะแนนโครงงาน (ฉบับ update).xlsx")
 
 if PRINT:
     from pythainlp.tokenize import word_tokenize
@@ -86,6 +86,7 @@ for name, size, before, after in (("Heading 1", 20, 18, 10), ("Heading 2", 18, 1
     set_font(S[name], size, True)
     pf = S[name].paragraph_format; pf.space_before = Pt(before); pf.space_after = Pt(after); pf.keep_with_next = True
 set_font(S["Caption"], 16, True); S["Caption"].font.italic = False
+TCAP = S.add_style("TableCaption", 1); TCAP.base_style = S["Caption"]; set_font(TCAP, 16, True); TCAP.font.italic = False
 for n, sid in (("toc 1", "TOC1"), ("toc 2", "TOC2"), ("toc 3", "TOC3"), ("table of figures", "TableofFigures")):
     st = S.add_style(n, 1); st.base_style = S["Normal"]; st.element.set(qn("w:styleId"), sid)
     st.element.find(qn("w:name")).set(qn("w:val"), n)
@@ -108,6 +109,9 @@ _set = doc.settings.element
 tfl = _set.find(qn("w:themeFontLang"))
 if tfl is None: tfl = OxmlElement("w:themeFontLang"); _set.append(tfl)
 tfl.set(qn("w:val"), "en-US"); tfl.set(qn("w:bidi"), "th-TH"); tfl.set(qn("w:eastAsia"), "en-US")
+# ไม่ให้ Word ย่อความละเอียดรูปตอนบันทึก/export PDF (File > Options > Do not compress images in file)
+if _set.find(qn("w:doNotAutoCompressPictures")) is None:
+    (_set.find(qn("w:clrSchemeMapping")) if _set.find(qn("w:clrSchemeMapping")) is not None else tfl).addnext(OxmlElement("w:doNotAutoCompressPictures"))
 compat = _set.find(qn("w:compat"))
 if compat is not None:
     fe = compat.find(qn("w:useFELayout"))
@@ -190,7 +194,7 @@ def png_size(path):
     return struct.unpack(">II", head[16:24])
 
 
-def shrink(path, max_px=3200):
+def shrink(path, max_px=4800):
     """ย่อรูปใหญ่ก่อนใส่ ไม่ให้ไฟล์ docx ใหญ่เกินไป"""
     w, h = png_size(path)
     if max(w, h) <= max_px: return path
@@ -227,8 +231,8 @@ def best_landscape(path):
 
 
 def natural_w(path):
-    """ความกว้างสูงสุดของรูปจาก mermaid (scale 2, ตัวอักษร 16px) ไม่ให้ตัวอักษรใหญ่เกิน 10pt"""
-    return png_size(path)[0] / 2 * 10 / 16 / 72
+    """ความกว้างสูงสุดของรูปจาก mermaid (scale 2, ตัวอักษร 20px) ไม่ให้ตัวอักษรใหญ่เกิน 10pt"""
+    return png_size(path)[0] / 2 * 10 / 20 / 72
 
 
 def AFIG(path, caption, chapter, **kw):
@@ -255,7 +259,7 @@ def FIG(path, caption, chapter, max_h=8.2, width=6.27, as_table=False, land_h=5.
 
 def CAPTION(kind, caption, chapter, counter):
     k = counter["n"].get(chapter, 0) + 1; counter["n"][chapter] = k
-    c = doc.add_paragraph(style="Caption"); c.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    c = doc.add_paragraph(style="Caption" if kind == "รูปที่" else "TableCaption"); c.alignment = WD_ALIGN_PARAGRAPH.CENTER
     if kind == "รูปที่": c.paragraph_format.space_before = Pt(6); c.paragraph_format.space_after = Pt(14)
     else: c.paragraph_format.space_before = Pt(12); c.paragraph_format.space_after = Pt(4); c.paragraph_format.keep_with_next = True
     run(c, f"{kind} {chapter}-{k} {caption}")
@@ -339,7 +343,9 @@ def blocks(items, chapter):
     for b in items:
         kind = b[0]
         if kind == "h2": H(2, b[1])
-        elif kind == "h3": H(3, b[1])
+        elif kind == "h3":
+            h = H(3, b[1])
+            if chapter == 1: h.paragraph_format.left_indent = Inches(0.5)  # หัวข้อย่อยบทที่ 1 เป็นรายการ เยื้องแบบ sa-ref
         elif kind == "p": P(b[1])
         elif kind == "li": LI(b[1])
         elif kind == "ol":
@@ -356,22 +362,24 @@ def cover(text, size=18, bold=True, before=0, after=0):
 
 
 p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-p.add_run().add_picture(LOGO, width=Inches(1.35))
-cover("รายงานวิชา 01418321", 24, before=12)
+p.add_run().add_picture(LOGO, width=Inches(1.1))
+cover("รายงานวิชา 01418321", 24, before=6)
 cover("System Analysis and Design", 20, before=2)
 cover("การวิเคราะห์และการออกแบบระบบ", 20)
-cover("เรื่อง", 20, False, before=30)
+cover("เรื่อง", 20, False, before=14)
 cover(TITLE, 24, before=2)
 cover(SUBTITLE, 20)
-cover("เสนอ", 20, False, before=30)
+cover("เสนอ", 20, False, before=14)
 cover("อาจารย์ สมโชค เรืองอิทธินันท์", 20)
-cover("จัดทำโดย", 20, False, before=30, after=2)
-for sid, nm in MEMBERS:
-    p = cover("", 18, False)
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT; p.paragraph_format.left_indent = Inches(1.1)
-    p.paragraph_format.tab_stops.add_tab_stop(Inches(2.4)); p.paragraph_format.tab_stops.add_tab_stop(Inches(5.0))
-    run(p, f"{sid}\t{nm}\t{SECTION_NO}", False, 18)
-cover("รายงานนี้เป็นส่วนหนึ่งของรายวิชา 01418321 การวิเคราะห์และการออกแบบระบบ", 18, False, before=30)
+cover("จัดทำโดย", 20, False, before=14, after=4)
+tb = doc.add_table(rows=2, cols=len(MEMBERS)); tb.alignment = WD_TABLE_ALIGNMENT.CENTER
+for c, (sid, nm) in enumerate(MEMBERS):
+    ph = tb.cell(0, c).paragraphs[0]; ph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    photo = next((f for f in (os.path.join(HERE, "assets", "members", sid + e) for e in (".jpg", ".jpeg", ".png")) if os.path.exists(f)), None)
+    if photo: ph.add_run().add_picture(photo, width=Inches(0.95))
+    pn = tb.cell(1, c).paragraphs[0]; pn.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run(pn, nm, size=16); pn.add_run().add_break(); run(pn, f"{sid} {SECTION_NO}", size=16)
+cover("รายงานนี้เป็นส่วนหนึ่งของรายวิชา 01418321 การวิเคราะห์และการออกแบบระบบ", 18, False, before=14)
 cover("ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์ มหาวิทยาลัยเกษตรศาสตร์", 18, False)
 cover("ภาคต้น ปีการศึกษา 2569", 18, False)
 page_break()
@@ -384,19 +392,6 @@ def FRONT(text, toc=True):
     h.alignment = WD_ALIGN_PARAGRAPH.CENTER; h.paragraph_format.space_after = Pt(12); return h
 
 
-FRONT("สมาชิกในกลุ่ม", toc=False)
-tb = doc.add_table(rows=2, cols=len(MEMBERS)); tb.alignment = WD_TABLE_ALIGNMENT.CENTER
-for c, (sid, nm) in enumerate(MEMBERS):
-    ph = tb.cell(0, c).paragraphs[0]; ph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    photo = next((f for f in (os.path.join(HERE, "assets", "members", sid + e) for e in (".jpg", ".jpeg", ".png")) if os.path.exists(f)), None)
-    if photo: ph.add_run().add_picture(photo, width=Inches(1.6))
-    else:
-        for _ in range(6): ph.add_run().add_break()
-        run(ph, "[ใส่รูป]")
-        for _ in range(6): ph.add_run().add_break()
-    pn = tb.cell(1, c).paragraphs[0]; pn.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run(pn, nm, size=16); pn.add_run().add_break(); run(pn, f"{sid} {SECTION_NO}", size=16)
-page_break()
 
 
 def keywords(label, text):
@@ -417,9 +412,13 @@ FRONT("สารบัญ", toc=False)
 p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.RIGHT; run(p, "หน้า", True)
 field(doc.add_paragraph(), 'TOC \\o "1-3" \\h \\z \\u', "(คลิกขวาแล้วเลือก Update Field เพื่อสร้างสารบัญ)")
 page_break()
-FRONT("สารบัญรูปและตาราง", toc=False)
+FRONT("สารบัญรูปภาพ", toc=False)
 p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.RIGHT; run(p, "หน้า", True)
-field(doc.add_paragraph(), 'TOC \\h \\z \\t "Caption,1"', "(คลิกขวาแล้วเลือก Update Field เพื่อสร้างสารบัญรูปและตาราง)")
+field(doc.add_paragraph(), 'TOC \\h \\z \\t "Caption,1"', "(คลิกขวาแล้วเลือก Update Field เพื่อสร้างสารบัญรูปภาพ)")
+page_break()
+FRONT("สารบัญตาราง", toc=False)
+p = doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.RIGHT; run(p, "หน้า", True)
+field(doc.add_paragraph(), 'TOC \\h \\z \\t "TableCaption,1"', "(คลิกขวาแล้วเลือก Update Field เพื่อสร้างสารบัญตาราง)")
 page_break()
 
 # ------------------------------------------------------------------ บทที่ 1
@@ -455,7 +454,7 @@ P(ch2.CRUD_ASIS_NOTE, indent=False, align="l")
 H(2, "2.10 คำอธิบาย CRUD Table ก่อนปรับปรุง")
 for t in ch2.CRUD_ASIS_DESC: P(t)
 H(2, "2.11 Use Case Diagram ที่ทบทวนปรับปรุงแล้ว")
-FIG(BP_IMG("2.11-use-case-diagram-to-be.png"), "Use Case Diagram ที่ทบทวนปรับปรุงแล้ว", 2, max_h=7.0)
+FIG(BP_IMG("2.11-use-case-diagram-to-be.png"), "Use Case Diagram ที่ทบทวนปรับปรุงแล้ว", 2, max_h=5.6)
 for t in ch2.UC_ACTORS: LI(t)
 
 H(2, "2.12 CRUD Table ที่ทบทวนแล้ว")
@@ -469,15 +468,19 @@ for uc in UCS:
     cells = CRUD["crud"].get(uc["id"], {"cells": {}})["cells"]
     rows.append([f"{uc['id']} {uc['name']}"] + [cells.get(t, "") for t in tables])
 TABLE(rows, [2.7] + [round(6.9 / len(tables), 2)] * len(tables), "CRUD Table ที่ทบทวนแล้ว (สร้างจาก SQL ใน Use Case Description)", 2, size=8, pad=0)
+for cell in doc.tables[-1]._cells:  # ระยะบรรทัดแคบ ให้ทั้งตารางอยู่หน้าเดียว
+    for par in cell.paragraphs: par.paragraph_format.line_spacing = Pt(11); par.paragraph_format.space_after = Pt(0)
 set_orientation(False)
 
 # ------------------------------------------------------------------ 2.13
 UI = {"1A": "1A-LoginScreen", "4A": "0-DashboardScreen", "2A": "2A-OrderVerifyScreen", "1S": "1S-RslMatchScreen",
       "3A": "3A-ProductScreen", "3S": "3S-StockCheckScreen", "4S": "4S-CostCalculatorScreen",
-      "5A": "5A-6A-ReorderDecisionScreen", "6A": "5A-6A-ReorderDecisionScreen", "7A": "7A-CancelOrderScreen",
-      "8A": "8A-ShipmentScreen", "5S": "8A-ShipmentScreen", "9A": "9A-LabelPrintScreen", "10A": "10A-DataCleanupScreen"}
+      "5A": "5A-6A-ReorderDecisionScreen", "6A": "../test/6A-ok", "7A": "7A-CancelOrderScreen",
+      "8A": "8A-ShipmentScreen", "5S": "../test/5S-7S-ok", "9A": "9A-LabelPrintScreen", "10A": "10A-DataCleanupScreen"}
 
 H(2, "2.13 Use Case Description, Sequence Diagram, Collaboration Diagram และ User Interface")
+P("Sequence Diagram และ Collaboration Diagram ใช้รูปแบบ MVC ตามโครงสร้างโค้ดจริง ได้แก่ Actor → Screen (หน้าเว็บ page.tsx ซึ่งเป็นชั้น View ของ MVC) → Controller (Server Action ใน actions.ts) → Model (UseCase และ Queries ใน src/lib) → DBConnector (db.ts) ส่วนระบบภายนอก (Rakuten, RSL, ขนส่ง, Supplier) เป็น object แยกที่ Model เรียกผ่าน Adapter Screen และ Controller เป็นชื่อบทบาทของไฟล์จริง ไม่ใช่คลาสที่เพิ่มขึ้นในโค้ด object ที่อยู่ติดกับ Actor ตั้งชื่อลงท้ายว่า Screen ไม่ใช้ชื่อ View ตามเกณฑ์ข้อ 24")
+P("ไม่มีลูกศรย้อนกลับไปที่ Actor ผลลัพธ์ส่งกลับจาก Controller มาที่ Screen แล้ว Screen แสดงผลเองด้วย self message (เช่น showError(), showSuccess()) และ Screen ไม่เรียก Model หรือฐานข้อมูลตรง การอ่านข้อมูลตอนเปิดหน้าทำผ่าน Controller loadAppState() Use Case ที่ระบบทำเอง (S) ไม่มี Actor เริ่มจาก Use Case ที่เรียกหรือ ExecuteWorkflow แทน Sequence Diagram ที่ยาวแบ่งเป็นหลายรูปตามลำดับ (1/n) โดยแสดงหัว object ซ้ำทุกรูป")
 n = 0
 for uc in UCS:
     uid, uname = uc["id"], uc["name"]
@@ -488,71 +491,56 @@ for uc in UCS:
     TABLE([("ลำดับ", "User Action", "System Response")] + uc["steps"], (0.75, 1.75, 3.77),
           f"Use Case Description ที่ {uid}: {uname}", 2, size=13)
     seq, col = DIA_IMG(f"{uid}-sequence.png"), DIA_IMG(f"{uid}-collaboration.png")
-    set_orientation(best_landscape(seq)); page_break()
-    n += 1; H(3, f"2.13.{n} Sequence Diagram ของ Use Case Description ที่ {uid}")
-    FIG(seq, f"Sequence Diagram ของ Use Case Description ที่ {uid}", 2, max_h=7.6, land_h=5.2, max_w=natural_w(seq))
-    set_orientation(False); page_break()
+    # รูปที่ยาวถูกตัดเป็นส่วน ๆ (<UC>-sequence-1.png, ...) โดย split_png.py ให้ตัวอักษรอ่านได้ที่ความกว้างหน้า
+    parts = [DIA_IMG(f"{uid}-sequence-{i}.png") for i in range(1, 10) if os.path.exists(DIA_IMG(f"{uid}-sequence-{i}.png"))] or [seq]
+    for i, part in enumerate(parts):
+        set_orientation(best_landscape(part)); page_break()
+        if not i: n += 1; H(3, f"2.13.{n} Sequence Diagram ของ Use Case Description ที่ {uid}")
+        tag = f" ({i + 1}/{len(parts)})" if len(parts) > 1 else ""
+        FIG(part, f"Sequence Diagram ของ Use Case Description ที่ {uid}{tag}", 2,
+            max_h=7.6 if not i else 8.0, land_h=5.2 if not i else 5.6, max_w=natural_w(part))
+    # เลือกแนวกระดาษก่อนวางหัวข้อ หัวข้อจะได้อยู่หน้าเดียวกับรูป
+    set_orientation(best_landscape(col)); page_break()
     n += 1; H(3, f"2.13.{n} Collaboration Diagram ของ Use Case Description ที่ {uid}")
-    FIG(col, f"Collaboration Diagram ของ Use Case Description ที่ {uid}", 2, max_h=6.6, max_w=natural_w(col))
-    if uid in UI: page_break()
+    FIG(col, f"Collaboration Diagram ของ Use Case Description ที่ {uid}", 2, max_h=6.6, land_h=5.2, max_w=png_size(col)[0] / 200)
+    if state["landscape"]: set_orientation(False); page_break()
     n += 1; H(3, f"2.13.{n} User Interface ของ Use Case Description ที่ {uid}")
-    if uid in UI: FIG(PLT_IMG(f"ui/{UI[uid]}.png"), f"User Interface ของ Use Case Description ที่ {uid} ({UI[uid].split('-')[-1]})", 2)
-    else: P("Use Case นี้ระบบทำเองโดยไม่มีหน้าจอของตัวเอง ผลการทำงานแสดงเป็นข้อความแจ้งเตือนในหน้าที่ Admin เปิดอยู่")
-    page_break()
+    screen = {"1A": "LoginScreen", "4A": "DashboardScreen", "2A": "OrderVerifyScreen", "1S": "RslMatchScreen", "3A": "ProductScreen",
+              "3S": "StockCheckScreen", "4S": "CostScreen", "5A": "ReorderScreen", "6A": "ReorderScreen หลังยืนยันการสั่งซื้อ",
+              "7A": "CancelOrderScreen", "8A": "ShippingScreen", "5S": "ShippingScreen หลังแจ้งเลขติดตาม", "9A": "LabelPrintScreen",
+              "10A": "CleanupScreen"}.get(uid, "")
+    if uid in UI: FIG(PLT_IMG(f"ui/{UI[uid]}.png"), f"User Interface ของ Use Case Description ที่ {uid} ({screen})", 2)
+    else: P("Use Case นี้ระบบทำเองโดยไม่มีหน้าจอของตัวเอง ผลการทำงานแสดงเป็นข้อความแจ้งเตือนในหน้าที่ Super Admin เปิดอยู่")
 
-# ------------------------------------------------------------------ 2.14-2.19
-CLASS_PARTS = ["เข้าสู่ระบบ", "รับคำสั่งซื้อและจับคู่ SKU", "ตรวจสอบและยกเลิกคำสั่งซื้อ", "จัดการสินค้า", "ตรวจและตัดสต๊อก",
-               "คำนวณต้นทุน", "ตัดสินใจสั่งซื้อเติม stock", "สั่งซื้อเติม stock จาก supplier", "ส่ง Order เข้า RSL", "จัดการใบปะ",
-               "จัดส่งและแจ้งเลขติดตาม", "ลบข้อมูลเก่า", "คลาสข้อมูลคำสั่งซื้อ (Entity)", "คลาสข้อมูลผู้ใช้และการจัดส่ง (Entity)",
-               "คลาสข้อมูลสินค้าและสต๊อก (Entity)"]
-set_orientation(best_landscape(DB_IMG("class-1.png")))
-H(2, "2.14 Class Diagram")
+# ------------------------------------------------------------------ 2.14-2.15 ER Diagram
+H(2, "2.14 ER Diagram")
 for t in ch2.DB_TEXT["2.14"]: P(t)
-for i, title in enumerate(CLASS_PARTS, 1):
-    AFIG(DB_IMG(f"class-{i}.png"), f"Class Diagram กลุ่ม{title} ({i}/{len(CLASS_PARTS)})", 2, land_h=3.3 if i == 1 else 5.6)
-set_orientation(False)
-
-H(2, "2.15 Data Flow Diagram")
-for t in ch2.DB_TEXT["2.15"]: P(t)
-FIG(DB_IMG("dfd-context.png"), "Context Diagram ของระบบ", 2)
-AFIG(DB_IMG("dfd-level0.png"), "Data Flow Diagram Level 0", 2)
-set_orientation(False)
-
-H(2, "2.16 State Diagram ของ Order")
-for t in ch2.DB_TEXT["2.16"]: P(t)
-FIG(DB_IMG("state-1.png"), "State Diagram ของ Order ก่อนจัดส่ง (1/2)", 2, max_h=6.6, max_w=natural_w(DB_IMG("state-1.png")))
-FIG(DB_IMG("state-2.png"), "State Diagram ของ Order ช่วงจัดส่ง (2/2)", 2, max_h=7.8, max_w=natural_w(DB_IMG("state-2.png")))
-
-H(2, "2.17 Component Diagram")
-for t in ch2.DB_TEXT["2.17"]: P(t)
-FIG(DB_IMG("component.png"), "Component Diagram ของระบบ", 2, max_h=7.0)
-
-H(2, "2.18 ER Diagram")
-for t in ch2.DB_TEXT["2.18"]: P(t)
-FIG(DB_IMG("er-0.png"), "ER Diagram ภาพรวมของระบบ", 2, max_h=6.8)
-ER_PARTS = ["คำสั่งซื้อ (ORDERS)", "ผู้ใช้ การจัดส่ง และบันทึกการลบ", "สินค้า สต๊อก ต้นทุน และการสั่งซื้อเติม"]
+AFIG(DB_IMG("er-diagram.png"), "ER Diagram ภาพรวมของระบบ (17 ตาราง)", 2, land_h=5.9)
+ER_PARTS = ["คำสั่งซื้อ (ORDERS)", "รายการสินค้า ใบปะ และการแจ้งเลขติดตาม", "สินค้า สต๊อก ต้นทุน และการสั่งซื้อเติม",
+            "ผู้ดูแลระบบและประวัติการทำงาน"]
 for i, title in enumerate(ER_PARTS, 1):
     AFIG(DB_IMG(f"er-{i}.png"), f"ER Diagram ส่วน{title} ({i}/{len(ER_PARTS)})", 2)
 
 set_orientation(best_landscape(DB_IMG("er-query-1.png")))
-H(2, "2.19 ER Diagram พร้อม Query")
-for t in ch2.DB_TEXT["2.19"]: P(t)
+H(2, "2.15 ER Diagram พร้อม Query")
+for t in ch2.DB_TEXT["2.15"]: P(t)
 for i, title in enumerate(ER_PARTS, 1):
     AFIG(DB_IMG(f"er-query-{i}.png"), f"ER Diagram พร้อม Query ส่วน{title} ({i}/{len(ER_PARTS)})", 2, land_h=4.3 if i == 1 else 5.6)
 set_orientation(False)
 
-# ------------------------------------------------------------------ 2.20 Query Table
-H(2, "2.20 Query Table")
-for t in ch2.DB_TEXT["2.20"]: P(t)
-rows = [("Use Case ID", "Use Case", "Query ID", "SQL Command")]
-for q in QUERIES: rows.append((q["uc"], q["uc_name"], q["id"], f"`{q['sql']}`"))
-TABLE(rows, (0.7, 1.45, 0.8, 3.32), "Query Table", 2, size=12)
+# ------------------------------------------------------------------ 2.16 Query Table
+H(2, "2.16 Query Table")
+for t in ch2.DB_TEXT["2.16"]: P(t)
+UC_NAME = {u["id"]: u["name"] for u in UCS}
+rows = [("Use Case ID", "Use Case Name", "Query ID", "ค่าคงที่ในโค้ด (src/lib/queries)", "SQL Command")]
+for q in QUERIES: rows.append((q["uc"], UC_NAME.get(q["uc"], "-"), q["id"], (q.get("code") or "-").replace(" · ", "<br>"), f"`{q['sql']}`"))
+TABLE(rows, (0.55, 1.0, 0.7, 1.05, 2.97), "Query Table", 2, size=10)
 
-# ------------------------------------------------------------------ 2.21 Table Structure
-H(2, "2.21 Table Structure")
-for t in ch2.DB_TEXT["2.21"]: P(t)
+# ------------------------------------------------------------------ 2.17 Table Structure
+H(2, "2.17 Table Structure")
+for t in ch2.DB_TEXT["2.17"]: P(t)
 for i, d in enumerate(DICT, 1):
-    H(3, f"2.21.{i} {d['title']}")
+    H(3, f"2.17.{i} {d['title']}")
     rows = [("No.", "Attribute", "Description", "Data Type", "Key", "Not Null", "ช่วงข้อมูล / การตรวจสอบ")]
     for c in d["columns"]:
         rows.append((str(c["no"]), c["name"], c["desc"], c["type"], c["key"], c["notnull"], c["range"]))
@@ -564,37 +552,61 @@ for i, d in enumerate(DICT, 1):
         part = f" (คอลัมน์ {k + 1}-{k + len(cols)})" if len(fields) > 6 else ""
         TABLE(rows, [round(6.27 / len(cols), 2)] * len(cols), f"ตัวอย่างข้อมูลของ{d['title']}{part}", 2, size=10)
 
-# ------------------------------------------------------------------ 2.22-2.24
-H(2, "2.22 Software Development Platform")
+# ------------------------------------------------------------------ 2.18-2.19 Class Diagram และ State Diagram
+CLASS_PARTS = ["เข้าสู่ระบบ", "รับคำสั่งซื้อและจับคู่ SKU", "ตรวจสอบและยกเลิกคำสั่งซื้อ", "จัดการสินค้า", "ตรวจและตัดสต๊อก",
+               "คำนวณต้นทุน", "ตัดสินใจสั่งซื้อเติม stock", "สั่งซื้อเติม stock จาก supplier", "ส่ง Order เข้า RSL", "จัดการใบปะ",
+               "จัดส่งและแจ้งเลขติดตาม", "ลบข้อมูลเก่า", "คลาสข้อมูลคำสั่งซื้อและการจัดส่ง (Entity)", "คลาสข้อมูลผู้ดูแลระบบและประวัติ (Entity)",
+               "คลาสข้อมูลสินค้าและสต๊อก (Entity)"]
+set_orientation(best_landscape(DB_IMG("class-1.png")))
+H(2, "2.18 Class Diagram")
+for t in ch2.DB_TEXT["2.18"]: P(t)
+for i, title in enumerate(CLASS_PARTS, 1):
+    AFIG(DB_IMG(f"class-{i}.png"), f"Class Diagram กลุ่ม{title} ({i}/{len(CLASS_PARTS)})", 2, land_h=3.3 if i == 1 else 5.6)
+set_orientation(False)
+
+H(2, "2.19 State Diagram")
+for t in ch2.DB_TEXT["2.19"]: P(t)
+page_break()
+FIG(DB_IMG("state-1.png"), "State Diagram ของ Order (order_status) ก่อนจัดส่ง (1/2)", 2, max_h=8.4)
+page_break()
+FIG(DB_IMG("state-2.png"), "State Diagram ของ Order (order_status) ช่วงจัดส่ง (2/2)", 2, max_h=8.4)
+for img, cap, text in ch2.DB_TEXT["2.19-other"]:
+    page_break()
+    P(text)
+    FIG(DB_IMG(img), cap, 2, max_h=7.6, max_w=natural_w(DB_IMG(img)) / 1.5 * 1.3)  # render scale 3
+
+# ------------------------------------------------------------------ 2.20-2.22
+H(2, "2.20 Software Development Platform")
 FIG(PLT_IMG("2.22-software-platform.png"), "เครื่องมือที่ใช้พัฒนาระบบ (Stack of Tools)", 2)
 TABLE(ch2.PLATFORM, (1.2, 2.6, 2.47), "เครื่องมือที่ใช้พัฒนาระบบ", 2)
 
-H(2, "2.23 Site Map / UI Structure")
+H(2, "2.21 Site Map / UI Structure")
 FIG(PLT_IMG("sitemap.png"), "โครงสร้างหน้าจอของระบบ (Site Map)", 2, max_h=3.6)
 P(ch2.SITEMAP_DESC[0]); P(ch2.SITEMAP_DESC[1])
 CODE(ch2.SITEMAP_TREE)
 P(ch2.SITEMAP_DESC[2])
-H(3, "2.23.1 User Interface Design")
+H(3, "2.21.1 User Interface Design")
 P("ชื่อหน้าจอตรงกับชื่อ Screen object ใน Sequence Diagram")
 TABLE([r[:2] for r in ch2.UI_SCREENS], (2.4, 3.87), "หน้าจอของระบบและ Use Case ที่เกี่ยวข้อง", 2)
 for scr, ucs, img in ch2.UI_SCREENS[1:]:
     FIG(PLT_IMG(img), f"{scr} ({ucs})", 2)
 
-H(2, "2.24 Output Design (Report)")
+H(2, "2.22 Output Design (Report)")
 P("ระบบมี 2 รายงาน ทั้งคู่เป็นหน้าสำหรับพิมพ์ที่เปิดจากหน้าจอเดิม ตอนพิมพ์จะซ่อนเมนูและปุ่มออก")
-H(3, "2.24.1 ใบปะสินค้า (Shipping Label)")
-FIG(PLT_IMG("report/label-ORD-24178.png"), "ใบปะสินค้าของ ORD-24178", 2)
-P("ใบปะสินค้าสร้างโดย Use Case 6S จัดรูปแบบใบปะสินค้า และพิมพ์ผ่าน Use Case 9A จากหน้า LabelPrintScreen ข้อมูลมาจาก Q6S.2 (ตาราง label) และตาราง orders")
+H(3, "2.22.1 ใบปะสินค้า (Shipping Label)")
+FIG(PLT_IMG("report/label-ORD-24178.png"), "ใบปะสินค้าของ ORD-24178 (RSL จัดส่ง, RSL-STD-A6)", 2)
+FIG(PLT_IMG("report/label-ORD-24177.png"), "ใบปะสินค้าของ ORD-24177 (บริษัทจัดส่งเอง, INHOUSE-YAMATO-A6)", 2)
+P("ใบปะสินค้าสร้างโดย Use Case 6S จัดรูปแบบใบปะสินค้า และพิมพ์ผ่าน Use Case 9A จากหน้า LabelPrintScreen ข้อมูลมาจาก Q6S.4 (ตาราง labels) และ Q9A.2 (labels ร่วมกับ orders) รูปแบบใบปะขึ้นกับแหล่งที่จัดส่งที่ 3S เลือก Order ที่ RSL จัดส่งพิมพ์เลข RSL และใช้เลข RSL เป็นรหัสสแกน ส่วน Order ที่บริษัทจัดส่งเองจากคลังบริษัทใช้รูปแบบ INHOUSE-YAMATO-A6 ช่องเลข RSL แสดง \"—\" และใช้ [Order ID]-[ลำดับกล่อง] เป็นรหัสสแกน")
 TABLE(ch2.REPORT_LABEL, (1.5, 3.17, 1.6), "โครงสร้างของใบปะสินค้า", 2)
-H(3, "2.24.2 รายงานต้นทุนต่อหน่วย (Unit Cost Report)")
+H(3, "2.22.2 รายงานต้นทุนต่อหน่วย (Unit Cost Report)")
 FIG(PLT_IMG("report/unit-cost-FSH-MLR-240.png"), "รายงานต้นทุนต่อหน่วยของ FSH-MLR-240", 2)
-P("รายงานต้นทุนต่อหน่วยมาจาก Use Case 4S คำนวณ Cost ในการสั่งสินค้าเติม stock เอง เปิดจากหน้า CostCalculatorScreen ใช้สูตรตาม Q4S.2 และบันทึกผลด้วย Q4S.3")
+P("รายงานต้นทุนต่อหน่วยมาจาก Use Case 4S คำนวณ Cost ในการสั่งสินค้าเติม stock เอง เปิดจากหน้า CostScreen (/products/cost) คำนวณด้วยฟังก์ชัน calcUnitCost แล้วบันทึกประวัติด้วย Q4S.6 และบันทึกค่าล่าสุดลงตาราง costs ด้วย Q4S.5 เมื่อเลือกบันทึกค่า")
 CODE(ch2.UNIT_COST_FORMULA)
 TABLE(ch2.REPORT_COST, (1.6, 4.67), "โครงสร้างของรายงานต้นทุนต่อหน่วย", 2)
 
-# ------------------------------------------------------------------ 2.25 SQL Statement
-H(2, "2.25 SQL Statement ใน Use Case Description")
-for t in ch2.DB_TEXT["2.25"]: P(t)
+# ------------------------------------------------------------------ 2.23 SQL Statement
+H(2, "2.23 SQL Statement ใน Use Case Description")
+for t in ch2.DB_TEXT["2.23"]: P(t)
 
 
 def result_text(res):
@@ -605,7 +617,7 @@ def result_text(res):
 
 
 for i, uc in enumerate(UCS, 1):
-    H(3, f"2.25.{i} Use Case {uc['id']}: {uc['name']}")
+    H(3, f"2.23.{i} Use Case {uc['id']}: {uc['name']}")
     rows = [("Query", "SQL Command", "ค่าที่ส่ง", "ผลการทำงาน")]
     for q in [q for q in QUERIES if q["uc"] == uc["id"]]:
         r = RESULTS[q["id"]]
@@ -617,8 +629,8 @@ for i, uc in enumerate(UCS, 1):
         rows.append((q["id"], sql, ", ".join(r["params"]) or "-", out))
     TABLE(rows, (0.65, 2.55, 1.2, 1.87), f"SQL Statement และผลการทำงานของ Use Case {uc['id']}", 2, size=10)
 
-# ------------------------------------------------------------------ 2.26
-H(2, "2.26 การทดสอบโปรแกรมทำงานตาม Use Case Description")
+# ------------------------------------------------------------------ 2.24
+H(2, "2.24 การทดสอบโปรแกรมทำงานตาม Use Case Description")
 for t in ch2.TEST_INTRO: P(t)
 tests = ch2.TESTS[1:]
 order = []
@@ -626,8 +638,7 @@ for r in tests:
     if r[0] not in order: order.append(r[0])
 for k, uid in enumerate(order, 1):
     rows = [r for r in tests if r[0] == uid]
-    if k > 1: page_break()
-    H(3, f"2.26.{k} การทดสอบ Use Case {uid}: {rows[0][1]}")
+    H(3, f"2.24.{k} การทดสอบ Use Case {uid}: {rows[0][1]}")
     TABLE([("กรณีทดสอบ", "ผลที่คาดหวัง (ข้อความจาก UC)", "ผล")] + [(r[2], r[3], r[4]) for r in rows],
           (2.2, 3.37, 0.7), f"การทดสอบ Use Case {uid}: {rows[0][1]}", 2, size=14)
     seen = set()
@@ -635,37 +646,57 @@ for k, uid in enumerate(order, 1):
         if r[5] in seen: continue
         seen.add(r[5])
         kind = "กรณีปกติ" if r[5].endswith("-ok.png") else "กรณีผิดพลาด"
+        if "inhouse" in r[5]: kind = "กรณีบริษัทจัดส่งเอง (in-house)"
         FIG(PLT_IMG(r[5]), f"ผลการทดสอบ Use Case {uid} {kind}", 2, max_h=2.9)
 k = len(order) + 1
-page_break()
-H(3, f"2.26.{k} การทดสอบการออกรายงาน")
+H(3, f"2.24.{k} การทดสอบการออกรายงาน")
 TABLE([("รายงาน", "Use Case", "วิธีทดสอบ", "ผล"),
        ("ใบปะสินค้า", "6S, 9A", "จับคู่ ORD-24178 กับ RSL แล้วเปิดหน้าพิมพ์ใบปะ ข้อมูลบนใบปะต้องตรงกับ Order และเลข RSL", "ผ่าน"),
-       ("รายงานต้นทุนต่อหน่วย", "4S", "คำนวณต้นทุนของ FSH-MLR-240 แล้วเปิดรายงาน ต้นทุนต่อหน่วยต้องตรงกับสูตร Q4S.2", "ผ่าน")],
+       ("รายงานต้นทุนต่อหน่วย", "4S", "คำนวณต้นทุนของ FSH-MLR-240 แล้วเปิดรายงาน ต้นทุนต่อหน่วยต้องตรงกับสูตรใน 4S", "ผ่าน")],
       (1.5, 0.8, 3.27, 0.7), "การทดสอบการออกรายงาน", 2, size=14)
 FIG(PLT_IMG("report/label-ORD-24178.png"), "ผลการออกรายงานใบปะสินค้า", 2, max_h=2.9)
 FIG(PLT_IMG("report/unit-cost-FSH-MLR-240.png"), "ผลการออกรายงานต้นทุนต่อหน่วย", 2, max_h=2.9)
 
-# ------------------------------------------------------------------ 2.27 หน้าที่รับผิดชอบ
-H(2, "2.27 หน้าที่รับผิดชอบ")
+# ------------------------------------------------------------------ 2.25 หน้าที่รับผิดชอบ
+H(2, "2.25 หน้าที่รับผิดชอบ")
+P("หัวหน้ากลุ่ม: นายธนภัทร พูลโภคา " + SECTION_NO)
 P("ตารางแสดงการแบ่งความรับผิดชอบงานตามรายการที่กำหนด งานใดที่ทำหลายคน หัวหน้าทีมระบุผู้รับผิดชอบหลัก")
-TABLE([("สมาชิก", "รวมงาน (ชิ้น)")] + [(f"{i}. {nm}", "") for i, (_, nm) in enumerate(MEMBERS, 1)],
-      (4.27, 2.0), "จำนวนงานของสมาชิกแต่ละคน", 2)
 from openpyxl import load_workbook  # noqa: E402
 ws = load_workbook(RUBRIC).active
+TYPO = {"สารบรรณ": "สารบัญ", "สนัลสนุน": "สนับสนุน", "Procdess": "Process"}  # คำผิดในไฟล์เกณฑ์
+
+
+def untypo(c):
+    if not isinstance(c, str): return c
+    for k, v in TYPO.items(): c = c.replace(k, v)
+    return c
 items, started = [], False
 for r in ws.iter_rows(values_only=True):
     if r[1] == "รายการ" and r[6] == "ผู้รับผิดชอบ": started = True; continue
+    r = tuple(untypo(c) for c in r)
     if started and isinstance(r[0], int): items.append(r)
     if started and r[1] == "คะแนนทีมงาน (พิมพ์)": break
+T, A, Y = "ธนภัทร", "อชิระ", "ปิยากร"
+RESP = {0: [Y], 1: [Y], 2: [Y], 3: [Y], 4: [Y], 5: [Y], 6: [Y],
+        7: [T, A], 8: [T, A], 9: [T, A], 10: [T, A], 11: [T, A], 12: [T, A], 13: [Y],
+        14: [Y], 15: [T], 16: [T, A], 17: [Y], 18: [A], 19: [T, A], 20: [T, A], 21: [T, A],
+        22: [A], 23: [T, A], 24: [Y], 25: [Y], 26: [Y], 27: [T, A], 29: [Y], 30: [Y],
+        31: [Y], 32: [Y], 33: [T, A], 34: [T, A, Y], 35: [T, A, Y], 36: [Y]}
+TABLE([("สมาชิก", "sec", "รหัส", "รวมงาน (ชิ้น)")] +
+      [(f"{i}. {nm}", SECTION_NO.split()[-1], sid, str(sum(n in nm for r in items for n in RESP[r[0]])))
+       for i, (sid, nm) in enumerate(MEMBERS, 1)],
+      (2.67, 0.8, 1.4, 1.4), "จำนวนงานของสมาชิกแต่ละคน", 2)
 rows = [("ที่", "รายการ", "วัตถุประสงค์", "ขนาด", "หน่วย", "การตรวจสอบ", "ผู้รับผิดชอบ")]
 for r in items:
     rows.append((str(r[0]), str(r[1]).strip(), str(r[2] or "").strip(), f"{r[3]:g}" if r[3] is not None else "", str(r[4] or ""),
-                 str(r[5] or "").strip(), ""))
-TABLE(rows, (0.35, 1.05, 1.15, 0.45, 0.5, 2.0, 0.77), "หน้าที่รับผิดชอบ", 2, size=10)
-H(3, "2.27.1 คะแนนการทำงานของทีม")
-P("หัวหน้าทีมเป็นผู้ให้คะแนนการทำงานของสมาชิกแต่ละคน คะแนนเต็ม 5")
-TABLE([("สมาชิก", "คะแนนที่ได้ (เต็ม 5)", "เหตุผลที่ได้คะแนน")] + [(f"{i}. {nm}", "", "") for i, (_, nm) in enumerate(MEMBERS, 1)],
+                 str(r[5] or "").strip(), ", ".join(RESP[r[0]])))
+TABLE(rows, (0.35, 1.0, 1.1, 0.42, 0.48, 1.82, 1.1), "หน้าที่รับผิดชอบ", 2, size=10)
+H(3, "2.25.1 คะแนนการทำงานของทีม")
+P("หัวหน้าทีม (นายธนภัทร พูลโภคา) เป็นผู้ให้คะแนนการทำงานของสมาชิกแต่ละคน คะแนนเต็ม 5")
+SCORE = [("5", "มีส่วนร่วมในการทำ Diagram ในส่วนของ Business Flow (As-Is & To-Be), ER Diagram และมีส่วนร่วมในการทำ CRUD Table (As-Is), Usecase Description และมีส่วนร่วมในการทำในส่วนของ Backend และ Database ของแอปพลิเคชัน"),
+         ("5", "มีส่วนร่วมในการทำ Diagram ในส่วนของ Business Flow (As-Is & To-Be), ER Diagram และมีส่วนร่วมในการทำ CRUD Table (To-Be), Query Table, Usecase Description และมีส่วนร่วมในการทำในส่วนของ Backend และ Database ของแอปพลิเคชัน"),
+         ("5", "เป็นผู้ประสานงานหลักติดต่อและสอบถามกับเจ้าของกิจการ และเป็นผู้จัดทำรายงานหลัก มีส่วนร่วมในการทำ Diagram ในส่วนของ Usecase Diagram, Sequence Diagram, Collaboration Diagram และรับผิดชอบในส่วนของ UX/UI และ Frontend ของแอปพลิเคชัน")]
+TABLE([("สมาชิก", "คะแนนที่ได้ (เต็ม 5)", "เหตุผลที่ได้คะแนน")] + [(f"{i}. {nm}", *SCORE[i - 1]) for i, (_, nm) in enumerate(MEMBERS, 1)],
       (2.4, 1.3, 2.57), "คะแนนการทำงานของทีม", 2)
 
 # ------------------------------------------------------------------ เลขหน้า

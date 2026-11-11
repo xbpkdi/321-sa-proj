@@ -3,10 +3,10 @@
   "id": "1A",
   "name": "เข้าสู่ระบบ",
   "origin": "เดิม",
-  "goal": "ให้ Admin สามารถเข้าใช้งานระบบได้ และออกจากระบบเมื่อเลิกใช้งาน",
-  "pre": "Admin มีบัญชีอยู่ในระบบแล้ว และอยู่ที่หน้า Login",
-  "post": "Admin เข้าสู่ระบบสำเร็จและเข้าถึงหน้า Dashboard ได้ / เมื่อออกจากระบบ session ถูกยกเลิกและกลับมาที่หน้า Login",
-  "actor": "Admin",
+  "goal": "ให้ Super Admin สามารถเข้าใช้งานระบบได้ และออกจากระบบเมื่อเลิกใช้งาน",
+  "pre": "Super Admin มีบัญชีอยู่ในตาราง `admins` แล้ว และอยู่ที่หน้า Login (`/login`)",
+  "post": "Super Admin เข้าสู่ระบบสำเร็จ ระบบสร้าง session ในตาราง `sessions` และ redirect ไปหน้า Dashboard (`/dashboard`) / เมื่อออกจากระบบ session ถูกยกเลิก (`revoked_at`) cookie ถูกลบ และกลับมาที่หน้า Login",
+  "actor": "Super Admin",
   "steps": [
    [
     "1",
@@ -21,624 +21,956 @@
    [
     "3",
     "กด \"เข้าสู่ระบบ\"",
-    "**1. ตรวจสอบค่าที่กรอกมา** (`user_email` & `user_password`) — ข้อมูลที่กรอกต้องไม่เป็นช่องว่าง หากเป็นช่องว่าง จะแสดงแจ้งเตือนว่า \"ข้อมูลที่กรอกมาไม่ครบ\"<br>**2. ตรวจสอบรูปแบบอีเมล** — ต้องอยู่ในรูปแบบ `[A-Za-z0-9]+@[A-Za-z0-9]+\\.[A-Za-z0-9]+` เท่านั้น หากกรอกข้อมูลนอกเหนือรูปแบบนี้ จะแจ้งเตือนว่า \"รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง\"<br>**3. ตรวจสอบอีเมลและรหัสผ่าน** — **Q1A.1:** `SELECT user_id, user_password, fail_attempts FROM users WHERE user_email=$1`<br>— หาก `fail_attempts >= 5` จะแจ้งเตือนว่า \"คุณพยายามเข้าสู่ระบบบ่อยเกินไป กรุณารอสักครู่ก่อนลองใหม่อีกครั้ง\"<br>— หากไม่พบอีเมล (`user_email`) ในระบบ จะแจ้งเตือนว่า \"อีเมลหรือรหัสผ่านไม่ถูกต้อง\" (ไม่ระบุว่าผิดที่ฟิลด์ใด เพื่อความปลอดภัย)<br>— หากพบอีเมลในระบบแต่รหัสผ่านไม่ตรงกันกับที่กรอกมา (เทียบ hash) จะแจ้งเตือนว่า \"อีเมลหรือรหัสผ่านไม่ถูกต้อง\" เช่นกัน (ไม่ระบุว่าผิดที่ field ใด เพื่อความปลอดภัย) พร้อมกับ +1 ให้กับ field `fail_attempts` (**Q1A.2:** `UPDATE users SET fail_attempts = fail_attempts + 1 WHERE user_email=$1`)<br>— หากพบอีเมลในระบบและรหัสผ่านตรงกันกับที่กรอกมา (เข้าสู่ระบบสำเร็จ): 1. set field `fail_attempts` ให้เป็น 0 และ `last_login`=DateTime ปัจจุบัน (**Q1A.3:** `UPDATE users SET fail_attempts = 0, last_login = CURRENT_TIMESTAMP WHERE user_email=$1`) 2. ระบบจะแจ้งว่า \"เข้าสู่ระบบสำเร็จ\" 3. ระบบทำการ redirect ผู้ใช้ไปหน้าการใช้งาน"
+    "ระบบเรียก Server Action `loginAction` (`src/app/login/actions.ts`)<br>**1. ตรวจสอบค่าที่กรอกมา** (`user_email` & `user_password`) — ต้องไม่เป็นช่องว่าง หากเป็นช่องว่าง จะแจ้งเตือนว่า \"ข้อมูลที่กรอกมาไม่ครบ\"<br>**2. ตรวจสอบรูปแบบอีเมล** — ต้องอยู่ในรูปแบบ `[A-Za-z0-9]+@[A-Za-z0-9]+\\.[A-Za-z0-9]+` เท่านั้น หากไม่ตรงจะแจ้งเตือนว่า \"รูปแบบของอีเมลที่กรอกมาไม่ถูกต้อง\"<br>**3. ตรวจสอบอีเมลและรหัสผ่าน** (ทำใน transaction เดียว) — **Q1A.1:** `SELECT admin_id, user_email, user_password, fail_attempts, locked_until, last_login FROM admins WHERE user_email = $1`<br>— หากไม่พบอีเมลในระบบ จะแจ้งเตือนว่า \"อีเมลหรือรหัสผ่านไม่ถูกต้อง\" (ไม่ระบุว่าผิดที่ฟิลด์ใด เพื่อความปลอดภัย) และไม่นับจำนวนครั้ง เพราะไม่มีบัญชีให้นับ<br>— หากพบอีเมลและบัญชียังถูกล็อกอยู่ (`locked_until` มากกว่าเวลาปัจจุบัน) จะแจ้งเตือนว่า \"คุณพยายามเข้าสู่ระบบบ่อยเกินไป บัญชีถูกล็อกชั่วคราว กรุณารออีก N นาทีก่อนลองใหม่อีกครั้ง\" (N = จำนวนนาทีที่เหลือ ปัดขึ้น อย่างน้อย 1) และไม่ตรวจรหัสผ่าน<br>— หากเคยถูกล็อกแต่ครบเวลาแล้ว (`locked_until` ไม่ว่าง หรือ `fail_attempts` ≥ 5) ระบบปลดล็อกให้อัตโนมัติก่อนตรวจรหัสผ่าน — **Q1A.2:** `UPDATE admins SET fail_attempts = 0, locked_until = NULL WHERE admin_id = $1`<br>— หากรหัสผ่านไม่ตรงกับค่า hash (scrypt) ที่เก็บไว้ จะแจ้งเตือนว่า \"อีเมลหรือรหัสผ่านไม่ถูกต้อง\" เช่นกัน พร้อม +1 ให้ `fail_attempts` ถ้าครบ 5 ครั้ง ตั้ง `locked_until` = เวลาปัจจุบัน + 15 นาที และแจ้งเตือนว่าบัญชีถูกล็อกทันทีตั้งแต่ครั้งที่ 5 — **Q1A.3:** `UPDATE admins SET fail_attempts = fail_attempts + 1, locked_until = CASE WHEN fail_attempts + 1 >= $3 THEN $2::timestamptz + make_interval(mins => $4::integer) ELSE locked_until END WHERE admin_id = $1 RETURNING fail_attempts, locked_until` ($2 = เวลาปัจจุบัน, $3 = 5 ครั้ง, $4 = 15 นาที)<br>— หากรหัสผ่านถูกต้อง (เข้าสู่ระบบสำเร็จ): 1. set `fail_attempts` = 0, `locked_until` = NULL และ `last_login` = เวลาปัจจุบัน — **Q1A.4:** `UPDATE admins SET fail_attempts = 0, locked_until = NULL, last_login = $2 WHERE admin_id = $1` 2. สร้าง session ใหม่ เก็บเฉพาะค่า hash ของ token และเวลาหมดอายุ — **Q1A.5:** `INSERT INTO sessions ( session_id, admin_id, token_hash, created_at, expires_at, revoked_at ) VALUES ($1, $2, $3, $4, $5, NULL)` 3. ตั้ง cookie แบบ HttpOnly ที่เก็บ token แล้ว redirect ไปหน้า Dashboard"
    ],
    [
     "4",
-    "กด \"ออกจากระบบ\"",
-    "**ยกเลิก session** — ระบบล้าง session ของผู้ใช้ปัจจุบัน (ไม่มีการเปลี่ยนแปลงข้อมูลในฐานข้อมูล) แล้ว redirect กลับไปหน้า Login พร้อมแจ้งว่า \"ออกจากระบบแล้ว\"<br>หากกดออกจากระบบขณะมีงานที่ยังไม่ได้บันทึก ระบบจะถามยืนยันก่อนว่า \"ต้องการออกจากระบบหรือไม่\""
+    "เปิดหน้าใดก็ได้ในระบบหลังเข้าสู่ระบบ",
+    "**ตรวจสอบ session ทุกครั้งที่เปิดหน้า** (`requireSession` ใน layout และทุก Server Action) — นำ hash ของ token ใน cookie ไปค้นหา session ที่ยังไม่ถูกยกเลิกและยังไม่หมดอายุ — **Q1A.6:** `SELECT s.session_id, s.admin_id, a.user_email, s.created_at, s.expires_at FROM sessions AS s INNER JOIN admins AS a ON a.admin_id = s.admin_id WHERE s.token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > $2`<br>— หากไม่พบ session ที่ใช้งานได้ ระบบ redirect กลับไปหน้า Login"
+   ],
+   [
+    "5",
+    "กด \"ออกจากระบบ\" ที่แถบเมนูด้านข้าง",
+    "ระบบถามยืนยันว่า \"ต้องการออกจากระบบหรือไม่\" เมื่อยืนยันแล้วเรียก Server Action `logoutAction`<br>**ยกเลิก session** — **Q1A.7:** `UPDATE sessions SET revoked_at = $2 WHERE token_hash = $1 AND revoked_at IS NULL`<br>ระบบลบ cookie แล้ว redirect กลับไปหน้า Login พร้อมแจ้งว่า \"ออกจากระบบแล้ว\""
+   ],
+   [
+    "ทางเลือก #1",
+    "ฐานข้อมูลไม่พร้อมใช้งานระหว่างเข้าสู่ระบบ",
+    "แจ้งเตือนว่า \"ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง\" (หรือ \"ไม่สามารถดำเนินการกับฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง\") และ rollback transaction ทั้งหมด ไม่มีการเปลี่ยน `fail_attempts`"
+   ],
+   [
+    "ทางเลือก #2",
+    "ฐานข้อมูลไม่พร้อมใช้งานขณะออกจากระบบ",
+    "ระบบยังลบ cookie และพากลับไปหน้า Login เพื่อไม่ให้ผู้ใช้ค้างอยู่ในหน้าที่ต้องเข้าสู่ระบบ"
+   ],
+   [
+    "ทางเลือก #3",
+    "บัญชีถูกล็อกและ Super Admin ต้องการทดสอบใหม่ทันที (เฉพาะสภาพแวดล้อมพัฒนา)",
+    "หน้า `/dev` มีปุ่ม \"ปลดล็อกบัญชี\" ล้าง `fail_attempts` และ `locked_until` ของทุกบัญชี (เครื่องมือทดสอบ ไม่ใช่ขั้นตอนของ Use Case) ในการใช้งานจริงบัญชีปลดล็อกเองเมื่อครบ 15 นาที"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q1A.1": "admin.ts · Q1A_1",
+   "Q1A.2": "admin.ts · Q1A_2_UNLOCK",
+   "Q1A.3": "admin.ts · Q1A_2",
+   "Q1A.4": "admin.ts · Q1A_3",
+   "Q1A.5": "sessions.ts · Q1A_4",
+   "Q1A.6": "sessions.ts · Q1A_5",
+   "Q1A.7": "sessions.ts · Q1A_6"
+  }
  },
  {
   "id": "2A",
   "name": "ตรวจสอบคำสั่งซื้อ",
   "origin": "เพิ่มใหม่",
-  "goal": "ให้ Admin ตรวจสอบความถูกต้องของ Order ที่ดึงเข้ามา ก่อนส่งเข้าสู่กระบวนการจับคู่กฎ SKU",
-  "pre": "Order อยู่ในสถานะ \"รอตรวจสอบคำสั่งซื้อ\"",
-  "post": "Order ผ่านการตรวจสอบและเปลี่ยนสถานะเป็น \"รอจับคู่กฎ SKU\"",
-  "actor": "Admin",
+  "goal": "ให้ Super Admin ตรวจสอบความถูกต้องของ Order ที่ดึงเข้ามา ก่อนส่งเข้าสู่กระบวนการจับคู่กฎ SKU",
+  "pre": "Super Admin เข้าสู่ระบบแล้ว และ Order อยู่ในสถานะ \"รอตรวจสอบคำสั่งซื้อ\"",
+  "post": "Order ผ่านการตรวจสอบ บันทึก `verified_at` และเปลี่ยนสถานะเป็น \"รอจับคู่กฎ SKU\" จากนั้น `executeWorkflow` ทำ UC 2S ต่อทันทีใน transaction เดียวกัน (หรือ Order ไปที่ \"รอดำเนินการด้วยตนเอง\" / \"ยกเลิกแล้ว\" ตามทางเลือก)",
+  "actor": "Super Admin",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการ Order ที่อยู่ในสถานะ \"รอตรวจสอบคำสั่งซื้อ\" พร้อมช่องค้นหาตาม `order_id`, `sku` และ `sales_channel` — **Q2A.1:** `SELECT order_id, marketplace_order_id, sku, qty, order_date FROM orders WHERE order_status='รอตรวจสอบคำสั่งซื้อ' ORDER BY order_date`"
+    "แสดงหน้าตรวจสอบคำสั่งซื้อ (`/orders/verify`) รายการ Order ที่อยู่ในสถานะ \"รอตรวจสอบคำสั่งซื้อ\" พร้อมช่องค้นหาตาม Order ID, SKU และช่องทางขาย (ข้อมูลมาจาก query รวมของ Order ที่ layout โหลด แล้วกรองสถานะที่หน้าจอ) — **Q2A.1:** `SELECT o.order_id, o.marketplace_order_id, o.sales_channel, o.order_date, o.shipping_address, o.shipping_method, o.order_status, o.rsl_no, o.tracking_number, o.carrier_name, o.dispatched_at, o.delivery_status, o.tracking_notified, o.tracking_notified_at, o.cancel_reason, o.cancelled_at, o.verified_at, o.manual_reason, o.customer_cancel_requested, o.edit_log, o.reorder_decision, o.decided_qty, item.channel_sku, item.variation, item.qty, item.fulfill_source, item.stock_deducted, item.deducted_at, item.sku_id, sku.sku, sku.product_name, sku.selling_price, o.reorder_id, label.label_template, label.parcel_total, label.label_printed_at, sync.sync_status, notification.notify_log FROM orders o LEFT JOIN LATERAL ( SELECT oi.* FROM order_items oi WHERE oi.order_id = o.order_id ORDER BY oi.order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN stock stock_row ON stock_row.sku_id = sku.sku_id LEFT JOIN rakuten_stock_sync_states sync ON sync.stock_id = stock_row.stock_id LEFT JOIN LATERAL ( SELECT MAX(l.label_template) AS label_template, MAX(l.parcel_total) AS parcel_total, MAX(l.printed_at) AS label_printed_at FROM labels l WHERE l.order_id = o.order_id ) label ON TRUE LEFT JOIN LATERAL ( SELECT jsonb_agg( jsonb_build_object( 'by', COALESCE(t.admin_id, 'system'), 'at', t.sent_at ) ORDER BY t.sent_at ) AS notify_log FROM tracking_notification_logs t WHERE t.order_id = o.order_id ) notification ON TRUE ORDER BY o.order_date DESC, o.order_id DESC`"
    ],
    [
     "2",
-    "เลือก Order ที่ต้องการตรวจสอบ (`order_id`)",
-    "**1. ดึงรายละเอียด Order** — **Q2A.2:** `SELECT order_id, marketplace_order_id, sales_channel, order_date, sku, variation, qty, shipping_address, shipping_method, order_status FROM orders WHERE order_id=$1`<br>แสดงรายละเอียด Order ให้ Admin ตรวจทาน"
+    "เลือก Order ที่ต้องการตรวจสอบ",
+    "แสดงรายละเอียด Order (เลขคำสั่งซื้อใน Rakuten, รหัสสินค้าใน Rakuten, Variation, จำนวน, ที่อยู่, วิธีจัดส่ง) และป้าย \"ลูกค้าขอยกเลิก\" หาก `customer_cancel_requested` เป็นจริง ให้ Super Admin ตรวจทาน และแก้ `shipping_method` ได้ก่อนยืนยัน"
    ],
    [
     "3",
     "กด \"ยืนยันคำสั่งซื้อ\"",
-    "**2. ตรวจสอบความครบถ้วนของข้อมูล** — ฟิลด์ที่จำเป็นต้องไม่เป็นช่องว่าง ได้แก่ `sku`, `qty` และ `shipping_address`; `qty` ต้องเป็นจำนวนเต็มบวก<br>— หากข้อมูลที่จำเป็นไม่ครบ จะแจ้งเตือนว่า \"ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ\" และตั้งสถานะ Order เป็น \"รอดำเนินการด้วยตนเอง\" (Manual Review)<br>— หาก `qty` ไม่ใช่จำนวนเต็มบวก จะแจ้งเตือนว่า \"จำนวนสินค้าต้องมากกว่า 0\"<br>**3. ตรวจสอบสถานะของ Order** — **Q2A.3:** `SELECT order_status FROM orders WHERE order_id=$1` Order ต้องอยู่ในสถานะ \"รอตรวจสอบคำสั่งซื้อ\"<br>— หาก Order ถูกตรวจสอบไปแล้ว จะแจ้งเตือนว่า \"Order นี้ผ่านการตรวจสอบไปแล้ว\" และไม่ดำเนินการซ้ำ<br>— หาก Order ถูกยกเลิกจากฝั่งลูกค้าก่อน Admin กดยืนยัน จะแจ้งเตือนว่า \"Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว\" และเปลี่ยนสถานะเป็น \"ยกเลิกแล้ว\" โดยไม่ส่งเข้ากระบวนการต่อ<br>— หาก Admin ต้องการแก้ไขข้อมูลก่อนยืนยัน (เช่น ปรับ `shipping_method`) ระบบเปิดให้แก้ไขฟิลด์ที่อนุญาต แล้วบันทึกทับก่อนยืนยัน พร้อมเก็บ Log ว่าใครแก้ไขและเวลาใด<br>**4. อัปเดตสถานะ Order** — **Q2A.4:** `UPDATE orders SET order_status='รอจับคู่กฎ SKU', verified_at=NOW(), verified_by=$1 WHERE order_id=$2`<br>— หากอัปเดตสำเร็จ ระบบแสดงข้อความ \"ยืนยันคำสั่งซื้อสำเร็จ\" และส่ง Order เข้าสู่ขั้นตอนจับคู่กฎ SKU (2S) โดยอัตโนมัติ<br>— หากดึงข้อมูล Order ล่าสุดจาก Marketplace มาเทียบไม่ได้ จะแจ้งเตือนว่า \"ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order ไว้เท่าเดิมเพื่อ retry อัตโนมัติ"
+    "ระบบเรียก Server Action `verifyOrderAction` → `verifyOrderUseCase`<br>**1. ล็อกและตรวจสถานะ Order** — **Q2A.2:** `SELECT o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status, o.manual_reason, o.shipping_address, o.shipping_method, o.rsl_no, o.cancelled_at, o.customer_cancel_requested, item.channel_sku, item.variation, item.qty, item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku, EXISTS ( SELECT 1 FROM labels l WHERE l.order_id = o.order_id AND l.printed_at IS NOT NULL ) AS label_printed, reorder.reorder_id, reorder.reorder_status FROM orders o INNER JOIN LATERAL ( SELECT oi.* FROM order_items oi WHERE oi.order_id = o.order_id ORDER BY oi.order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN reorders reorder ON reorder.reorder_id = o.reorder_id WHERE o.order_id = $1 FOR UPDATE OF o`<br>— หาก Order ไม่อยู่ในสถานะ \"รอตรวจสอบคำสั่งซื้อ\" แล้ว จะแจ้งเตือนว่า \"Order นี้ผ่านการตรวจสอบไปแล้ว\" และไม่ดำเนินการซ้ำ<br>**2. ดึงข้อมูลล่าสุดจาก Rakuten RMS** (`RakutenAdapter.fetchOrderState`) มาแทนค่าที่เปลี่ยนไป<br>**3. ตรวจสอบความครบถ้วน** — `channel_sku`, `shipping_address` และ `shipping_method` ต้องไม่ว่าง และ `qty` ต้องเป็นจำนวนเต็มบวก<br>**4. บันทึกผลการตรวจสอบ** — ล็อก Order ซ้ำด้วย Q2A.2 แล้วบันทึกข้อมูลล่าสุดลง `order_items` และ `orders` พร้อมเปลี่ยนสถานะเป็น \"รอจับคู่กฎ SKU\", `verified_at` = เวลาปัจจุบัน และหากแก้ `shipping_method` จะเพิ่มรายการใน `edit_log` (ผู้แก้ไข/เวลา) — **Q2A.3:** `WITH updated_item AS ( UPDATE order_items SET channel_sku = $2, variation = $3, qty = $4 WHERE order_id = $1 ) UPDATE orders SET shipping_address = $5, shipping_method = $6, order_status = $7, manual_reason = $8, customer_cancel_requested = $9, verified_at = $10, edit_log = CASE WHEN $11::boolean THEN edit_log || jsonb_build_array( jsonb_build_object('field', 'shipping_method', 'by', $12::text, 'at', $10::timestamptz) ) ELSE edit_log END, cancel_reason = $13, cancelled_at = $14, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1`<br>**5. ทำงานอัตโนมัติต่อ** — ขั้นตอน 4 ทำใน `executeWorkflow` ซึ่งเรียก UC 2S (จับคู่กฎ SKU) และ UC ถัดไปต่อทันทีใน transaction เดียวกัน แล้วแสดงข้อความ \"ยืนยันคำสั่งซื้อสำเร็จ\""
+   ],
+   [
+    "ทางเลือก #1",
+    "ข้อมูลคำสั่งซื้อไม่ครบ (`channel_sku`, ที่อยู่ หรือวิธีจัดส่งว่าง)",
+    "แจ้งเตือนว่า \"ข้อมูลคำสั่งซื้อไม่ครบถ้วน กรุณาตรวจสอบ\" ระบบล็อก Order (Q2A.2) และบันทึกด้วย Q2A.3 ให้สถานะเป็น \"รอดำเนินการด้วยตนเอง\" `manual_reason` = `incomplete` ให้ Super Admin แก้ข้อมูลใน Rakuten RMS แล้วนำเข้าใหม่ หรือยกเลิก Order (UC 7A)"
+   ],
+   [
+    "ทางเลือก #2",
+    "จำนวนสินค้า (`qty`) ไม่ใช่จำนวนเต็มบวก",
+    "แจ้งเตือนว่า \"จำนวนสินค้าต้องมากกว่า 0\" และไม่เปลี่ยนแปลงข้อมูล"
+   ],
+   [
+    "ทางเลือก #3",
+    "ลูกค้ายกเลิก Order ผ่าน Rakuten ก่อน Super Admin กดยืนยัน (`customer_cancel_requested` หรือข้อมูลล่าสุดจาก RMS)",
+    "แจ้งเตือนว่า \"Order นี้ถูกยกเลิกจากฝั่งลูกค้าแล้ว\" ระบบบันทึกด้วย Q2A.3 ให้สถานะเป็น \"ยกเลิกแล้ว\", `cancel_reason` = \"ลูกค้ายกเลิกผ่าน Rakuten\" และ `cancelled_at` = เวลาปัจจุบัน โดยไม่ส่งเข้ากระบวนการต่อ"
+   ],
+   [
+    "ทางเลือก #4",
+    "ดึงข้อมูลล่าสุดจาก Rakuten RMS ไม่ได้",
+    "แจ้งเตือนว่า \"ไม่สามารถตรวจสอบข้อมูลล่าสุดจาก Marketplace ได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order ไว้เท่าเดิม ให้ Super Admin กดยืนยันใหม่ภายหลัง"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q2A.1": "orders.ts · Q2A_1",
+   "Q2A.2": "orders.ts · Q2A_1_FOR_UPDATE",
+   "Q2A.3": "orders.ts · Q2A_2"
+  }
  },
  {
   "id": "3A",
   "name": "ตั้งกฎ SKU",
-  "origin": "เดิม",
-  "goal": "ให้ Admin สามารถเพิ่ม แก้ไข และจัดการข้อมูลสินค้า เพื่อให้ SKU ที่ใช้จับคู่ Order, สต๊อก และต้นทุน ถูกต้องตรงกันทุกระบบ",
-  "pre": "Admin เข้าสู่ระบบแล้ว และอยู่ที่หน้าจัดการสินค้า",
-  "post": "ข้อมูลสินค้าและ SKU ถูกบันทึกในระบบ และพร้อมใช้จับคู่กับ Order, สต๊อก และการคำนวณต้นทุน",
-  "actor": "Admin",
+  "origin": "เพิ่มใหม่",
+  "goal": "ให้ Super Admin เพิ่ม แก้ไข เปิด/ปิดการขาย และลบข้อมูลสินค้า (SKU) รวมถึงกฎ SKU คือรหัสสินค้าใน Rakuten (`channel_sku`) ที่ใช้จับคู่ Order เพื่อให้ Order, สต๊อก และต้นทุนอ้างอิง SKU เดียวกัน",
+  "pre": "Super Admin เข้าสู่ระบบแล้ว และอยู่ที่หน้าจัดการสินค้า (`/products`)",
+  "post": "ข้อมูลสินค้าและกฎ SKU ถูกบันทึกในตาราง `skus` (สินค้าใหม่มีแถวใน `stock` เริ่มที่ 0) และ Order ที่ค้างอยู่ที่ \"รอดำเนินการด้วยตนเอง\" เพราะ SKU นี้ถูกส่งกลับเข้ากระบวนการอัตโนมัติ (Order ที่ค้างเพราะกฎ SKU ผ่าน 2S และ 3S ต่อทันทีใน transaction เดียวกัน)",
+  "actor": "Super Admin",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการสินค้าทั้งหมด พร้อมปุ่ม \"เพิ่มสินค้าใหม่\" และตัวเลือกแก้ไข/ปิดการใช้งาน"
+    "แสดงรายการสินค้าทั้งหมด — **Q3A.1:** `SELECT sku, product_name, variation, sales_channel, channel_sku, supplier_id, reorder_threshold, reorder_qty, selling_price, sku_status FROM skus ORDER BY sku`<br>พร้อมรายชื่อ Supplier สำหรับเลือกในฟอร์ม — **Q3A.2:** `SELECT supplier_id, supplier_name, contact_info, lead_time_days FROM suppliers ORDER BY supplier_name, supplier_id`<br>มีปุ่ม \"เพิ่มสินค้าใหม่\", \"นำเข้าจากไฟล์ CSV\" และตัวเลือกแก้ไข / เปิด-ปิดการขาย / ลบ"
    ],
    [
     "2",
     "กด \"เพิ่มสินค้าใหม่\" หรือเลือกสินค้าที่ต้องการแก้ไข",
-    "แสดงฟอร์มข้อมูลสินค้า ได้แก่ ชื่อสินค้า, SKU, Variation, ช่องทางขาย, Supplier, Reorder Threshold, Reorder Quantity และองค์ประกอบต้นทุน"
+    "แสดงฟอร์มข้อมูลสินค้า ได้แก่ SKU, ชื่อสินค้า, Variation, รหัสสินค้าใน Rakuten (`channel_sku` = กฎ SKU), Supplier, Reorder Threshold, Reorder Quantity, ราคาขาย, สถานะเปิดขาย และค่าเริ่มต้นของต้นทุน"
    ],
    [
     "3",
     "กรอกข้อมูลแล้วกด \"บันทึก\"",
-    "**ตรวจสอบ:** ชื่อสินค้าและ SKU ต้องไม่เป็นช่องว่าง หากไม่กรอกจะแจ้งเตือนว่า \"กรุณากรอกข้อมูลให้ครบถ้วน\"; SKU ต้องไม่ซ้ำกับสินค้าอื่นในระบบ (**Q3A.1:** `SELECT sku FROM products WHERE sku=$1`) หากซ้ำจะแจ้งเตือนว่า \"SKU นี้มีอยู่ในระบบแล้ว\"; Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก<br>**บันทึกข้อมูลสินค้า** — กรณีเพิ่มสินค้าใหม่ **Q3A.2:** `INSERT INTO products (sku, product_name, variation, sales_channel, supplier_id, reorder_threshold, reorder_qty, selling_price) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`<br>กรณีแก้ไขสินค้าเดิม **Q3A.3:** `UPDATE products SET product_name=$1, variation=$2, supplier_id=$3, reorder_threshold=$4, reorder_qty=$5, selling_price=$6 WHERE sku=$7`<br>ระบบบันทึกข้อมูลและแสดงข้อความ \"บันทึกข้อมูลสินค้าสำเร็จ\""
+    "ระบบเรียก Server Action `saveProductAction` → `saveProductUseCase` (ทำทั้งหมดใน transaction เดียว)<br>**1. ตรวจสอบค่าที่กรอก** — SKU, ชื่อสินค้า, Variation และ `channel_sku` ต้องไม่ว่าง หากว่างจะแจ้งเตือนว่า \"กรุณากรอกข้อมูลให้ครบถ้วน\"; Reorder Threshold และ Reorder Quantity ต้องเป็นจำนวนเต็มบวก และราคาขาย (ถ้ามี) ต้องไม่ติดลบ หากไม่ถูกต้องจะแจ้งเตือนว่า \"Reorder Threshold และ Reorder Quantity ต้องเป็นตัวเลขจำนวนเต็มบวก\"<br>**2. ล็อกสินค้าเดิม** (กรณีแก้ไข) — **Q3A.3:** `SELECT sku_id, sku, channel_sku FROM skus WHERE sku = $1 FOR UPDATE`<br>**3. ตรวจ SKU / `channel_sku` ซ้ำ** — **Q3A.4:** `SELECT sku_id, sku, channel_sku FROM skus WHERE (sku = $1 OR channel_sku = $2) AND ($3::text IS NULL OR sku_id <> $3) LIMIT 1` หากซ้ำกับสินค้าอื่นจะแจ้งเตือนว่า \"SKU นี้มีอยู่ในระบบแล้ว\"<br>**4. ตรวจ Supplier** (ถ้าเลือก) — **Q3A.5:** `SELECT EXISTS ( SELECT 1 FROM suppliers WHERE supplier_id = $1 ) AS found` หากไม่พบจะแจ้งเตือนว่า \"กรุณากรอกข้อมูลให้ครบถ้วน\"<br>**5. บันทึกข้อมูลสินค้า** — กรณีเพิ่มสินค้าใหม่ สร้างแถวใน `skus` และแถว `stock` เริ่มต้นที่ 0 — **Q3A.6:** `WITH inserted_sku AS ( INSERT INTO skus ( sku_id, sku, product_name, variation, sales_channel, channel_sku, selling_price, reorder_threshold, reorder_qty, sku_status, supplier_id ) VALUES ($1, $2, $3, $4, 'Rakuten Ichiba', $5, $6, $7, $8, $9, $10) RETURNING sku_id ) INSERT INTO stock (stock_id, in_house_qty, rsl_qty, updated_at, sku_id) SELECT $11, 0, 0, CURRENT_TIMESTAMP, sku_id FROM inserted_sku`<br>กรณีแก้ไขสินค้าเดิม (คง `sku_id` เดิมไว้) — **Q3A.7:** `UPDATE skus SET sku = $2, product_name = $3, variation = $4, channel_sku = $5, selling_price = $6, reorder_threshold = $7, reorder_qty = $8, sku_status = $9, supplier_id = $10 WHERE sku_id = $1`<br>**6. บันทึกค่าเริ่มต้นของต้นทุน** — เรียก `saveCostDraft` ตามขั้นตอนของ UC 4S<br>**7. นำ Order ที่ค้างกลับเข้ากระบวนการ** — Order ที่ \"รอดำเนินการด้วยตนเอง\" ด้วย `manual_reason` = `sku-rule` กลับไป \"รอจับคู่กฎ SKU\", `sku-unregistered` ผูก `sku_id` แล้วกลับไป \"รอตรวจสอบคำสั่งซื้อ\" และ `price` (เมื่อมีราคาขายแล้ว) กลับไป \"รอ Admin ตัดสินใจสั่งซื้อ\" — **Q3A.8:** `WITH registered_items AS ( UPDATE order_items SET sku_id = $2 WHERE sku_id IS NULL AND (channel_sku = $1 OR channel_sku = $4) RETURNING order_id ) UPDATE orders o SET order_status = CASE WHEN o.manual_reason = 'sku-rule' THEN 'รอจับคู่กฎ SKU' WHEN o.manual_reason = 'sku-unregistered' THEN 'รอตรวจสอบคำสั่งซื้อ' ELSE 'รอ Admin ตัดสินใจสั่งซื้อ' END, manual_reason = NULL, updated_at = CURRENT_TIMESTAMP FROM order_items item WHERE item.order_id = o.order_id AND o.order_status = 'รอดำเนินการด้วยตนเอง' AND ( (o.manual_reason = 'sku-rule' AND item.channel_sku = $1) OR ( o.manual_reason = 'sku-unregistered' AND item.order_id IN (SELECT order_id FROM registered_items) ) OR (o.manual_reason = 'price' AND item.sku_id = $2 AND $3::boolean) ) RETURNING o.order_id`<br><br>**8. ส่ง Order ที่คืนคิวเข้ากระบวนการอัตโนมัติทันที** — `saveProductUseCase` ทำงานใน `executeWorkflow` จึงรัน 2S, 3S (และ 6S สำหรับ Order ที่ส่งจากคลังบริษัท) ต่อกับ Order ที่ได้จาก `RETURNING o.order_id` ใน transaction เดียวกัน Order ที่กลับไป \"รอตรวจสอบคำสั่งซื้อ\" (รอ 2A) หรือ \"รอ Admin ตัดสินใจสั่งซื้อ\" (รอ 5A) รอ Super Admin ตามเดิม<br>แสดงข้อความ \"บันทึกข้อมูลสินค้าสำเร็จ\" และ \"นำ Order ที่ค้างอยู่ n รายการกลับเข้าสู่กระบวนการอัตโนมัติ\""
    ],
    [
     "ทางเลือก #1",
-    "Admin ต้องการลบสินค้าที่ยังมี Order หรือคำสั่งซื้อค้างอยู่",
-    "แจ้งเตือนว่า \"ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่\" และเสนอให้เปลี่ยนเป็นสถานะ \"ปิดการขาย\" แทน"
+    "กดเปลี่ยนสถานะ \"เปิดขาย\" / \"ปิดการขาย\"",
+    "เรียก `setProductActiveAction` ล็อกสินค้าด้วย Q3A.3 แล้วเปลี่ยน `sku_status` เป็น `active` / `inactive` — **Q3A.9:** `UPDATE skus SET sku_status = $2 WHERE sku_id = $1` (สินค้าที่ปิดการขายจะไม่ถูกใช้จับคู่ใน UC 2S)"
    ],
    [
     "ทางเลือก #2",
-    "Admin ต้องการนำเข้าข้อมูลสินค้าจำนวนมากพร้อมกัน",
-    "ระบบให้อัปโหลดไฟล์ CSV/Excel และตรวจสอบความถูกต้องทีละแถว พร้อมแสดงรายการที่นำเข้าไม่สำเร็จเพื่อให้แก้ไข"
+    "กด \"ลบสินค้า\"",
+    "เรียก `deleteProductAction` ล็อกสินค้าด้วย Q3A.3 แล้วตรวจว่ายังมี Order หรือคำสั่งซื้อเติมสต๊อกอ้างอิงอยู่หรือไม่ — **Q3A.10:** `SELECT EXISTS ( SELECT 1 FROM order_items WHERE sku_id = $1 UNION ALL SELECT 1 FROM reorders WHERE sku_id = $1 ) AS has_related`<br>— หากมี จะแจ้งเตือนว่า \"ไม่สามารถลบสินค้านี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่\" และเสนอปุ่ม \"เปลี่ยนเป็น ปิดการขาย แทน\"<br>— หากไม่มี ลบประวัติต้นทุน ต้นทุน สต๊อก และสินค้า — **Q3A.11:** `WITH removed_history AS ( DELETE FROM cost_history WHERE sku_id = $1 ), removed_costs AS ( DELETE FROM costs WHERE sku_id = $1 ), removed_stock AS ( DELETE FROM stock WHERE sku_id = $1 ) DELETE FROM skus WHERE sku_id = $1` แล้วแจ้งว่า \"ลบสินค้า [SKU] แล้ว\""
    ],
    [
     "ทางเลือก #3",
-    "SKU ในระบบไม่ตรงกับ SKU ที่ใช้ใน Marketplace หรือ RSL",
-    "ระบบให้ Admin กำหนดตาราง Mapping (กฎ SKU) ระหว่าง SKU ภายในกับ SKU ของแต่ละช่องทาง เพื่อให้การจับคู่ Order (2S) ทำงานได้ถูกต้อง — **Q3A.4:** `INSERT INTO sku_rules (channel_sku, sales_channel, sku, variation, product_name) VALUES ($1, $2, $3, $4, $5)`"
+    "นำเข้าข้อมูลสินค้าจากไฟล์ CSV (หัวตาราง `sku,product_name,variation,channel_sku,supplier_id,reorder_threshold,reorder_qty,selling_price`)",
+    "เรียก `importProductsAction` → `importProductsUseCase` ตรวจและบันทึกทีละแถวด้วยขั้นตอนเดียวกับขั้นที่ 3 (Q3A.3–Q3A.8 แถวที่มี SKU อยู่แล้วถือเป็นการแก้ไข) ทั้งไฟล์อยู่ใน transaction เดียว (`executeWorkflow`) และรัน 2S/3S/6S กับ Order ที่คืนคิวต่อทันทีเหมือนขั้นตอนที่ 3 แล้วแสดงผลรายแถวพร้อมเหตุผลของแถวที่นำเข้าไม่สำเร็จ"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q3A.1": "skus.ts · Q3A_1",
+   "Q3A.2": "skus.ts · Q6A_2",
+   "Q3A.3": "skus.ts · Q3A_1_FOR_UPDATE",
+   "Q3A.4": "skus.ts · Q3A_1_FIND_CONFLICT",
+   "Q3A.5": "skus.ts · Q6A_2_SUPPLIER_EXISTS",
+   "Q3A.6": "skus.ts · Q3A_1_INSERT",
+   "Q3A.7": "skus.ts · Q3A_1_UPDATE",
+   "Q3A.8": "skus.ts · Q3A_1_REQUEUE",
+   "Q3A.9": "skus.ts · Q3A_1_SET_STATUS",
+   "Q3A.10": "skus.ts · Q3A_1_HAS_RELATED",
+   "Q3A.11": "skus.ts · Q3A_1_DELETE"
+  }
  },
  {
   "id": "4A",
   "name": "ดึง Order เข้าระบบ",
   "origin": "เดิม",
-  "goal": "ให้ระบบดึง Order ใหม่จาก Rakuten Ichiba (ผ่าน Rakuten RMS) เข้าสู่ระบบโดยอัตโนมัติ เพื่อเป็นจุดเริ่มต้นของกระบวนการจัดส่ง",
-  "pre": "ต้องมีการตั้งค่าการเชื่อมต่อ (API Key / Credential) ของ Rakuten RMS ไว้แล้ว",
-  "post": "Order ใหม่ทั้งหมดถูกบันทึกเข้าระบบ พร้อมสถานะ \"รอตรวจสอบคำสั่งซื้อ\" (ส่งต่อให้ 2A ตรวจสอบ)",
-  "actor": "System (Auto) / Admin",
+  "goal": "ให้ Super Admin กดดึง Order ใหม่จาก Rakuten Ichiba (ผ่าน Rakuten RMS) เข้าสู่ระบบ เพื่อเป็นจุดเริ่มต้นของกระบวนการจัดส่ง",
+  "pre": "Super Admin เข้าสู่ระบบแล้วและอยู่ที่หน้าภาพรวมระบบ (`/dashboard`) และระบบเชื่อมต่อ Rakuten RMS ผ่าน `RakutenAdapter` ได้",
+  "post": "Order ใหม่ถูกบันทึกลง `orders` และ `order_items` สถานะ \"รอตรวจสอบคำสั่งซื้อ\" (ส่งต่อให้ 2A) หรือ \"รอดำเนินการด้วยตนเอง\" หากยังไม่มีกฎ SKU และ Order ที่ลูกค้าขอยกเลิกถูกตั้ง `customer_cancel_requested`",
+  "actor": "Super Admin (Marketplace เป็นแหล่งข้อมูล Order)",
   "steps": [
    [
     "1",
     "",
-    "ระบบเชื่อมต่อกับ Rakuten Ichiba (RMS) ตามรอบเวลาที่ตั้งไว้"
+    "แสดงหน้าภาพรวมระบบ: จำนวน Order แยกตามสถานะ — **Q4A.1:** `SELECT order_status, COUNT(*)::integer AS count FROM orders GROUP BY order_status ORDER BY order_status`<br>จำนวน Order 7 วันล่าสุด — **Q4A.2:** `SELECT TO_CHAR(order_date::date, 'YYYY-MM-DD') AS date, COUNT(*)::integer AS count FROM orders WHERE order_date >= ( SELECT MAX(order_date)::date - INTERVAL '6 days' FROM orders ) GROUP BY order_date::date ORDER BY order_date::date`<br>และ Order ล่าสุด — **Q4A.3:** `SELECT order_id, order_date FROM orders ORDER BY order_date DESC, order_id DESC LIMIT 6`<br>พร้อมปุ่ม \"นำเข้า Order\""
    ],
    [
     "2",
-    "Admin กด \"นำเข้า Order\" หรือระบบดึงอัตโนมัติตามรอบเวลา",
-    "ระบบเริ่มดึงข้อมูล Order ใหม่จาก Rakuten RMS"
+    "กด \"นำเข้า Order\"",
+    "ระบบเรียก Server Action `importOrdersAction` → `importOrdersUseCase` ซึ่งดึง Order ใหม่และรายการขอยกเลิกจาก Rakuten RMS (`RakutenAdapter.fetchOrders`) (ระบบไม่มีการดึงตามรอบเวลา ดึงเมื่อกดปุ่มเท่านั้น)"
    ],
    [
     "3",
-    "ตรวจสอบรายการ Order ที่นำเข้า",
-    "**ตรวจสอบข้อมูล:** Order ต้องมีหมายเลขคำสั่งซื้อ (`marketplace_order_id`), SKU, จำนวน และที่อยู่จัดส่งครบถ้วน หากไม่ครบจะแจ้งเตือนว่า \"ข้อมูล Order ไม่ครบถ้วน กรุณาตรวจสอบ\"; หาก `marketplace_order_id` ซ้ำกับที่มีอยู่แล้ว (**Q4A.1:** `SELECT order_id FROM orders WHERE marketplace_order_id=$1 AND sales_channel=$2`) ระบบจะข้ามรายการนั้นเพื่อป้องกันข้อมูลซ้ำ<br>**บันทึก Order** — **Q4A.2:** `INSERT INTO orders (marketplace_order_id, sales_channel, order_date, channel_sku, sku, variation, qty, shipping_address, shipping_method, order_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'รอตรวจสอบคำสั่งซื้อ')`<br>ระบบบันทึก Order ใหม่พร้อมสถานะ \"รอตรวจสอบคำสั่งซื้อ\" และแสดงจำนวน Order ที่นำเข้าสำเร็จ"
+    "",
+    "ทำทุก Order ใน transaction เดียว:<br>**1. ตรวจสอบข้อมูล** — ต้องมี `marketplace_order_id`, `channel_sku`, `shipping_address`, `shipping_method` และ `qty` เป็นจำนวนเต็มบวก หากไม่ครบจะข้ามรายการนั้นและแจ้งเตือนว่า \"ข้อมูล Order ไม่ครบถ้วน กรุณาตรวจสอบ\"<br>**2. หากฎ SKU** จาก `channel_sku` (สินค้าที่เปิดขาย) — **Q4A.4:** `SELECT sku_id, sku, product_name, variation FROM skus WHERE channel_sku = $1 AND sales_channel = $2 AND sku_status = 'active' ORDER BY sku_id`<br>**3. บันทึก Order และรายการสินค้า** — `order_id` สร้างจาก hash ของ `marketplace_order_id`; หาก `marketplace_order_id` ซ้ำกับที่มีอยู่แล้ว `ON CONFLICT DO NOTHING` จะข้ามรายการนั้นเพื่อป้องกันข้อมูลซ้ำ — **Q4A.5:** `WITH inserted_order AS ( INSERT INTO orders ( order_id, marketplace_order_id, sales_channel, order_date, shipping_address, shipping_method, order_status, manual_reason, created_at, updated_at ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON CONFLICT (marketplace_order_id) DO NOTHING RETURNING order_id ), inserted_item AS ( INSERT INTO order_items ( order_item_id, channel_sku, variation, qty, fulfill_source, order_id, sku_id ) SELECT $9, $10, $11, $12, $13, order_id, $14 FROM inserted_order RETURNING order_id ) SELECT order_id FROM inserted_order`<br>— พบกฎ SKU 1 รายการ: สถานะ \"รอตรวจสอบคำสั่งซื้อ\" และผูก `sku_id` (ค่า `fulfill_source` = `rsl` เป็นค่าตั้งต้น UC 3S จะกำหนดค่าจริง)<br>**4. บันทึกคำขอยกเลิกจากลูกค้า** — Order ที่ยังไม่จบจะถูกตั้ง `customer_cancel_requested` — **Q4A.6:** `UPDATE orders SET customer_cancel_requested = TRUE, updated_at = CURRENT_TIMESTAMP WHERE marketplace_order_id = $1 AND order_status NOT IN ('จัดส่งสำเร็จ', 'ยกเลิกแล้ว') RETURNING order_id, order_status`<br>แสดงข้อความ \"นำเข้า Order สำเร็จ n รายการ\" (หรือ \"ไม่มี Order ใหม่ใน Rakuten RMS\") และ \"ข้ามรายการที่ซ้ำกับที่มีอยู่แล้ว n รายการ\""
    ],
    [
     "ทางเลือก #1",
-    "การเชื่อมต่อกับ Marketplace ล้มเหลว หรือ Credential หมดอายุ",
-    "แจ้งเตือนว่า \"ไม่สามารถเชื่อมต่อกับ [ชื่อช่องทางขาย] ได้ กรุณาตรวจสอบการตั้งค่า\" และบันทึก Log ข้อผิดพลาดเพื่อลองใหม่ในรอบถัดไป"
+    "เชื่อมต่อ Rakuten RMS ไม่ได้",
+    "แจ้งเตือนว่า \"ไม่สามารถเชื่อมต่อกับ Rakuten Ichiba ได้ กรุณาตรวจสอบการตั้งค่า\" ไม่มีการบันทึกข้อมูล ให้ Super Admin กดนำเข้าใหม่ภายหลัง"
    ],
    [
     "ทางเลือก #2",
-    "Order ที่ดึงมามี SKU ที่ยังไม่มีในระบบ",
-    "ระบบนำ Order นั้นเข้าสถานะ \"รอดำเนินการด้วยตนเอง\" และแจ้งเตือนว่า \"พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ\""
+    "Order มี `channel_sku` ที่ยังไม่มีกฎ SKU หรือพบกฎมากกว่า 1 รายการ",
+    "บันทึก Order ด้วย Q4A.5 ในสถานะ \"รอดำเนินการด้วยตนเอง\" `manual_reason` = `sku-unregistered` (`sku_id` ว่าง) และแจ้งเตือนว่า \"พบ SKU ที่ยังไม่ได้ลงทะเบียนในระบบ\" เมื่อ Super Admin เพิ่มสินค้าใน UC 3A ระบบจะนำ Order กลับไป \"รอตรวจสอบคำสั่งซื้อ\""
    ],
    [
     "ทางเลือก #3",
-    "Order ถูกแก้ไขหรือยกเลิกจากฝั่ง Marketplace หลังนำเข้าแล้ว",
-    "ระบบอัปเดตข้อมูล Order ให้ตรงกับ Marketplace และแจ้งเตือน Admin หาก Order นั้นอยู่ระหว่างดำเนินการแล้ว"
+    "ลูกค้ายกเลิก Order ผ่าน Rakuten หลังนำเข้าแล้ว",
+    "Q4A.6 ตั้ง `customer_cancel_requested` = TRUE หาก Order ผ่านการตรวจสอบไปแล้ว (ไม่ใช่ \"รอตรวจสอบคำสั่งซื้อ\") ระบบแจ้งเตือนว่า \"ลูกค้ายกเลิก [Order ID] ผ่าน Rakuten ระหว่างที่ Order อยู่ระหว่างดำเนินการ กรุณาตรวจสอบที่หน้ายกเลิก Order\" (UC 7A)"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q4A.1": "dashboard.ts · Q2A_1_DASHBOARD_TOTALS",
+   "Q4A.2": "dashboard.ts · Q2A_1_DASHBOARD_VOLUME",
+   "Q4A.3": "dashboard.ts · Q2A_1_DASHBOARD_RECENT",
+   "Q4A.4": "orders.ts · Q2S_1",
+   "Q4A.5": "orders.ts · Q4A_1",
+   "Q4A.6": "orders.ts · Q4A_1_MARK_CANCELLATION"
+  }
  },
  {
   "id": "5A",
   "name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
-  "origin": "เพิ่มใหม่",
-  "goal": "ให้ Admin ตัดสินใจจากต้นทุนที่คำนวณได้ว่าคุ้มค่าที่จะสั่งสินค้าเพิ่มเข้าสต๊อกหรือไม่",
-  "pre": "Order อยู่ในสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\" และระบบคำนวณ `unit_cost` เรียบร้อยแล้ว (4S)",
-  "post": "Order ถูกแยกเส้นทาง — คุ้มค่า ไปสู่ \"รอสั่งซื้อจาก Supplier\" (6A) / ไม่คุ้มค่า ไปสู่ \"รอยกเลิก Order\" (7A)",
-  "actor": "Admin",
+  "origin": "เดิม",
+  "goal": "ให้ Super Admin ตัดสินใจจากต้นทุนที่คำนวณได้ว่าคุ้มค่าที่จะสั่งสินค้าเพิ่มเข้าสต๊อกหรือไม่",
+  "pre": "Order อยู่ในสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\" (มาจาก 3S เมื่อสต๊อก RSL และสต๊อกในบ้านไม่พอจำนวนใน Order) และ SKU มีต้นทุนต่อหน่วย (`costs.unit_cost`) จาก 4S แล้ว",
+  "post": "Order ถูกแยกเส้นทาง — คุ้มค่า: บันทึก `reorder_decision`='คุ้มค่า' และ `decided_qty` แล้วไปสู่ \"รอสั่งซื้อจาก Supplier\" (6A) / ไม่คุ้มค่า: ไปสู่ \"รอยกเลิก Order\" (7A) / ไม่มีราคาขาย: \"รอดำเนินการด้วยตนเอง\" (`manual_reason`='price') / Order ที่ผูกกับคำสั่งซื้อเติมสต๊อกเก็บเลขคำสั่งซื้อไว้ที่ `orders.reorder_id` (กำหนดใน 6A) คำสั่งซื้อหนึ่งรายการครอบคลุมได้หลาย Order ของ SKU เดียวกัน",
+  "actor": "Super Admin",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการ Order ที่รอการตัดสินใจ พร้อม `unit_cost`, ราคาขายปัจจุบัน, กำไรต่อหน่วยที่คาดการณ์ และ `lead_time` ของซัพพลายเออร์"
+    "หน้า `/products/reorder` แท็บ \"รอตัดสินใจ\" แสดง Order ที่อยู่ในสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\" และ Order ที่ \"รอดำเนินการด้วยตนเอง\" เพราะไม่มีราคาขาย (`manual_reason`='price') พร้อมต้นทุนต่อหน่วย (`unit_cost`), ราคาขายปัจจุบัน (`selling_price`), กำไรต่อหน่วยที่คาดการณ์ (`selling_price - unit_cost`) และระยะเวลารอของ (`lead_time_days`) ของ Supplier — ข้อมูลมาจาก read model ที่ layout โหลดผ่าน `loadAppState` (รายการ Order, SKU, ต้นทุน, Supplier) หากยังไม่มี `unit_cost` จะแสดง \"คำนวณไม่ได้\" พร้อมลิงก์ \"ไปหน้าคำนวณต้นทุน\" (4S) หากไม่มีราคาขายจะแสดง \"ไม่พบราคาขาย\" พร้อมลิงก์ \"ไปหน้าตั้งกฎ SKU\" (3A)"
    ],
    [
     "2",
-    "เลือก Order ที่ต้องการตัดสินใจ (`order_id`)",
-    "**1. ดึงข้อมูลประกอบการตัดสินใจ**<br>**Q5A.1:** `SELECT o.order_id, o.sku, o.qty, p.selling_price, p.reorder_qty, p.supplier_id, s.lead_time FROM orders o JOIN products p ON p.sku = o.sku JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE o.order_id=$1`<br>**Q5A.2:** `SELECT unit_cost, calculated_at FROM cost_calculation_log WHERE sku=$1 ORDER BY calculated_at DESC LIMIT 1`<br>**Q5A.3:** `Expected Margin = selling_price - unit_cost`<br>— หากดึงข้อมูลครบถ้วน ระบบแสดงต้นทุนต่อหน่วย ราคาขาย กำไรที่คาดการณ์ และระยะเวลารอสินค้า (`lead_time`) พร้อมปุ่ม \"คุ้มค่า - สั่งซื้อเพิ่ม\" และ \"ไม่คุ้มค่า - ยกเลิก\" ให้ Admin เลือก (ดูทางเลือก #1 และ #2)<br>— หากไม่พบราคาขายปัจจุบันของ SKU (คำนวณกำไรไม่ได้) จะแจ้งเตือนว่า \"ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ\" และตั้งสถานะเป็น \"รอดำเนินการด้วยตนเอง\" (Manual Review) จนกว่าจะระบุราคาขาย<br>— หากมีคำสั่งซื้อ SKU เดียวกันค้างอยู่กับ Supplier แล้ว จะแจ้งเตือนว่า \"มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่\" พร้อมแสดงวันที่คาดว่าจะได้รับของล็อตเดิม ให้ Admin ยืนยันก่อนสั่งซ้ำ"
+    "เลือก Order แล้วกด \"คุ้มค่า - สั่งซื้อเพิ่ม\" หรือ \"ไม่คุ้มค่า - ยกเลิก\"",
+    "เปิดหน้าต่าง \"ยืนยันผลการตัดสินใจ: [คุ้มค่า/ไม่คุ้มค่า]\" กรณีคุ้มค่าแสดงช่อง \"จำนวนที่จะสั่งซื้อ\" ค่าเริ่มต้น = `reorder_qty` ของ SKU แก้ได้เฉพาะครั้งนี้ (ไม่กระทบ Reorder Quantity ในกฎ SKU) และแสดงต้นทุนต่อหน่วยที่คำนวณใหม่ตามจำนวนนี้"
+   ],
+   [
+    "3",
+    "กด \"ยืนยัน\"",
+    "ระบบเรียก Server Action `decideReorderAction` → `decideReorderUseCase` ทำงานใน transaction เดียว<br>**1. ตรวจสอบจำนวน** — จำนวนต้องเป็นจำนวนเต็มบวก หากไม่ใช่ จะแจ้งเตือนว่า \"กรุณากรอกจำนวนที่จะสั่งซื้อเป็นจำนวนเต็มบวก\" (แสดงในหน้าต่างยืนยัน)<br>**2. ล็อก Order และอ่านราคาขาย/ต้นทุนล่าสุด** — **Q5A.1:** `SELECT o.order_id, o.order_status, o.manual_reason, item.sku_id, sku.sku, sku.selling_price, COALESCE( cost.unit_cost, NULLIF(history.new_value ->> 'unit_cost', '')::numeric ) AS unit_cost FROM orders o INNER JOIN LATERAL ( SELECT * FROM order_items WHERE order_id = o.order_id ORDER BY order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN LATERAL ( SELECT unit_cost FROM costs WHERE sku_id = item.sku_id ORDER BY calculated_at DESC NULLS LAST, cost_id DESC LIMIT 1 ) cost ON TRUE LEFT JOIN LATERAL ( SELECT new_value FROM cost_history WHERE sku_id = item.sku_id AND new_value ->> 'unit_cost' IS NOT NULL ORDER BY changed_at DESC, cost_history_id DESC LIMIT 1 ) history ON TRUE WHERE o.order_id = $1 FOR UPDATE OF o` (`unit_cost` ใช้ค่าล่าสุดจาก `costs` ถ้าไม่มีใช้ค่าล่าสุดใน `cost_history`)<br>— หาก Order อยู่ที่ \"รอดำเนินการด้วยตนเอง\" เพราะไม่มีราคาขาย (`manual_reason`='price') จะแจ้งเตือนว่า \"ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ\" พร้อมปุ่ม \"ไปหน้าตั้งกฎ SKU\" (3A) และไม่บันทึก (หน้าจอซ่อนปุ่มตัดสินใจของ Order เหล่านี้อยู่แล้ว)<br>— หาก Order ไม่อยู่ในสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\" จะแจ้งเตือนว่า \"Order นี้ได้รับการตัดสินใจไปแล้ว\" และไม่บันทึกซ้ำ<br>— หากไม่มีราคาขาย (`selling_price` เป็น NULL) ดูทางเลือก #3<br>— หากไม่มี `unit_cost` จะแจ้งเตือนว่า \"กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง\" และคงสถานะเดิม<br>**3. บันทึกผลการตัดสินใจ** — **Q5A.2:** `UPDATE orders SET reorder_decision = $2, decided_qty = CASE WHEN $2 = 'คุ้มค่า' THEN $3::integer ELSE NULL END, order_status = $4, manual_reason = $5, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1` ($2 = ผลการตัดสินใจ, $3 = จำนวนที่จะสั่งซื้อ เก็บเฉพาะกรณีคุ้มค่า, $4 = สถานะใหม่ ตามทางเลือก #1 / #2, $5 = NULL)<br>— บันทึกสำเร็จ แสดงข้อความ \"บันทึกผลการตัดสินใจสำเร็จ\""
    ],
    [
     "ทางเลือก #1",
-    "กด \"คุ้มค่า - สั่งซื้อเพิ่ม\"",
-    "**1. ตรวจสอบสถานะก่อนบันทึก** — Order ต้องอยู่ในสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\"<br>— หาก Order ไม่ได้อยู่ในสถานะนี้ จะแจ้งเตือนว่า \"Order นี้ได้รับการตัดสินใจไปแล้ว\" และไม่ดำเนินการซ้ำ<br>— หาก Admin ต้องการแก้ไขจำนวนที่จะสั่งซื้อก่อนยืนยัน ระบบเปิดให้แก้ไขจำนวนสั่งซื้อได้ก่อนกดยืนยัน โดยค่าที่แก้จะไม่กระทบ `reorder_qty` เริ่มต้นในกฎ SKU และระบบคำนวณ `unit_cost` ใหม่ตามจำนวนที่แก้<br>**2. บันทึกผลการตัดสินใจ \"คุ้มค่า\"**<br>**Q5A.4:** `UPDATE orders SET order_status='รอสั่งซื้อจาก Supplier', decision='คุ้มค่า', decided_at=NOW(), decided_by=$1 WHERE order_id=$2`<br>— หากบันทึกสำเร็จ ระบบแสดงข้อความ \"บันทึกผลการตัดสินใจสำเร็จ\" และส่ง Order เข้าสู่การสั่งซื้อจาก Supplier (6A)<br>— หากบันทึกลงฐานข้อมูลไม่สำเร็จ จะแจ้งเตือนว่า \"ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order ไว้เท่าเดิมเพื่อให้กดยืนยันซ้ำได้"
+    "ตัดสินใจ \"คุ้มค่า\"",
+    "**Q5A.2** ตั้ง `reorder_decision`='คุ้มค่า', `decided_qty` = จำนวนที่ยืนยัน และ `order_status`='รอสั่งซื้อจาก Supplier' แสดงข้อความ \"ส่ง Order เข้าสู่การสั่งซื้อจาก Supplier\" — SKU นี้จะไปอยู่ในแท็บ \"รอสั่งซื้อเติมสต๊อก\" ของ 6A โดยใช้ `decided_qty` เป็นจำนวนเริ่มต้น"
    ],
    [
     "ทางเลือก #2",
-    "กด \"ไม่คุ้มค่า - ยกเลิก\"",
-    "**1. ตรวจสอบสถานะก่อนบันทึก** — Order ต้องอยู่ในสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\"<br>— หาก Order ไม่ได้อยู่ในสถานะนี้ จะแจ้งเตือนว่า \"Order นี้ได้รับการตัดสินใจไปแล้ว\" และไม่ดำเนินการซ้ำ<br>**2. บันทึกผลการตัดสินใจ \"ไม่คุ้มค่า\"**<br>**Q5A.5:** `UPDATE orders SET order_status='รอยกเลิก Order', decision='ไม่คุ้มค่า', decided_at=NOW(), decided_by=$1 WHERE order_id=$2`<br>— หากบันทึกสำเร็จ ระบบแสดงข้อความ \"บันทึกผลการตัดสินใจสำเร็จ\" และส่ง Order เข้าสู่การยกเลิก Order (7A)<br>— หากบันทึกลงฐานข้อมูลไม่สำเร็จ จะแจ้งเตือนว่า \"ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order ไว้เท่าเดิมเพื่อให้กดยืนยันซ้ำได้"
+    "ตัดสินใจ \"ไม่คุ้มค่า\"",
+    "**Q5A.2** ตั้ง `reorder_decision`='ไม่คุ้มค่า', `decided_qty` = NULL และ `order_status`='รอยกเลิก Order' แสดงข้อความ \"ส่ง Order เข้าสู่การยกเลิก Order\" (ไป 7A)"
+   ],
+   [
+    "ทางเลือก #3",
+    "SKU ไม่มีราคาขายปัจจุบัน",
+    "ตั้งสถานะ \"รอดำเนินการด้วยตนเอง\" พร้อม `manual_reason`='price' — **Q5A.3:** `UPDATE orders SET order_status = 'รอดำเนินการด้วยตนเอง', manual_reason = 'price', updated_at = CURRENT_TIMESTAMP WHERE order_id = $1` แล้วแจ้งเตือนว่า \"ไม่พบราคาขายของสินค้านี้ กรุณาตรวจสอบ\" เมื่อ Super Admin ใส่ราคาขายใน 3A ระบบจะคืน Order กลับเป็น \"รอ Admin ตัดสินใจสั่งซื้อ\""
+   ],
+   [
+    "ทางเลือก #4",
+    "บันทึกลงฐานข้อมูลไม่สำเร็จ (จำลองด้วย fault `db` ในหน้า `/dev`)",
+    "แจ้งเตือนว่า \"ไม่สามารถบันทึกผลการตัดสินใจได้ กรุณาลองใหม่ภายหลัง\" ไม่ทำ Q5A.2 และคงสถานะ Order ไว้เท่าเดิมเพื่อให้กดยืนยันซ้ำได้"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q5A.1": "reorders.ts · Q5A_1_FOR_UPDATE",
+   "Q5A.2": "reorders.ts · Q5A_4",
+   "Q5A.3": "reorders.ts · Q5A_4_MANUAL_PRICE"
+  }
  },
  {
   "id": "6A",
   "name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
   "origin": "เดิม",
-  "goal": "ให้ระบบสั่งซื้อสินค้าเพิ่มจากซัพพลายเออร์โดยอัตโนมัติเมื่อสต๊อกต่ำกว่าเกณฑ์ที่กำหนด (Reorder Threshold)",
-  "pre": "สินค้า (SKU) ต้องมีการตั้งค่า Reorder Threshold, Reorder Quantity และ Supplier ไว้ล่วงหน้าแล้ว",
-  "post": "ระบบส่งคำสั่งซื้อ (Purchase Order) ไปยัง Supplier ที่กำหนดไว้ และบันทึกผลการสั่งซื้อ",
-  "actor": "Admin / System (Auto)",
+  "goal": "ให้ Super Admin ส่งคำสั่งซื้อเติมสต๊อกไปยัง Supplier สำหรับ SKU ที่สต๊อกรวมต่ำกว่าเกณฑ์ (Reorder Threshold) หรือ SKU ที่มี Order ตัดสินใจว่าคุ้มค่าใน 5A และบันทึกการรับสินค้าเมื่อ Supplier ส่งของมาถึง",
+  "pre": "SKU มี Supplier ที่มี Lead Time มากกว่า 0 และมี Reorder Quantity (หรือ `decided_qty` จาก 5A)",
+  "post": "คำสั่งซื้อ (`reorders`) อยู่ในสถานะ \"สั่งซื้อแล้ว\" พร้อม `expected_date` = วันนี้ + Lead Time และ Order ทุกรายการที่ผูกกับคำสั่งซื้อ (`orders.reorder_id`) อยู่ในสถานะ \"สั่งซื้อแล้ว\" จนกว่า Super Admin จะบันทึกการรับสินค้า / หากส่งไม่สำเร็จ คำสั่งซื้อและ Order คงสถานะ \"รอส่งคำสั่งซื้อ\" เพื่อส่งซ้ำ / เมื่อบันทึกรับสินค้า คำสั่งซื้อเป็น \"ได้รับสินค้าแล้ว\" (`received_at`, `received_qty`) สต๊อกในบริษัท (`in_house_qty`) เพิ่มตามจำนวนที่ได้รับ มีประวัติใน `stock_adjustment_history` และ Order ที่ผูกไว้กลับไปผ่าน 3S ทันที",
+  "actor": "Super Admin, Supplier",
   "steps": [
    [
     "1",
     "",
-    "ระบบตรวจสอบสต๊อกรวม (`in_house_qty + rsl_qty`) ของแต่ละ SKU เทียบกับ Reorder Threshold ตามรอบเวลาที่ตั้งไว้ — **Q6A.1:** `SELECT p.sku, p.product_name, s.in_house_qty, s.rsl_qty, p.reorder_threshold, p.reorder_qty FROM products p JOIN stock s ON s.sku = p.sku WHERE s.in_house_qty + s.rsl_qty <= p.reorder_threshold`"
+    "หน้า `/products/reorder` โหลดรายการคำสั่งซื้อเติมสต๊อกทั้งหมด (แท็บ \"คำสั่งซื้อ\") — **Q6A.1:** `SELECT reorders.reorder_id, sku.sku, reorders.supplier_id, reorders.order_qty, COALESCE(reorders.ordered_at, reorders.created_at) AS order_date, reorders.expected_date, reorders.reorder_status, reorders.received_at, reorders.received_qty FROM reorders INNER JOIN skus sku ON sku.sku_id = reorders.sku_id ORDER BY COALESCE(reorders.ordered_at, reorders.created_at) DESC, reorders.reorder_id DESC`<br>และรายการ Supplier พร้อม Lead Time — **Q6A.2:** `SELECT supplier_id, supplier_name, contact_info, lead_time_days FROM suppliers ORDER BY supplier_name, supplier_id`"
    ],
    [
     "2",
     "",
-    "หาก SKU ใดมีสต๊อกรวม ≤ Reorder Threshold ระบบแสดงรายการ SKU นั้นในหน้า \"รอสั่งซื้อเติมสต๊อก\""
+    "แท็บ \"รอสั่งซื้อเติมสต๊อก\" แสดง SKU ที่ต้องสั่ง (คำนวณจาก read model ด้วย `purchaseQueue`): (ก) SKU active ที่สต๊อกรวม `in_house_qty + rsl_qty` ≤ `reorder_threshold` และไม่มีคำสั่งซื้อค้าง (ข) SKU ของ Order ที่ \"รอสั่งซื้อจาก Supplier\" หรือ \"รอส่งคำสั่งซื้อ\" (ค) SKU ที่มีคำสั่งซื้อ \"รอส่งคำสั่งซื้อ\" (แสดงป้าย \"ส่งไม่สำเร็จครั้งก่อน\") แต่ละแถวแสดง คงเหลือ/เกณฑ์, จำนวนที่จะสั่ง (`decided_qty` ถ้ามี ไม่เช่นนั้น `reorder_qty`), Order ที่รอ และ Supplier (หรือ \"ยังไม่ได้ตั้งค่า\")"
    ],
    [
     "3",
-    "Admin ตรวจสอบรายการแล้วกด \"สั่งซื้อ\" หรือระบบสั่งซื้ออัตโนมัติตามที่ตั้งค่าไว้",
-    "**ตรวจสอบ:** SKU ต้องมี Supplier, Order Quantity และ Lead Time กำหนดไว้ หากไม่มีจะแจ้งเตือนว่า \"ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ\"<br>**ดึงข้อมูล Supplier** — **Q6A.2:** `SELECT s.supplier_id, s.supplier_name, s.contact_info, s.lead_time, p.reorder_qty AS order_qty FROM products p JOIN suppliers s ON s.supplier_id = p.supplier_id WHERE p.sku=$1`<br>**สร้างคำสั่งซื้อ** — **Q6A.3:** `INSERT INTO purchase_orders (po_id, sku, supplier_id, order_qty, order_date, eta, status) VALUES ($1, $2, $3, $4, NOW(), $5, 'สั่งซื้อแล้ว')` (`eta` = วันนี้ + `lead_time`)<br>ระบบส่งคำสั่งซื้อไปยัง Supplier ผ่านช่องทางที่ตั้งค่าไว้ (เช่น อีเมล) และอัปเดตสถานะเป็น \"สั่งซื้อแล้ว\" พร้อมวันที่คาดว่าจะได้รับสินค้า (คำนวณจาก Lead Time)<br>**ผูกคำสั่งซื้อกับ Order** — **Q6A.4:** `UPDATE orders SET order_status='สั่งซื้อแล้ว', po_id=$1 WHERE sku=$2 AND order_status='รอสั่งซื้อจาก Supplier'`"
+    "กด \"สั่งซื้อ\" ที่ SKU แก้ \"จำนวนที่จะสั่ง\" ได้ (ไม่กระทบ Reorder Quantity) แล้วกดยืนยัน",
+    "ระบบเรียก Server Action `purchaseReorderAction` → `purchaseReorderUseCase`<br>**1. ตรวจสอบจำนวนและล็อก SKU** — จำนวนต้องเป็นจำนวนเต็มบวก แล้วล็อกแถว SKU และอ่าน Supplier — **Q6A.3:** `SELECT sku.sku_id, sku.sku, sku.product_name, sku.variation, supplier.supplier_id, supplier.supplier_name, supplier.lead_time_days FROM skus sku LEFT JOIN suppliers supplier ON supplier.supplier_id = sku.supplier_id WHERE sku.sku = $1 FOR UPDATE OF sku`<br>— หากไม่พบ SKU หรือไม่มี Supplier/Lead Time ดูทางเลือก #1<br>**2. ตรวจคำสั่งซื้อค้าง** — **Q6A.4:** `SELECT reorder_id, order_qty, supplier_id, supplier_request_id, expected_date, created_at FROM reorders WHERE sku_id = $1 AND reorder_status = 'สั่งซื้อแล้ว' AND expected_date >= CURRENT_DATE - 1 ORDER BY ordered_at DESC NULLS LAST, created_at DESC LIMIT 1` หากมีและยังไม่ยืนยันสั่งซ้ำ ดูทางเลือก #3<br>**3. เตรียมคำสั่งซื้อ** — หาคำสั่งซื้อที่ส่งไม่สำเร็จครั้งก่อนเพื่อใช้ `supplier_request_id` เดิม — **Q6A.5:** `SELECT reorder_id, order_qty, supplier_id, supplier_request_id, expected_date, created_at FROM reorders WHERE sku_id = $1 AND reorder_status = 'รอส่งคำสั่งซื้อ' ORDER BY created_at DESC LIMIT 1`<br>— หากไม่มี: ขอเลขคำสั่งซื้อถัดไปแบบเลขรัน (PO-0092 ต่อจาก PO-0091 และ `supplier_request_id` = SUPPLIER-req-0092) จาก sequence `reorder_no_seq` (migration 008) — **Q6A.6:** `SELECT nextval('reorder_no_seq') AS reorder_no`<br>— แล้วสร้างคำสั่งซื้อใหม่สถานะ \"รอส่งคำสั่งซื้อ\" (`expected_date` = วันนี้ + `lead_time_days`) — **Q6A.7:** `INSERT INTO reorders ( reorder_id, order_qty, reorder_status, expected_date, created_at, sku_id, supplier_id, supplier_request_id ) VALUES ($1, $2, 'รอส่งคำสั่งซื้อ', $3, CURRENT_TIMESTAMP, $4, $5, $6)`<br>— ผูก Order ทุกรายการของ SKU นี้ที่อยู่ในสถานะ \"รอสั่งซื้อจาก Supplier\" หรือ \"รอส่งคำสั่งซื้อ\" (รวม Order ที่รอดำเนินการด้วยตนเองเพราะไม่มีข้อมูล Supplier) กับคำสั่งซื้อนี้ โดยบันทึกเลขคำสั่งซื้อลงใน `orders.reorder_id` และเปลี่ยนเป็น \"รอส่งคำสั่งซื้อ\" — **Q6A.8:** `UPDATE orders o SET order_status = $2, manual_reason = $3, reorder_id = COALESCE($4, o.reorder_id), updated_at = CURRENT_TIMESTAMP WHERE EXISTS ( SELECT 1 FROM order_items item WHERE item.order_id = o.order_id AND item.sku_id = $1 ) AND ( o.order_status IN ('รอสั่งซื้อจาก Supplier', 'รอส่งคำสั่งซื้อ') OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'supplier') )` ($2='รอส่งคำสั่งซื้อ', $3=NULL, $4=เลขคำสั่งซื้อ) แล้ว commit ก่อนติดต่อภายนอก<br>**4. ส่งคำสั่งซื้อไปยัง Supplier** — เรียก `SupplierAdapter.sendPurchaseOrder(po, supplier_request_id)` (ส่งทางอีเมล)<br>**5. บันทึกผล** (transaction ใหม่) — **Q6A.9:** `UPDATE reorders SET reorder_status = $2, ordered_at = CASE WHEN $2 = 'สั่งซื้อแล้ว' THEN CURRENT_TIMESTAMP ELSE ordered_at END, supplier_reference = $3, last_error_code = $4 WHERE reorder_id = $1 AND supplier_request_id = $5 AND ($2 = 'สั่งซื้อแล้ว' OR reorder_status <> 'สั่งซื้อแล้ว') RETURNING reorder_id` ($2='สั่งซื้อแล้ว', $3=`supplier_reference`) และ **Q6A.8** ($2='สั่งซื้อแล้ว', $4=เลขคำสั่งซื้อ) Order ที่ผูกไว้ทุกรายการเปลี่ยนเป็น \"สั่งซื้อแล้ว\" แล้วแสดงข้อความ \"ส่งคำสั่งซื้อ [SKU] ไปยัง [Supplier] แล้ว\" และ \"สถานะ สั่งซื้อแล้ว · คาดว่าจะได้รับสินค้า [วันที่]\""
+   ],
+   [
+    "4",
+    "เมื่อสินค้ามาถึง กด \"รับสินค้า\" ที่คำสั่งซื้อสถานะ \"สั่งซื้อแล้ว\" ในแท็บ \"คำสั่งซื้อ\"",
+    "แสดงหน้าต่าง \"บันทึกการรับสินค้า [เลขที่]\" พร้อมข้อความ \"สั่ง [SKU] ไว้ [จำนวน] ชิ้น สินค้าที่ได้รับจะถูกเพิ่มเข้าสต๊อกในบริษัท และ Order ที่รอสินค้านี้จะกลับไปตรวจสอบสต๊อก\" และช่อง \"จำนวนที่ได้รับ\" (ค่าเริ่มต้น = จำนวนที่สั่ง แก้ได้หากได้รับไม่ครบหรือเกิน บันทึกได้ครั้งเดียวต่อคำสั่งซื้อ)"
+   ],
+   [
+    "5",
+    "กรอกจำนวนที่ได้รับแล้วกด \"รับสินค้า\"",
+    "ระบบเรียก Server Action `receiveReorderAction` → `receiveReorderUseCase` ทำงานใน `executeWorkflow` (transaction เดียว)<br>**1. ตรวจสอบจำนวน** — ต้องเป็นจำนวนเต็มบวก หากไม่ใช่ จะแจ้งเตือนว่า \"กรุณากรอกจำนวนที่ได้รับเป็นจำนวนเต็มบวก\"<br>**2. ล็อกคำสั่งซื้อและแถวสต๊อกของ SKU** — **Q6A.10:** `SELECT r.reorder_id, r.reorder_status, r.order_qty, sku.sku, stock.stock_id, stock.in_house_qty, stock.rsl_qty FROM reorders r INNER JOIN skus sku ON sku.sku_id = r.sku_id INNER JOIN stock ON stock.sku_id = r.sku_id WHERE r.reorder_id = $1 FOR UPDATE OF r, stock`<br>— หากเป็น \"ได้รับสินค้าแล้ว\" ดูทางเลือก #5 หากไม่ใช่ \"สั่งซื้อแล้ว\" (เช่น ยกเลิกแล้ว) ดูทางเลือก #6<br>**3. ปิดคำสั่งซื้อ** — เปลี่ยนสถานะเป็น \"ได้รับสินค้าแล้ว\" พร้อม `received_at` และ `received_qty` — **Q6A.11:** `UPDATE reorders SET reorder_status = 'ได้รับสินค้าแล้ว', received_at = CURRENT_TIMESTAMP, received_qty = $2 WHERE reorder_id = $1 AND reorder_status = 'สั่งซื้อแล้ว' RETURNING reorder_id` (เงื่อนไข `reorder_status = 'สั่งซื้อแล้ว'` ทำให้กดซ้ำหรือกดพร้อมกันไม่บวกสต๊อกซ้ำ)<br>**4. เพิ่มสต๊อกในบริษัท** — บวกจำนวนที่ได้รับเข้า `in_house_qty` (`rsl_qty` คงเดิม) และตั้งสถานะซิงก์สต๊อก Rakuten เป็น 'pending' — **Q6A.12:** `WITH adjusted AS ( UPDATE stock SET in_house_qty = $2, rsl_qty = $3, updated_at = CURRENT_TIMESTAMP WHERE stock_id = $1 RETURNING stock_id ) INSERT INTO rakuten_stock_sync_states (stock_id, sync_status) SELECT stock_id, 'pending' FROM adjusted ON CONFLICT (stock_id) DO UPDATE SET sync_status = 'pending', last_error_code = NULL` แล้วบันทึกประวัติการปรับสต๊อก (เหตุผล \"รับสินค้าจาก Supplier ตามคำสั่งซื้อ [เลขที่]\") — **Q6A.13:** `INSERT INTO stock_adjustment_history ( stock_adjustment_history_id, stock_id, previous_in_house_qty, new_in_house_qty, previous_rsl_qty, new_rsl_qty, reason, admin_id ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`<br>**5. ส่ง Order ที่รอสินค้ากลับไปตรวจสต๊อก** — **Q6A.14:** `UPDATE orders SET order_status = 'รอตรวจสอบสต๊อก', manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE reorder_id = $1 AND order_status = 'สั่งซื้อแล้ว' RETURNING order_id` แล้ว `runAutomation` รัน 3S กับ Order เหล่านั้น (และ 6S สำหรับ Order ที่ส่งจากคลังบริษัท) และ 7S ซิงก์ยอดคงเหลือไป Rakuten ก่อน commit<br>— แสดงข้อความ \"เพิ่ม [SKU] เข้าสต๊อกในบริษัท [จำนวน] ชิ้นแล้ว\" และ \"Order ที่รอสินค้านี้ [n] รายการกลับไปตรวจสอบสต๊อกแล้ว\" แถวคำสั่งซื้อแสดง \"ได้รับ [จำนวน] ชิ้น · [วันที่]\""
    ],
    [
     "ทางเลือก #1",
-    "SKU ไม่มีการตั้งค่า Supplier หรือ Reorder Quantity",
-    "แจ้งเตือนตามข้อ 3 และนำรายการเข้าสถานะ \"รอดำเนินการด้วยตนเอง\" เพื่อให้ Admin ตั้งค่าและสั่งซื้อเอง"
+    "SKU ไม่มี Supplier หรือ Lead Time หรือจำนวนสั่งซื้อไม่ถูกต้อง",
+    "แจ้งเตือนว่า \"ไม่พบข้อมูล Supplier หรือจำนวนสั่งซื้อ กรุณาตั้งค่าก่อนสั่งซื้อ\" หากพบ SKU จะตั้ง Order ที่ผูกอยู่เป็น \"รอดำเนินการด้วยตนเอง\" ด้วย **Q6A.8** ($2='รอดำเนินการด้วยตนเอง', $3='supplier') ให้ Super Admin ไปตั้งค่าใน 3A"
    ],
    [
     "ทางเลือก #2",
-    "Admin ต้องการแก้ไขจำนวนสั่งซื้อก่อนยืนยัน",
-    "ระบบให้แก้ไขจำนวนได้ก่อนกด \"สั่งซื้อ\" โดยค่าที่แก้ไขจะไม่กระทบค่า Reorder Quantity เริ่มต้นที่ตั้งไว้"
+    "Super Admin แก้จำนวนสั่งซื้อก่อนยืนยัน",
+    "ใช้จำนวนที่แก้ใน **Q6A.7** (`order_qty`) เฉพาะคำสั่งซื้อนี้ ไม่แก้ `reorder_qty` ของ SKU"
    ],
    [
     "ทางเลือก #3",
-    "ส่งคำสั่งซื้อไปยัง Supplier ไม่สำเร็จ (เช่น อีเมลส่งไม่ผ่าน)",
-    "แจ้งเตือนว่า \"ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่\" และคงสถานะเป็น \"รอส่งคำสั่งซื้อ\""
+    "SKU มีคำสั่งซื้อ \"สั่งซื้อแล้ว\" ที่ยังไม่ถึงกำหนดรับของ (`expected_date` ≥ เมื่อวาน)",
+    "แจ้งเตือนว่า \"มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่\" พร้อม \"ล็อตเดิมคาดว่าจะได้รับ [วันที่]\" หาก Super Admin ยืนยัน ระบบเรียกซ้ำโดยส่ง `confirmDuplicate`=true แล้วทำขั้นตอนที่ 3 ต่อ"
    ],
    [
     "ทางเลือก #4",
-    "SKU เดียวกันมีคำสั่งซื้อที่ยังไม่ได้รับสินค้าอยู่แล้ว (Order ค้าง)",
-    "ระบบแจ้งเตือนว่า \"มีคำสั่งซื้อ SKU นี้ค้างอยู่แล้ว ต้องการสั่งซื้อเพิ่มหรือไม่\" ให้ Admin ยืนยันก่อนสั่งซื้อซ้ำ"
+    "ส่งคำสั่งซื้อไปยัง Supplier ไม่สำเร็จ (จำลองด้วย fault `supplierSend`)",
+    "บันทึก **Q6A.9** ($2='รอส่งคำสั่งซื้อ', `last_error_code` = รหัสข้อผิดพลาด) และ **Q6A.8** ($2='รอส่งคำสั่งซื้อ') แจ้งเตือนว่า \"ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่\" เมื่อกดสั่งซื้ออีกครั้ง **Q6A.5** จะหยิบคำสั่งซื้อเดิมและ `supplier_request_id` เดิมมาส่งซ้ำ (ไม่สร้างคำสั่งซื้อซ้ำ)"
+   ],
+   [
+    "ทางเลือก #5",
+    "กดรับสินค้าซ้ำกับคำสั่งซื้อที่บันทึกรับไปแล้ว",
+    "แจ้งเตือนว่า \"คำสั่งซื้อนี้บันทึกการรับสินค้าไปแล้ว\" ไม่เปลี่ยนสต๊อกหรือสถานะใดๆ"
+   ],
+   [
+    "ทางเลือก #6",
+    "คำสั่งซื้อไม่อยู่ในสถานะ \"สั่งซื้อแล้ว\" (เช่น ถูกยกเลิกใน 7A)",
+    "แจ้งเตือนว่า \"รับสินค้าได้เฉพาะคำสั่งซื้อที่อยู่ในสถานะ สั่งซื้อแล้ว\" ไม่เปลี่ยนข้อมูล"
+   ],
+   [
+    "ทางเลือก #7",
+    "ได้รับสินค้าไม่ครบหรือเกินจำนวนที่สั่ง",
+    "กรอกจำนวนที่ได้รับจริง ระบบบันทึก `received_qty` ตามนั้นและปิดคำสั่งซื้อ (รับได้ครั้งเดียว) หากสต๊อกยังไม่พอ 3S จะส่ง Order กลับไป \"รอ Admin ตัดสินใจสั่งซื้อ\" (5A) เพื่อสั่งเพิ่ม"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q6A.1": "reorders.ts · Q5A_1",
+   "Q6A.2": "skus.ts · Q6A_2",
+   "Q6A.3": "reorders.ts · Q6A_2_FOR_UPDATE",
+   "Q6A.4": "reorders.ts · Q6A_1_PENDING",
+   "Q6A.5": "reorders.ts · Q6A_1_RETRY",
+   "Q6A.6": "reorders.ts · Q6A_1_NEXT_NUMBER",
+   "Q6A.7": "reorders.ts · Q6A_1_INSERT",
+   "Q6A.8": "reorders.ts · Q6A_1_MARK_ORDERS",
+   "Q6A.9": "reorders.ts · Q6A_1_COMPLETE",
+   "Q6A.10": "reorders.ts · Q6A_10_FOR_UPDATE",
+   "Q6A.11": "reorders.ts · Q6A_11_RECEIVE",
+   "Q6A.12": "stock.ts · Q3S_1_ADJUST",
+   "Q6A.13": "stock.ts · Q3S_1_INSERT_HISTORY",
+   "Q6A.14": "reorders.ts · Q6A_12_RELEASE_ORDERS"
+  }
  },
  {
   "id": "7A",
   "name": "ยกเลิก Order",
   "origin": "เดิม",
-  "goal": "ให้ Admin สามารถยกเลิก Order ที่มีปัญหาหรือถูกลูกค้ายกเลิกได้ พร้อมคืนสต๊อกและยกเลิกกระบวนการที่เกี่ยวข้องอย่างถูกต้อง",
-  "pre": "Order ต้องมีอยู่ในระบบและยังไม่อยู่ในสถานะ \"จัดส่งสำเร็จ\" หรือ \"ยกเลิกแล้ว\"",
-  "post": "Order มีสถานะเป็น \"ยกเลิกแล้ว\" และสต๊อกสินค้าที่เกี่ยวข้องถูกคืนกลับเข้าระบบ (เฉพาะ Order ที่ถูกตัดสต๊อกไปแล้ว — ระบบตัดสต๊อกเมื่อจัดส่งใน 7S)",
-  "actor": "Admin",
+  "goal": "ให้ Super Admin สามารถยกเลิก Order ที่มีปัญหาหรือถูกลูกค้ายกเลิกได้ พร้อมคืนสต๊อกและยกเลิกกระบวนการที่เกี่ยวข้องอย่างถูกต้อง",
+  "pre": "Order มีอยู่ในระบบและยังไม่อยู่ในสถานะ \"จัดส่งสำเร็จ\" หรือ \"ยกเลิกแล้ว\"",
+  "post": "Order มีสถานะ \"ยกเลิกแล้ว\" พร้อม `cancel_reason` และ `cancelled_at` คืนสต๊อกตามแหล่งที่จัดส่ง (`fulfill_source`: คลัง RSL หรือคลังบริษัท) เฉพาะ Order ที่ถูกตัดสต๊อกแล้ว (`order_items.stock_deducted` = true) / Order ที่ส่งมอบ Delivery แล้วถูกบันทึกเป็น \"รอดำเนินการพิเศษ\" แทน",
+  "actor": "Super Admin, Marketplace (แหล่งคำขอยกเลิกจากลูกค้าผ่าน Rakuten ที่ 4A บันทึกไว้)",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการ Order พร้อมสถานะปัจจุบัน (รอตรวจสอบคำสั่งซื้อ, รอพิมพ์ใบปะสินค้า, อยู่ระหว่างจัดส่ง ฯลฯ)"
+    "หน้า `/orders/cancel` แสดงรายการ Order พร้อมสถานะปัจจุบัน เรียงใหม่สุดก่อน กรองตามสถานะและค้นหาด้วย Order ID, SKU หรือชื่อสินค้าได้ (ข้อมูลจาก read model ที่ layout โหลดผ่าน `loadAppState`) Order ที่ลูกค้าขอยกเลิกผ่าน Rakuten (`customer_cancel_requested` = true ซึ่ง 4A ตั้งไว้ตอนดึง Order) มีหมายเหตุ \"ลูกค้าขอยกเลิกผ่าน Rakuten\""
    ],
    [
     "2",
-    "Admin เลือก Order ที่ต้องการยกเลิก แล้วกด \"ยกเลิก Order\"",
-    "ระบบตรวจสอบสถานะปัจจุบันของ Order ก่อนดำเนินการ"
+    "เลือก Order แล้วกด \"ยกเลิก Order\"",
+    "หน้าจอตรวจสถานะจากข้อมูลที่โหลดไว้ก่อนเปิดหน้าต่าง: หาก \"จัดส่งสำเร็จ\" จะแจ้งเตือนว่า \"ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว\" หาก \"ยกเลิกแล้ว\" ดูทางเลือก #4 นอกนั้นเปิดหน้าต่าง \"ยกเลิก [Order ID]\" ให้กรอก \"เหตุผลการยกเลิก\" และหากมีคำสั่งซื้อเติมสต๊อกผูกอยู่ แสดงตัวเลือก \"ยกเลิกคำสั่งซื้อเติมสต๊อกนี้ด้วย\" (ทางเลือก #2)"
    ],
    [
     "3",
-    "ระบุเหตุผลการยกเลิก แล้วกด \"ยืนยันการยกเลิก\"",
-    "**ตรวจสอบ:** Order ต้องไม่อยู่ในสถานะ \"จัดส่งสำเร็จ\" หรือ \"ยกเลิกแล้ว\" หากอยู่ในสถานะดังกล่าวจะแจ้งเตือนว่า \"ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว\"; ต้องระบุเหตุผลการยกเลิก หากไม่กรอกจะแจ้งเตือนว่า \"กรุณาระบุเหตุผลการยกเลิก\"<br>**ยกเลิกกระบวนการที่เกี่ยวข้อง** — **Q7A.1:** `UPDATE orders SET order_status='ยกเลิกแล้ว', cancel_reason=$1, cancelled_at=NOW(), cancelled_by=$2 WHERE order_id=$3`<br>หาก Order เคยพิมพ์ใบปะสินค้าแล้วแต่ยังไม่ส่งมอบ Delivery ระบบจะแจ้งเตือนให้ Admin ยกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย<br>**คืนสต๊อกสินค้า** — **Q7A.2:** `UPDATE stock SET in_house_qty = in_house_qty + $1, updated_at=NOW() WHERE sku=$2` (เฉพาะกรณีที่ Order ถูกตัดสต๊อกไปแล้ว `stock_deducted = true` — Order ที่ยังไม่จัดส่งยังไม่ถูกตัดสต๊อก จึงไม่ต้องคืน)<br>ระบบคืนสต๊อกสินค้ากลับเข้าคลัง อัปเดตสถานะ Order เป็น \"ยกเลิกแล้ว\" และแสดงข้อความ \"ยกเลิก Order สำเร็จ\""
+    "กรอกเหตุผลแล้วกด \"ยืนยันการยกเลิก\"",
+    "ระบบเรียก Server Action `cancelOrderAction` → `cancelOrderUseCase` ทำงานใน transaction เดียว<br>**1. ตรวจเหตุผล** — ต้องไม่เป็นค่าว่าง หากว่างจะแจ้งเตือนว่า \"กรุณาระบุเหตุผลการยกเลิก\"<br>**2. ล็อก Order และอ่านสถานะล่าสุด** — **Q7A.1:** `SELECT o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status, o.manual_reason, o.shipping_address, o.shipping_method, o.rsl_no, o.cancelled_at, o.customer_cancel_requested, item.channel_sku, item.variation, item.qty, item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku, EXISTS ( SELECT 1 FROM labels l WHERE l.order_id = o.order_id AND l.printed_at IS NOT NULL ) AS label_printed, reorder.reorder_id, reorder.reorder_status FROM orders o INNER JOIN LATERAL ( SELECT oi.* FROM order_items oi WHERE oi.order_id = o.order_id ORDER BY oi.order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN reorders reorder ON reorder.reorder_id = o.reorder_id WHERE o.order_id = $1 FOR UPDATE OF o`<br>— หากไม่พบ หรือ \"จัดส่งสำเร็จ\" จะแจ้งเตือนว่า \"ไม่สามารถยกเลิก Order นี้ได้ เนื่องจากจัดส่งสำเร็จแล้ว/ถูกยกเลิกไปแล้ว\"<br>— หาก \"ยกเลิกแล้ว\" ดูทางเลือก #4<br>— หากส่งมอบ Delivery แล้ว (อยู่ระหว่างจัดส่ง, รอแจ้งเลขติดตาม, แจ้งเลขติดตามแล้ว, จัดส่งไม่สำเร็จ, รอดำเนินการพิเศษ) ดูทางเลือก #1 — **Q7A.2:** `UPDATE orders SET order_status = $2, cancel_reason = $3, cancelled_at = $4, manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1`<br>**3. คืนสต๊อก** (เฉพาะ `stock_deducted` = true) — คืนจำนวนเข้าสต๊อกตาม `fulfill_source` ('in_house' หรือ 'rsl') แล้วตั้ง `stock_deducted` = false — **Q7A.3:** `WITH restored AS ( UPDATE stock SET in_house_qty = in_house_qty + CASE WHEN $3 = 'in_house' THEN $4 ELSE 0 END, rsl_qty = CASE WHEN $3 = 'rsl' THEN COALESCE(rsl_qty, 0) + $4 ELSE rsl_qty END, updated_at = CURRENT_TIMESTAMP WHERE sku_id = $2 AND EXISTS ( SELECT 1 FROM order_items WHERE order_id = $1 AND stock_deducted = TRUE ) RETURNING stock_id ) UPDATE order_items SET stock_deducted = FALSE, deducted_at = NULL WHERE order_id = $1 AND EXISTS (SELECT 1 FROM restored) RETURNING qty`<br>**4. ยกเลิกคำสั่งซื้อเติมสต๊อก** (เมื่อเลือกทางเลือก #2 ยกเลิกได้เฉพาะคำสั่งซื้อที่ยังไม่ได้รับสินค้า) — **Q7A.4:** `UPDATE reorders SET reorder_status = 'ยกเลิกแล้ว' WHERE reorder_id = $1 AND reorder_status IN ('รอส่งคำสั่งซื้อ', 'สั่งซื้อแล้ว') RETURNING reorder_id` แล้วส่ง Order อื่นที่ผูกกับคำสั่งซื้อเดียวกันกลับไป \\\"รอ Admin ตัดสินใจสั่งซื้อ\\\" (5A) พร้อมล้างการผูก — **Q7A.5:** `UPDATE orders SET order_status = 'รอ Admin ตัดสินใจสั่งซื้อ', manual_reason = NULL, reorder_id = NULL, reorder_decision = NULL, decided_qty = NULL, updated_at = CURRENT_TIMESTAMP WHERE reorder_id = $1 AND order_id <> $2 AND order_status IN ('รอส่งคำสั่งซื้อ', 'สั่งซื้อแล้ว')`<br>**5. บันทึกการยกเลิก** — **Q7A.2** ($2='ยกเลิกแล้ว', $3=เหตุผล, $4=เวลาปัจจุบัน) แล้วแสดงข้อความ \"ยกเลิก Order สำเร็จ\" พร้อมรายละเอียด \"คืนสต๊อก [n] ชิ้นกลับเข้าคลังแล้ว\" / \"ยกเลิกคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องแล้ว\" ตามที่เกิดขึ้น หาก Order พิมพ์ใบปะสินค้าแล้วแต่ยังไม่ส่งมอบ แจ้งว่า \"Order นี้พิมพ์ใบปะสินค้าแล้วแต่ยังไม่ส่งมอบ Delivery กรุณายกเลิกใบปะสินค้ากับผู้ให้บริการขนส่งด้วย\""
    ],
    [
     "ทางเลือก #1",
-    "Order อยู่ระหว่างจัดส่งแล้ว (ส่งมอบให้ Delivery ไปแล้ว)",
-    "แจ้งเตือนว่า \"Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน\" และบันทึกคำขอยกเลิกไว้เป็น \"รอดำเนินการพิเศษ\""
+    "Order ส่งมอบ Delivery ไปแล้ว",
+    "**Q7A.2** ($2='รอดำเนินการพิเศษ', $3=เหตุผล, $4=NULL) ไม่คืนสต๊อก แจ้งเตือนว่า \"Order นี้อยู่ระหว่างการจัดส่งแล้ว ไม่สามารถยกเลิกในระบบได้ทันที กรุณาประสานงานกับผู้ให้บริการขนส่งเพื่อเรียกพัสดุคืน\" และ \"บันทึกคำขอยกเลิกเป็น รอดำเนินการพิเศษ แล้ว\""
    ],
    [
     "ทางเลือก #2",
-    "Order ที่ยกเลิกมีการสั่งซื้อเติมสต๊อก (Reorder) ที่ผูกกับ Order นี้ไปแล้ว",
-    "ระบบแจ้งเตือน Admin ว่ามีคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้อง และให้ตัดสินใจว่าจะยกเลิกคำสั่งซื้อนั้นด้วยหรือไม่"
+    "Order มีคำสั่งซื้อเติมสต๊อก (`orders.reorder_id`) ผูกอยู่",
+    "หน้าต่างแสดง \"มีคำสั่งซื้อเติมสต๊อกที่เกี่ยวข้องกับ Order นี้ ([เลขที่])\" หาก Super Admin ติ๊ก \"ยกเลิกคำสั่งซื้อเติมสต๊อกนี้ด้วย\" ระบบทำ **Q7A.4** ตั้ง `reorder_status`='ยกเลิกแล้ว' ในขั้นตอนที่ 3 ยกเลิกได้เฉพาะคำสั่งซื้อที่ \"รอส่งคำสั่งซื้อ\" หรือ \"สั่งซื้อแล้ว\" (ได้รับสินค้าแล้วยกเลิกไม่ได้) Order อื่นที่ผูกกับคำสั่งซื้อเดียวกันกลับไปสถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\" เพื่อให้ Super Admin ตัดสินใจใหม่ (5A) ด้วย **Q7A.5** ถ้าไม่ติ๊ก คำสั่งซื้อคงเดิม"
    ],
    [
     "ทางเลือก #3",
-    "ลูกค้าเป็นผู้ร้องขอยกเลิกผ่านช่องทางขาย (Marketplace)",
-    "ระบบดึงคำขอยกเลิกจาก Marketplace เข้ามาแสดงในรายการ และให้ Admin ยืนยันก่อนดำเนินการยกเลิกในระบบ"
+    "ลูกค้าขอยกเลิกผ่าน Rakuten",
+    "4A ตั้ง `customer_cancel_requested` = true ให้ Order นั้น หน้าจอแสดงหมายเหตุ \"ลูกค้าขอยกเลิกผ่าน Rakuten\" ระบบไม่ยกเลิกเอง Super Admin ต้องยืนยันตามขั้นตอนที่ 2-3"
    ],
    [
     "ทางเลือก #4",
-    "Admin กดยกเลิกซ้ำ Order ที่ยกเลิกไปแล้ว",
-    "ระบบแจ้งเตือนว่า \"Order นี้ถูกยกเลิกไปแล้วเมื่อ [วันที่/เวลา]\" และไม่ดำเนินการซ้ำ"
+    "กดยกเลิกซ้ำ Order ที่ยกเลิกไปแล้ว",
+    "แจ้งเตือนว่า \"Order นี้ถูกยกเลิกไปแล้วเมื่อ [วันที่/เวลา]\" (ใช้ `cancelled_at`) และไม่บันทึกซ้ำ"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q7A.1": "orders.ts · Q2A_1_FOR_UPDATE",
+   "Q7A.2": "orders.ts · Q7A_1",
+   "Q7A.3": "stock.ts · Q7A_2",
+   "Q7A.4": "orders.ts · Q7A_1_CANCEL_REORDER",
+   "Q7A.5": "orders.ts · Q7A_1_RELEASE_ORDERS"
+  }
  },
  {
   "id": "8A",
   "name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
   "origin": "เดิม",
-  "goal": "ให้ Order ที่พิมพ์ใบปะสินค้าแล้วถูกส่งมอบให้บริษัทขนส่ง (Delivery) และติดตามสถานะจนถึงมือลูกค้า",
-  "pre": "Order ต้องพิมพ์ใบปะสินค้าแล้ว และสินค้าพร้อมส่งมอบให้ Delivery",
-  "post": "Order มีสถานะการจัดส่งอัปเดตเป็น \"อยู่ระหว่างจัดส่ง\" พร้อมหมายเลขติดตามพัสดุ (Tracking Number)",
-  "actor": "Admin / System (Auto)",
+  "goal": "ให้ Order ที่พิมพ์ใบปะสินค้าแล้วถูกส่งมอบให้บริษัทขนส่ง (Delivery) พร้อมบันทึกหมายเลขติดตามพัสดุ และติดตามสถานะจากผู้ขนส่งจนปิดงานเป็น \"จัดส่งสำเร็จ\"",
+  "pre": "Order มีสถานะ \"พิมพ์ใบปะสินค้าแล้ว\" หรือ \"รอส่งมอบ\" และใบปะสินค้าทุกใบของ Order พิมพ์แล้ว (`labels.printed_at` ไม่ว่าง)",
+  "post": "Order มีสถานะ \"อยู่ระหว่างจัดส่ง\" พร้อม `tracking_number`, `carrier_name`, `dispatched_at` และ `delivery_status`='in_transit' จากนั้นระบบอัปเดต `delivery_status` ตามผู้ขนส่ง Order จะเป็น \"จัดส่งสำเร็จ\" เมื่อครบ 3 เงื่อนไขเท่านั้น คือ ผู้ขนส่งยืนยันส่งถึง (`delivered`) แจ้งเลขติดตามให้ลูกค้าแล้ว (5S) และตัดสต๊อกแล้ว (7S)",
+  "actor": "Super Admin, Delivery",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการ Order ที่พิมพ์ใบปะสินค้าแล้ว และรอส่งมอบให้ Delivery"
+    "หน้า \"จัดส่งสินค้าให้ลูกค้า\" (`/shipping`) แสดง 2 รายการ คือ \"รอส่งมอบให้ Delivery\" (Order สถานะ \"พิมพ์ใบปะสินค้าแล้ว\" และ \"รอส่งมอบ\") และ \"ส่งมอบแล้ว\" (แสดงหมายเลขติดตาม ผู้ขนส่ง สถานะจากขนส่ง สถานะแจ้งลูกค้า และการตัดสต๊อก)<br>เมื่อเปิดหน้า ระบบดึงสถานะจากผู้ให้บริการขนส่งทันที (ขั้นตอนที่ 5)"
    ],
    [
     "2",
-    "Admin รวบรวมพัสดุแล้วกด \"ส่งมอบให้ Delivery\" หรือระบบดึงสถานะอัตโนมัติจากผู้ให้บริการขนส่ง",
-    "ระบบเริ่มกระบวนการบันทึกการส่งมอบ"
+    "Super Admin รวบรวมพัสดุ เลือก Order แล้วกด \"ส่งมอบให้ Delivery\"",
+    "แสดงหน้าต่าง \"ยืนยันรายการพัสดุที่ส่งมอบ\" พร้อมข้อความ \"ตรวจนับพัสดุให้ตรงกับรายการก่อนยืนยัน\""
    ],
    [
     "3",
-    "ยืนยันรายการพัสดุที่ส่งมอบ",
-    "**ตรวจสอบ:** Order ต้องมีสถานะ \"พิมพ์ใบปะสินค้าแล้ว\" หากยังไม่พิมพ์จะแจ้งเตือนว่า \"Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้\"<br>**ดึงหมายเลขติดตามพัสดุ** — **Q8A.1:** `SELECT tracking_number, carrier_name, pickup_date FROM delivery_partners WHERE order_id=$1`<br>**บันทึกการส่งมอบ** — **Q8A.2:** `UPDATE orders SET order_status='อยู่ระหว่างจัดส่ง', tracking_number=$1, carrier_name=$2, dispatched_at=NOW() WHERE order_id=$3`<br>ระบบอัปเดตสถานะ Order เป็น \"อยู่ระหว่างจัดส่ง\" พร้อมแสดงหมายเลขติดตามพัสดุ<br>**ติดตามสถานะระหว่างทาง** — **Q8A.3:** `SELECT delivery_status, last_location, updated_at FROM carrier_tracking WHERE tracking_number=$1`<br>ระบบดึงสถานะจากผู้ให้บริการขนส่งเป็นระยะ และอัปเดต Order เมื่อสถานะเปลี่ยน (เช่น \"จัดส่งสำเร็จ\")"
+    "กดยืนยันรายการพัสดุที่ส่งมอบ",
+    "ระบบเรียก `dispatchOrdersAction` → `dispatchOrdersUseCase` ทำทีละ Order<br>**1. ล็อกและตรวจสอบ Order** — **Q8A.1:** `SELECT o.order_id, o.order_status, o.tracking_number, o.carrier_name, o.delivery_status, EXISTS (SELECT 1 FROM labels l WHERE l.order_id = o.order_id) AND NOT EXISTS ( SELECT 1 FROM labels l WHERE l.order_id = o.order_id AND l.printed_at IS NULL ) AS labels_printed FROM orders o WHERE o.order_id = $1 FOR UPDATE OF o`<br>— Order ต้องมีสถานะ \"พิมพ์ใบปะสินค้าแล้ว\" หรือ \"รอส่งมอบ\" และ `labels_printed` เป็นจริง หากไม่ผ่านจะแจ้งเตือนว่า \"Order นี้ยังไม่ได้พิมพ์ใบปะสินค้า ไม่สามารถส่งมอบได้\"<br>**2. ขอหมายเลขติดตามพัสดุจาก Delivery** — เรียก `CarrierAdapter.getTrackingInfo(orderId)` ต้องได้ `trackingNumber` และ `carrierName` ที่ไม่ว่าง<br>**3. บันทึกการส่งมอบ** — ล็อก Order ซ้ำ (**Q8A.1**) ใน transaction ใหม่ แล้วบันทึก **Q8A.2:** `UPDATE orders SET tracking_number = $2, carrier_name = $3, dispatched_at = CURRENT_TIMESTAMP, delivery_status = 'in_transit', tracking_notified = FALSE, tracking_notified_at = NULL, order_status = 'อยู่ระหว่างจัดส่ง', updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status IN ('พิมพ์ใบปะสินค้าแล้ว', 'รอส่งมอบ')`<br>ระบบเปลี่ยนสถานะเป็น \"อยู่ระหว่างจัดส่ง\" ตั้ง `delivery_status`='in_transit' และ `tracking_notified`=false แล้วแจ้งว่า \"ส่งมอบ [Order ID] ให้ [ผู้ขนส่ง] แล้ว\" พร้อม \"หมายเลขติดตามพัสดุ [เลข]\""
+   ],
+   [
+    "4",
+    "",
+    "Order ที่ส่งมอบแล้วย้ายไปอยู่ในรายการ \"ส่งมอบแล้ว\" รอ Super Admin กด \"ส่งเลขติดตามให้ลูกค้า\" (**Use Case 5S**)"
+   ],
+   [
+    "5",
+    "เปิดหน้า `/shipping` (ระบบเรียก `pollCarrierAction` ให้อัตโนมัติ)",
+    "**ติดตามสถานะจากผู้ขนส่ง** — `pollCarrierUseCase` ดึง Order ที่มีหมายเลขติดตามและยังต้องติดตาม **Q8A.3:** `SELECT o.order_id, o.order_status, o.tracking_number, o.delivery_status, o.tracking_notified, item.stock_deducted, item.sku_id, item.fulfill_source, item.qty FROM orders o INNER JOIN LATERAL ( SELECT * FROM order_items WHERE order_id = o.order_id ORDER BY order_item_id LIMIT 1 ) item ON TRUE WHERE o.tracking_number IS NOT NULL AND o.order_status IN ( 'อยู่ระหว่างจัดส่ง', 'รอแจ้งเลขติดตาม', 'แจ้งเลขติดตามแล้ว', 'จัดส่งสำเร็จ', 'รอดำเนินการพิเศษ' ) ORDER BY o.order_id`<br>สำหรับแต่ละ Order เรียก `CarrierAdapter.getDeliveryStatus(tracking_number)` หากสถานะเท่าเดิม (หรือเคย `delivered` แล้วได้ `in_transit` กลับมา) ระบบข้ามไป<br>หากสถานะเปลี่ยน บันทึก **Q8A.4:** `UPDATE orders SET delivery_status = $2, order_status = CASE WHEN $2 = 'failed' THEN 'จัดส่งไม่สำเร็จ' WHEN $2 = 'returned' THEN 'ตีกลับ/คืนสินค้า' WHEN $2 = 'delivered' AND tracking_notified = TRUE AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1) AND NOT EXISTS ( SELECT 1 FROM order_items WHERE order_id = $1 AND stock_deducted = FALSE ) THEN 'จัดส่งสำเร็จ' ELSE order_status END, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND (delivery_status IS DISTINCT FROM 'delivered' OR $2 <> 'in_transit')`<br>— `failed` → สถานะ Order \"จัดส่งไม่สำเร็จ\"<br>— `returned` → สถานะ Order \"ตีกลับ/คืนสินค้า\"<br>— `delivered` → เก็บ `delivery_status`='delivered' และเปลี่ยนเป็น \"จัดส่งสำเร็จ\" เฉพาะเมื่อ `tracking_notified`=true และ `order_items.stock_deducted`=true ครบทุกรายการแล้ว มิฉะนั้นคงสถานะเดิมไว้รอ 5S/7S<br>การบันทึกสถานะแต่ละ Order ทำผ่าน `executeWorkflow` เมื่อได้ `delivered` ระบบรัน 7S (ตัดสต๊อกที่ค้าง) และปิด Order เป็น \"จัดส่งสำเร็จ\" ด้วย **Q8A.5** ใน transaction เดียวกัน"
+   ],
+   [
+    "6",
+    "",
+    "**ปิดงานหลังตัดสต๊อก** — ถ้าผู้ขนส่งยืนยันส่งถึงก่อนตัดสต๊อก เมื่อ Super Admin แจ้งเลขติดตาม (5S) แล้ว `executeWorkflow` จะรัน 7S ใน transaction เดียวกัน และเมื่อตัดสต๊อกได้จะปิด Order **Q8A.5:** `UPDATE orders SET order_status = 'จัดส่งสำเร็จ', manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'แจ้งเลขติดตามแล้ว' AND tracking_notified = TRUE AND delivery_status = 'delivered' AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1) AND NOT EXISTS ( SELECT 1 FROM order_items WHERE order_id = $1 AND stock_deducted = FALSE )` เป็น \"จัดส่งสำเร็จ\""
    ],
    [
     "ทางเลือก #1",
-    "ไม่พบหมายเลขติดตามพัสดุจากผู้ให้บริการขนส่ง",
-    "แจ้งเตือนว่า \"ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง\" และคง Order ไว้ในสถานะ \"รอส่งมอบ\""
+    "ไม่พบหมายเลขติดตามพัสดุจากผู้ให้บริการขนส่ง หรือเรียก Delivery ไม่สำเร็จ",
+    "บันทึก **Q8A.6:** `UPDATE orders SET order_status = 'รอส่งมอบ', updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'พิมพ์ใบปะสินค้าแล้ว'` เปลี่ยนสถานะเป็น \"รอส่งมอบ\" และแจ้งเตือนว่า \"ไม่พบหมายเลขติดตามพัสดุ กรุณาตรวจสอบกับผู้ให้บริการขนส่ง\" Order ยังอยู่ในรายการรอส่งมอบ ให้กดส่งมอบใหม่ได้"
    ],
    [
     "ทางเลือก #2",
-    "พัสดุจัดส่งไม่สำเร็จ (ที่อยู่ไม่ถูกต้อง / ลูกค้าติดต่อไม่ได้)",
-    "ระบบอัปเดตสถานะเป็น \"จัดส่งไม่สำเร็จ\" และแจ้งเตือน Admin ให้ตรวจสอบและดำเนินการแก้ไข (เช่น ติดต่อลูกค้าหรือส่งใหม่)"
+    "ผู้ขนส่งแจ้งว่าจัดส่งไม่สำเร็จ (ที่อยู่ไม่ถูกต้อง / ติดต่อลูกค้าไม่ได้)",
+    "บันทึกตามขั้นตอนที่ 5 (**Q8A.4**) สถานะเป็น \"จัดส่งไม่สำเร็จ\" และแจ้งเตือนว่า \"[Order ID] จัดส่งไม่สำเร็จ กรุณาตรวจสอบและดำเนินการแก้ไข เช่น ติดต่อลูกค้าหรือส่งใหม่\""
    ],
    [
     "ทางเลือก #3",
-    "ลูกค้าปฏิเสธรับพัสดุหรือขอคืนสินค้า",
-    "ระบบอัปเดตสถานะเป็น \"ตีกลับ/คืนสินค้า\" และเชื่อมโยงไปยังกระบวนการรับคืนสินค้าเข้าสต๊อก"
+    "ลูกค้าปฏิเสธรับพัสดุหรือขอคืนสินค้า (ผู้ขนส่งแจ้ง `returned`)",
+    "หาก Order ตัดสต๊อกไปแล้ว ระบบคืนสต๊อกตาม `fulfill_source` ใน transaction เดียวกัน **Q8A.7:** `WITH restored AS ( UPDATE stock SET in_house_qty = in_house_qty + CASE WHEN $3 = 'in_house' THEN $4 ELSE 0 END, rsl_qty = CASE WHEN $3 = 'rsl' THEN COALESCE(rsl_qty, 0) + $4 ELSE rsl_qty END, updated_at = CURRENT_TIMESTAMP WHERE sku_id = $2 AND EXISTS ( SELECT 1 FROM order_items WHERE order_id = $1 AND stock_deducted = TRUE ) RETURNING stock_id ) UPDATE order_items SET stock_deducted = FALSE, deducted_at = NULL WHERE order_id = $1 AND EXISTS (SELECT 1 FROM restored) RETURNING qty` แล้วบันทึกสถานะ \"ตีกลับ/คืนสินค้า\" (**Q8A.4**) แจ้งเตือนว่า \"[Order ID] ตีกลับ/คืนสินค้า · คืนสต๊อก [จำนวน] ชิ้นแล้ว\""
    ],
    [
     "ทางเลือก #4",
     "การเชื่อมต่อกับระบบติดตามของผู้ให้บริการขนส่งล้มเหลว",
-    "แจ้งเตือนว่า \"ไม่สามารถดึงสถานะจากผู้ให้บริการขนส่งได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะล่าสุดที่มีอยู่ไว้ก่อน"
+    "แจ้งเตือนครั้งเดียวว่า \"ไม่สามารถดึงสถานะจากผู้ให้บริการขนส่งได้ กรุณาลองใหม่ภายหลัง\" คงสถานะล่าสุดไว้ และดึงใหม่เมื่อเปิดหน้า `/shipping` ครั้งถัดไป"
+   ],
+   [
+    "ทางเลือก #5",
+    "Order ถูกขอยกเลิกหลังส่งมอบให้ Delivery แล้ว (7A)",
+    "Order อยู่ในสถานะ \"รอดำเนินการพิเศษ\" ระบบยังติดตามสถานะจากผู้ขนส่งต่อ (อยู่ในเงื่อนไขของ **Q8A.3**) จนได้ผลการจัดส่ง"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q8A.1": "shipping.ts · Q8A_1",
+   "Q8A.2": "shipping.ts · Q8A_1_SAVE",
+   "Q8A.3": "shipping.ts · Q8A_1_POLL",
+   "Q8A.4": "shipping.ts · Q8A_1_STATUS",
+   "Q8A.5": "shipping.ts · Q8A_1_DELIVERED",
+   "Q8A.6": "shipping.ts · Q8A_1_WAIT",
+   "Q8A.7": "stock.ts · Q7A_2"
+  }
  },
  {
   "id": "9A",
   "name": "พิมพ์ใบปะสินค้า",
-  "origin": "เดิม",
-  "goal": "ให้ระบบพิมพ์ใบปะสินค้า (Shipping Label) ที่ถูกต้องโดยอัตโนมัติเมื่อ Order พร้อมสำหรับการจัดส่ง",
-  "pre": "Order ต้องจับคู่กับ RSL แล้ว (หรือกำหนดวิธีจัดส่งเรียบร้อยแล้ว) และยังไม่เคยพิมพ์ใบปะสินค้า",
-  "post": "Order มีใบปะสินค้าที่พิมพ์แล้ว พร้อมสถานะ \"พิมพ์ใบปะสินค้าแล้ว\"",
-  "actor": "Admin / System (Auto)",
+  "origin": "เพิ่มใหม่",
+  "goal": "ให้ Super Admin พิมพ์ใบปะสินค้า (Shipping Label) ที่ระบบจัดรูปแบบไว้แล้ว (6S) ออกเครื่องพิมพ์ และบันทึกประวัติการพิมพ์ทุกครั้ง",
+  "pre": "Order มีสถานะ \"รอพิมพ์ใบปะสินค้า\" และมีใบปะสินค้าในตาราง `labels` (สถานะ `ready`) ที่ 6S สร้างไว้แล้ว",
+  "post": "ใบปะสินค้าทุกใบของ Order มี `label_status`='printed' และ `printed_at` และ Order มีสถานะ \"พิมพ์ใบปะสินค้าแล้ว\" ทุกการพิมพ์ (รวมพิมพ์ซ้ำและพิมพ์ไม่สำเร็จ) ถูกบันทึกใน `label_print_history` (ใบปะของ Order ที่บริษัทจัดส่งเองไม่มีเลข RSL รายงานใบปะแสดง \"—\" ที่ช่อง RSL และใช้ [Order ID]-[กล่อง] เป็นรหัสสแกน)",
+  "actor": "Super Admin",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการ Order ที่พร้อมพิมพ์ใบปะสินค้า (จับคู่ SKU/วิธีจัดส่งแล้ว และยังไม่ได้พิมพ์)"
+    "เมื่อเปิดหน้า \"พิมพ์ใบปะสินค้า\" (`/shipping/label`) ระบบเรียก `formatLabelsAction` ให้ 6S สร้างใบปะของ Order ที่รอจัดรูปแบบก่อน แล้วแสดงรายการ \"รอพิมพ์\" และ \"พิมพ์แล้ว\" พร้อมรูปแบบใบปะ จำนวนกล่อง และเวลาพิมพ์ **Q9A.1:** `SELECT order_id, MAX(label_template) AS label_template, MAX(parcel_total)::integer AS parcel_total, MAX(printed_at) AS printed_at FROM labels GROUP BY order_id ORDER BY order_id`"
    ],
    [
     "2",
-    "Admin เลือก Order หรือกด \"พิมพ์ใบปะสินค้าทั้งหมด\"",
-    "ระบบเริ่มกระบวนการเตรียมใบปะสินค้า"
+    "Super Admin กด \"พิมพ์ใบปะสินค้า\" ที่ Order หรือกด \"พิมพ์ใบปะสินค้าทั้งหมด\"",
+    "ระบบเรียก `printLabelsAction(orderIds, reprint=false)` → `printLabelsUseCase` ซึ่งเรียก `printLabelUseCase` ทีละ Order"
    ],
    [
     "3",
-    "กด \"พิมพ์ใบปะสินค้า\"",
-    "**ตรวจสอบ:** Order ต้องมีข้อมูลที่อยู่จัดส่งและวิธีจัดส่งครบถ้วน หากไม่ครบจะแจ้งเตือนว่า \"ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถพิมพ์ใบปะสินค้าได้\"; Order ต้องยังไม่เคยพิมพ์ใบปะสินค้ามาก่อน หากเคยพิมพ์แล้วจะแจ้งเตือนว่า \"Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่\"<br>**เลือก Label Template** — **Q9A.1:** `SELECT label_template FROM shipping_rules WHERE shipping_method=$1 AND sales_channel=$2`<br>**สร้างและพิมพ์ใบปะสินค้า** — **Q9A.2:** `UPDATE label SET label_status='พิมพ์แล้ว', printed_at=NOW() WHERE order_id=$1`<br>ระบบส่งไฟล์ใบปะสินค้าไปยังเครื่องพิมพ์ที่ตั้งค่าไว้ และอัปเดตสถานะ Order เป็น \"พิมพ์ใบปะสินค้าแล้ว\" — **Q9A.3:** `UPDATE orders SET order_status='พิมพ์ใบปะสินค้าแล้ว' WHERE order_id=$1`"
+    "",
+    "**1. ตรวจสอบใบปะสินค้าของ Order** — **Q9A.2:** `SELECT l.label_id, l.order_id, l.label_template, l.rsl_no, l.parcel_seq, l.parcel_total, o.order_status, o.shipping_address, o.shipping_method FROM labels l INNER JOIN orders o ON o.order_id = l.order_id WHERE l.order_id = $1 ORDER BY l.parcel_seq`<br>— หากไม่พบใบปะสินค้า หรือ Order ไม่อยู่ในสถานะ \"รอพิมพ์ใบปะสินค้า\" จะแจ้งเตือนว่า \"ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน\"<br>— หาก `shipping_address` หรือ `shipping_method` ว่าง จะแจ้งเตือนว่า \"ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถพิมพ์ใบปะสินค้าได้\"<br>— หาก Order มีสถานะ \"พิมพ์ใบปะสินค้าแล้ว\" ระบบถามว่า \"Order นี้พิมพ์ใบปะสินค้าไปแล้ว ต้องการพิมพ์ซ้ำหรือไม่\" (ทางเลือก #3)<br>**2. ส่งพิมพ์** — สร้าง `print_attempt_id` แล้วเรียก `PrinterAdapter.printLabel(label, attemptId)` ทีละใบตาม `parcel_seq` หยุดทันทีเมื่อใบใดพิมพ์ไม่สำเร็จ<br>**3. บันทึกผล** (transaction เดียว) — บันทึกประวัติทุกใบที่สั่งพิมพ์ **Q9A.3:** `INSERT INTO label_print_history ( label_print_history_id, print_attempt_id, label_id, admin_id, is_reprint, outcome, error_code ) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (print_attempt_id, label_id) DO NOTHING`<br>เมื่อพิมพ์ครบทุกใบ ระบบอัปเดตใบปะเป็น `printed` และสถานะ Order เป็น \"พิมพ์ใบปะสินค้าแล้ว\" **Q9A.4:** `WITH updated_labels AS ( UPDATE labels SET label_status = 'printed', printed_at = CURRENT_TIMESTAMP WHERE order_id = $1 ) UPDATE orders SET order_status = 'พิมพ์ใบปะสินค้าแล้ว', updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'รอพิมพ์ใบปะสินค้า'`<br>แจ้งว่า \"ส่งใบปะสินค้า [Order ID] ไปยังเครื่องพิมพ์แล้ว\" พร้อม \"รูปแบบ [template] · [จำนวน] ใบ\" กรณีพิมพ์ทั้งหมดแสดงสรุป \"พิมพ์สำเร็จ [n] · ไม่สำเร็จ [m]\" แล้ว Order ไปรอส่งมอบที่ **Use Case 8A**"
    ],
    [
     "ทางเลือก #1",
-    "ไม่พบ Label Template ที่ตรงกับวิธีจัดส่งหรือช่องทางขายของ Order",
-    "แจ้งเตือนว่า \"ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน\" และนำ Order เข้าสถานะ \"รอดำเนินการด้วยตนเอง\""
+    "ไม่พบใบปะสินค้า/Label Template ของ Order",
+    "แจ้งเตือนว่า \"ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน\" ไม่เปลี่ยนแปลงข้อมูล (Order ที่ไม่มี template ถูก 6S ส่งเข้า \"รอดำเนินการด้วยตนเอง\" เหตุผล `template` ไว้แล้ว)"
    ],
    [
     "ทางเลือก #2",
     "เครื่องพิมพ์ไม่พร้อมใช้งาน หรือพิมพ์ไม่สำเร็จ",
-    "แจ้งเตือนว่า \"พิมพ์ใบปะสินค้าไม่สำเร็จ กรุณาตรวจสอบเครื่องพิมพ์\" และคงสถานะ Order เป็น \"รอพิมพ์ใบปะสินค้า\" เพื่อให้ลองพิมพ์ใหม่ได้"
+    "บันทึกประวัติใบที่ล้มเหลวด้วย `outcome`='failed' และ `error_code` (**Q9A.3**) ไม่เรียก **Q9A.4** แจ้งเตือนว่า \"พิมพ์ใบปะสินค้าไม่สำเร็จ กรุณาตรวจสอบเครื่องพิมพ์\" Order คงสถานะ \"รอพิมพ์ใบปะสินค้า\" ให้กดพิมพ์ใหม่ได้"
    ],
    [
     "ทางเลือก #3",
-    "Admin ต้องการพิมพ์ใบปะสินค้าซ้ำ (เช่น ใบเดิมเสียหาย)",
-    "ระบบให้ Admin ยืนยันการพิมพ์ซ้ำ แล้วบันทึก Log การพิมพ์ซ้ำพร้อมเวลาและผู้ดำเนินการ"
+    "Super Admin ต้องการพิมพ์ใบปะสินค้าซ้ำ (เช่น ใบเดิมเสียหาย)",
+    "ระบบแสดงหน้าต่างยืนยัน \"ระบบจะบันทึก Log การพิมพ์ซ้ำพร้อมเวลาและผู้ดำเนินการ\" เมื่อกด \"ยืนยันพิมพ์ซ้ำ\" ระบบเรียก `printLabelsAction(orderIds, reprint=true)` พิมพ์ทุกใบอีกครั้ง บันทึกประวัติด้วย `is_reprint`=true และ `admin_id` (**Q9A.3**) ไม่เปลี่ยนสถานะ Order แล้วแจ้งว่า \"พิมพ์ใบปะสินค้า [Order ID] ซ้ำแล้ว\""
    ],
    [
     "ทางเลือก #4",
-    "Order มีจำนวนสินค้าหลายรายการที่ต้องแยกพัสดุ (Multi-parcel)",
-    "ระบบสร้างใบปะสินค้าแยกตามจำนวนพัสดุ พร้อมระบุลำดับกล่อง (เช่น 1/2, 2/2) บนใบปะสินค้าแต่ละใบ"
+    "Order มีหลายกล่อง (Multi-parcel)",
+    "6S สร้างใบปะแยกต่อกล่อง (`parcel_seq`/`parcel_total` เช่น 1/2, 2/2) ระบบพิมพ์ทุกใบตามลำดับและบันทึกประวัติแยกทีละใบ Order จะเป็น \"พิมพ์ใบปะสินค้าแล้ว\" เมื่อพิมพ์ครบทุกใบเท่านั้น"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q9A.1": "shipping.ts · Q9A_1",
+   "Q9A.2": "shipping.ts · Q9A_1_PRINT",
+   "Q9A.3": "shipping.ts · Q9A_2_HISTORY",
+   "Q9A.4": "shipping.ts · Q9A_2_COMPLETE"
+  }
  },
  {
   "id": "10A",
   "name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
   "origin": "เพิ่มใหม่",
-  "goal": "ให้ Admin ลบข้อมูลเก่าที่เสร็จสิ้นแล้วออกจากระบบ เพื่อลดปริมาณข้อมูลสะสมและรักษาประสิทธิภาพของระบบ",
-  "pre": "ข้อมูลที่จะลบต้องอยู่ในสถานะสิ้นสุดแล้ว เช่น Order \"จัดส่งสำเร็จ\" หรือ \"ยกเลิกแล้ว\"",
-  "post": "ข้อมูล Order, Cost, Label และ Reorder ที่เลือกถูกลบออกจากระบบ พร้อมบันทึก Log การลบ",
-  "actor": "Admin",
+  "goal": "ให้ Super Admin ลบข้อมูลเก่าที่เสร็จสิ้นแล้วออกจากระบบ เพื่อลดปริมาณข้อมูลสะสมและรักษาประสิทธิภาพของระบบ",
+  "pre": "Super Admin เข้าสู่ระบบแล้ว ข้อมูลที่จะลบต้องสิ้นสุดแล้ว ได้แก่ Order \"จัดส่งสำเร็จ\" หรือ \"ยกเลิกแล้ว\" และ Reorder \"ยกเลิกแล้ว\" \"ได้รับสินค้าแล้ว\" หรือ \"สั่งซื้อแล้ว\" ที่เลยวันรับสินค้าและไม่ผูกกับ Order ที่ยังไม่ปิด",
+  "post": "ข้อมูล Order, Cost (ประวัติต้นทุน), Label และ Reorder ที่เลือกถูกลบใน transaction เดียว Order ที่ลบถูกเก็บ snapshot (Order + รายการสินค้า + ใบปะ) ไว้ในตาราง `deletion_history`",
+  "actor": "Super Admin",
   "steps": [
    [
     "1",
-    "",
-    "แสดงหน้าลบข้อมูลเก่า พร้อมตัวเลือกวิธีการลบ 2 แบบ ได้แก่ ลบตามช่วงวันที่ และลบ Order ที่ปิดแล้ว (จัดส่งสำเร็จ / ยกเลิกแล้ว)"
+    "เปิดหน้า \"ลบข้อมูลเก่า\"",
+    "แสดง 2 แท็บ ได้แก่ \"ลบตามช่วงวันที่\" และ \"ลบ Order ที่ปิดแล้ว\" รายการที่ลบได้คำนวณจากข้อมูลที่โหลดไว้แล้วในหน้า (`loadAppState`: Order, ประวัติต้นทุน, Reorder) จึงไม่มี query แยกในขั้นนี้"
    ],
    [
     "2",
-    "เลือกวิธีการลบข้อมูล",
-    "แสดงฟอร์มตามวิธีที่เลือก (ดูทางเลือก #1 และ #2)"
+    "เลือกวิธีการลบ แล้วกด \"ตรวจทานรายการ\"",
+    "แสดงรายการที่จะลบแยกตามประเภท และ \"รายการที่ลบไม่ได้\" (ดูทางเลือก #1 และ #2) พร้อมคำเตือน \"การลบนี้ย้อนกลับไม่ได้\""
+   ],
+   [
+    "3",
+    "กด \"ดาวน์โหลดไฟล์สำรองก่อนลบ\" (ไม่บังคับ)",
+    "สร้างไฟล์ CSV ของรายการที่จะลบให้ดาวน์โหลด และแจ้งว่า \"ดาวน์โหลดไฟล์สำรองแล้ว\""
+   ],
+   [
+    "4",
+    "กด \"ยืนยันการลบข้อมูล\"",
+    "`cleanupOrdersAction` ตรวจ session และกรองรายการ (ประเภท Order/Cost/Label/Reorder, ไม่เกิน 1,000 รายการ) แล้ว `cleanupOrdersUseCase` ลบทั้งชุดใน transaction เดียว (`withTransaction`) โดยตรวจเงื่อนไขซ้ำใน SQL ทุกข้อ และลบ Order ก่อน<br>**1. Order:** บันทึก snapshot ลง `deletion_history` ปลด `cost_history.cost_id` ที่อ้างถึง (`orders.reorder_id` เป็น FK จาก Order ไปคำสั่งซื้อ จึงไม่ต้องปลด) ลบ `costs` ของ Order แล้วลบ Order (`order_items` และ `labels` ถูกลบตาม ON DELETE CASCADE) **Q10A.1:** `WITH eligible AS MATERIALIZED ( SELECT o.order_id, jsonb_build_object( 'order', to_jsonb(o), 'items', COALESCE(( SELECT jsonb_agg(to_jsonb(i)) FROM order_items i WHERE i.order_id = o.order_id ), '[]'::jsonb), 'labels', COALESCE(( SELECT jsonb_agg(to_jsonb(l)) FROM labels l WHERE l.order_id = o.order_id ), '[]'::jsonb) ) AS snapshot FROM orders o WHERE o.order_id = $1 AND o.order_status IN ('จัดส่งสำเร็จ', 'ยกเลิกแล้ว') FOR UPDATE ), logged AS ( INSERT INTO deletion_history ( deletion_history_id, order_reference, order_snapshot, admin_id ) SELECT $2, order_id, snapshot, $3 FROM eligible RETURNING order_reference ), detached_cost_history AS ( UPDATE cost_history SET cost_id = NULL WHERE cost_id IN ( SELECT cost_id FROM costs WHERE order_id IN (SELECT order_reference FROM logged) ) RETURNING cost_history_id ), deleted_costs AS ( DELETE FROM costs WHERE order_id IN (SELECT order_reference FROM logged) AND (SELECT COUNT(*) FROM detached_cost_history) >= 0 RETURNING cost_id ), deleted AS ( DELETE FROM orders WHERE order_id IN (SELECT order_reference FROM logged) AND (SELECT COUNT(*) FROM deleted_costs) >= 0 RETURNING order_id ) SELECT order_id FROM deleted`<br>**2. Label:** ลบใบปะของ Order ที่ปิดแล้ว (ถ้า Order ถูกลบในรอบเดียวกันนับว่าลบแล้ว) **Q10A.2:** `DELETE FROM labels l USING orders o WHERE l.order_id = $1 AND o.order_id = l.order_id AND o.order_status IN ('จัดส่งสำเร็จ', 'ยกเลิกแล้ว') RETURNING l.label_id`<br>**3. Cost:** ลบแถวประวัติต้นทุนของ SKU ตามเวลาที่บันทึก (`record_id` = `sku@changed_at`) **Q10A.3:** `WITH sku_row AS ( SELECT sku_id FROM skus WHERE sku = $1 ), deleted_history AS ( DELETE FROM cost_history h USING sku_row s WHERE h.sku_id = s.sku_id AND h.changed_at = $2::timestamptz RETURNING h.cost_history_id ) SELECT 'history' AS kind FROM deleted_history`<br>**4. Reorder:** **Q10A.4:** `DELETE FROM reorders r WHERE r.reorder_id = $1 AND ( r.reorder_status IN ('ยกเลิกแล้ว', 'ได้รับสินค้าแล้ว') OR (r.reorder_status = 'สั่งซื้อแล้ว' AND r.expected_date < CURRENT_DATE) ) AND NOT EXISTS ( SELECT 1 FROM orders o WHERE o.reorder_id = r.reorder_id AND o.order_status NOT IN ('จัดส่งสำเร็จ', 'ยกเลิกแล้ว') ) RETURNING r.reorder_id`<br>— รายการที่ไม่เข้าเงื่อนไขแล้วตอนลบจริงจะถูกข้าม (skipped)<br>— สำเร็จ: แสดง \"ลบข้อมูลสำเร็จ [จำนวน] รายการ\" พร้อมสรุปตามประเภท หรือ \"ลบ Order ที่ปิดแล้วสำเร็จ [จำนวน] รายการ\" สำหรับทางเลือก #2"
+   ],
+   [
+    "5",
+    "",
+    "หลังลบ ระบบโหลดข้อมูลหน้าใหม่ (`revalidatePath`) รวมถึงประวัติการลบ **Q10A.5:** `SELECT order_reference, admin_id, deleted_at FROM deletion_history ORDER BY deleted_at DESC`"
    ],
    [
     "ทางเลือก #1",
-    "**ลบตามช่วงวันที่:** เลือกประเภทข้อมูล (`data_type`) และช่วงวันที่ที่ต้องการลบ (`cutoff_date`) แล้วกด \"ยืนยันการลบข้อมูล\"",
-    "**1. ตรวจสอบค่าที่เลือก** — ต้องเลือกประเภทข้อมูลอย่างน้อย 1 ประเภท (Order/Cost/Label/Reorder) หากไม่เลือกจะแจ้งเตือนว่า \"กรุณาเลือกประเภทข้อมูลที่ต้องการลบ\"; `cutoff_date` ต้องย้อนหลังอย่างน้อย 12 เดือน หากไม่ถึงจะแจ้งเตือนว่า \"สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น\"<br>**2. ดึงรายการข้อมูลในช่วงวันที่ที่เลือก**<br>**Q10A.1:** `SELECT order_id, order_status, order_date FROM orders WHERE order_status IN ('จัดส่งสำเร็จ','ยกเลิกแล้ว') AND order_date < $1`<br>**Q10A.2:** `SELECT cost_id, sku, calculated_at FROM cost_calculation_log WHERE calculated_at < $1`<br>**Q10A.3:** `SELECT label_id, order_id, created_at FROM label WHERE created_at < $1 AND label_status='พิมพ์แล้ว'`<br>**Q10A.4:** `SELECT po_id, sku, status FROM purchase_orders WHERE order_date < $1 AND status IN ('ได้รับสินค้าแล้ว','ยกเลิกแล้ว')`<br>— หากไม่พบข้อมูลที่เข้าเงื่อนไขในช่วงวันที่ที่เลือก จะแจ้งเตือนว่า \"ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก\" และเสนอให้ปรับช่วงวันที่ใหม่ โดยไม่ดำเนินการลบ<br>— หากข้อมูลถูกอ้างอิงโดยรายการที่ยังไม่เสร็จสิ้น จะแจ้งเตือนว่า \"ไม่สามารถลบข้อมูลนี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่\" ข้ามรายการนั้น และแสดงรายการที่ลบไม่ได้พร้อมเหตุผลให้ Admin ตรวจสอบ<br>— หาก Admin ต้องการสำรองข้อมูลก่อนลบ ระบบให้ดาวน์โหลดไฟล์สำรอง (CSV/Excel) ของรายการที่จะลบก่อน แล้วจึงดำเนินการลบเมื่อ Admin ยืนยันอีกครั้ง<br>**3. บันทึก Log และลบข้อมูล**<br>**Q10A.5:** `INSERT INTO deletion_log (data_type, record_id, deleted_at, deleted_by) VALUES ($1, $2, NOW(), $3)` (ทำทีละรายการ)<br>**Q10A.6:** `DELETE FROM orders WHERE order_id = ANY($1)`<br>**Q10A.7:** `DELETE FROM cost_calculation_log WHERE cost_id = ANY($1)`<br>**Q10A.8:** `DELETE FROM label WHERE label_id = ANY($1)`<br>**Q10A.9:** `DELETE FROM purchase_orders WHERE po_id = ANY($1)`<br>— หากลบสำเร็จ ระบบแสดงข้อความ \"ลบข้อมูลสำเร็จ [จำนวน] รายการ\" พร้อมสรุปจำนวนที่ลบแยกตามประเภท และรายการที่ลบไม่ได้พร้อมเหตุผล<br>— หากลบข้อมูลไม่สำเร็จ หรือฐานข้อมูลขัดข้องระหว่างลบ จะแจ้งเตือนว่า \"ลบข้อมูลไม่สำเร็จ กรุณาลองใหม่ภายหลัง\" ยกเลิกการลบทั้งชุด (rollback) และคงข้อมูลเดิมไว้ทั้งหมดเพื่อให้ลองใหม่ได้"
+    "**ลบตามช่วงวันที่:** เลือกประเภทข้อมูล (Order/Cost/Label/Reorder) และวันที่ \"ลบข้อมูลที่เก่ากว่าวันที่\"",
+    "**ตรวจสอบค่า** — ไม่เลือกประเภท: \"กรุณาเลือกประเภทข้อมูลที่ต้องการลบ\"; วันที่ไม่ย้อนหลังอย่างน้อย 12 เดือน: \"สามารถลบข้อมูลที่เก่ากว่า 12 เดือนเท่านั้น\"<br>**เลือกรายการ** (`planRangeCleanup`) — Order ที่ปิดแล้วและ `order_date` ก่อนวันที่เลือก; Label ของ Order ดังกล่าว; Cost = แถวประวัติต้นทุนก่อนวันที่เลือก ยกเว้นแถวล่าสุดของ SKU ที่ยังมี Order ไม่ปิด (ยังใช้ใน 5A); Reorder ที่ \"ยกเลิกแล้ว\", \"ได้รับสินค้าแล้ว\" หรือ \"สั่งซื้อแล้ว\" ที่เลยวันคาดว่าจะได้รับ และไม่มี Order ที่ยังไม่ปิดผูกอยู่ (`orders.reorder_id`)<br>— ไม่พบข้อมูล: \"ไม่พบข้อมูลที่ลบได้ในช่วงเวลาที่เลือก\" และแนะนำ \"ลองปรับช่วงวันที่ใหม่\""
    ],
    [
     "ทางเลือก #2",
-    "**ลบ Order ที่ปิดแล้ว:** เลือก \"ลบ Order ที่ปิดแล้วทั้งหมด\" (จัดส่งสำเร็จ / ยกเลิกแล้ว) แล้วกด \"ยืนยันการลบข้อมูล\"",
-    "**1. ดึงรายการ Order ที่ปิดแล้ว** (ลบได้ทันทีโดยไม่ต้องกำหนดช่วงวันที่)<br>**Q10A.10:** `SELECT order_id, order_status, order_date FROM orders WHERE order_status IN ('จัดส่งสำเร็จ','ยกเลิกแล้ว')`<br>**Q10A.11:** `SELECT label_id FROM label WHERE order_id = ANY($1)`<br>— หากพบ Order ที่ปิดแล้ว ระบบแสดงจำนวน Order และใบปะสินค้าที่เกี่ยวข้องที่จะถูกลบ ให้ Admin ตรวจทานก่อนยืนยัน<br>— หากไม่พบ Order ที่ปิดแล้ว จะแจ้งเตือนว่า \"ไม่พบ Order ที่ปิดแล้วให้ลบ\" และไม่ดำเนินการต่อ<br>— หาก Admin ต้องการสำรองข้อมูลก่อนลบ ระบบให้ดาวน์โหลดไฟล์สำรอง (CSV/Excel) ของ Order ที่จะลบก่อน แล้วจึงดำเนินการลบเมื่อ Admin ยืนยันอีกครั้ง<br>**2. บันทึก Log และลบข้อมูล**<br>**Q10A.12:** `INSERT INTO deletion_log (data_type, record_id, deleted_at, deleted_by) VALUES ('order', $1, NOW(), $2)` (ทำทีละรายการ)<br>**Q10A.13:** `DELETE FROM label WHERE order_id = ANY($1)`<br>**Q10A.14:** `DELETE FROM orders WHERE order_id = ANY($1)`<br>— หากลบสำเร็จ ระบบแสดงข้อความ \"ลบ Order ที่ปิดแล้วสำเร็จ [จำนวน] รายการ\"<br>— หากลบข้อมูลไม่สำเร็จ หรือฐานข้อมูลขัดข้องระหว่างลบ จะแจ้งเตือนว่า \"ลบข้อมูลไม่สำเร็จ กรุณาลองใหม่ภายหลัง\" ยกเลิกการลบทั้งชุด (rollback) และคงข้อมูลเดิมไว้ทั้งหมดเพื่อให้ลองใหม่ได้"
+    "**ลบ Order ที่ปิดแล้ว:** เลือกแท็บ \"ลบ Order ที่ปิดแล้ว\"",
+    "เลือก Order ที่ \"จัดส่งสำเร็จ\" หรือ \"ยกเลิกแล้ว\" ทั้งหมดพร้อมใบปะที่เกี่ยวข้อง (`planClosedCleanup`) โดยไม่ต้องกำหนดวันที่ แสดง \"Order ที่ปิดแล้ว [n] รายการ · ใบปะสินค้าที่เกี่ยวข้อง [m] รายการ\" แล้วลบด้วย **Q10A.1** และ **Q10A.2** ตามขั้นตอนที่ 4<br>— ไม่พบ: \"ไม่พบ Order ที่ปิดแล้วให้ลบ\""
+   ],
+   [
+    "ทางเลือก #3",
+    "(ระบบตรวจพบเอง) มีรายการที่ลบไม่ได้หรือถูกข้าม",
+    "แจ้งเตือนว่า \"ไม่สามารถลบข้อมูลนี้ได้ เนื่องจากยังมีรายการที่เกี่ยวข้องอยู่\" พร้อมรายการที่ลบไม่ได้และจำนวนที่ถูกข้าม"
+   ],
+   [
+    "ทางเลือก #4",
+    "(ระบบตรวจพบเอง) ฐานข้อมูลขัดข้องระหว่างลบ (จำลองด้วย fault `db`)",
+    "ยกเลิกการลบทั้งชุด (rollback) คงข้อมูลเดิมไว้ทั้งหมด และแจ้งข้อผิดพลาดของฐานข้อมูลบนหน้าจอให้ลองใหม่"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q10A.1": "cleanup.ts · Q10A_5_DELETE_ORDER",
+   "Q10A.2": "cleanup.ts · Q10A_3_DELETE_LABEL",
+   "Q10A.3": "cleanup.ts · Q10A_2_DELETE_COST",
+   "Q10A.4": "cleanup.ts · Q10A_4_DELETE_REORDER",
+   "Q10A.5": "cleanup.ts · Q10A_6"
+  }
  },
  {
   "id": "1S",
   "name": "จับคู่ Order กับเลข RSL",
   "origin": "เดิม",
-  "goal": "ให้ Order ที่นำเข้ามาใหม่ถูกจับคู่กับข้อมูลการจัดส่งใน RSL ได้อย่างถูกต้อง เพื่อใช้ในการติดตามและอัปเดตสถานะการจัดส่งต่อไป",
-  "pre": "Order ต้องถูกนำเข้าระบบแล้ว และยังไม่ได้จับคู่กับ RSL",
-  "post": "Order มีข้อมูลอ้างอิง RSL (RSL Reference / Fulfillment ID) ที่ถูกต้อง และเปลี่ยนสถานะเป็น \"รอจัดรูปแบบใบปะสินค้า\" (ส่งต่อให้ 6S)",
-  "actor": "Admin / System (Auto)",
+  "goal": "ให้ Order ที่ตรวจสต๊อกแล้วถูกจับคู่กับข้อมูลในคลัง RSL (เลข `rsl_no`) ได้ถูกต้อง เพื่อใช้จัดรูปแบบใบปะสินค้าและจัดส่งต่อไป",
+  "pre": "Order จับคู่กฎ SKU แล้ว (2S) ผ่าน 3S โดยให้ RSL จัดส่ง (`order_items.fulfill_source`='rsl') และมีสถานะ \"ยังไม่ได้จับคู่\" หรือ \"รอดำเนินการด้วยตนเอง\" ที่ `manual_reason`='rsl' (Order ที่บริษัทจัดส่งเองจากคลังบริษัทไม่ผ่าน Use Case นี้)",
+  "post": "Order มี `rsl_no` และ `rsl_matched_at` สถานะ \"รอจัดรูปแบบใบปะสินค้า\" และ `executeWorkflow` รัน 6S ต่อใน transaction เดียวกันทันที (สำเร็จแล้วเป็น \"รอพิมพ์ใบปะสินค้า\")",
+  "actor": "Super Admin (กดสั่งจับคู่จากหน้าจอ), RSL",
   "steps": [
    [
     "1",
     "",
-    "แสดงรายการ Order ใหม่ที่ยังไม่ได้จับคู่กับ RSL โดยดึงข้อมูลจากช่องทางขาย (Rakuten Ichiba)"
+    "หน้า \"จับคู่ Order กับ RSL\" (`/orders/rsl-match`) แสดงรายการ \"ยังไม่ได้จับคู่\" และ \"จับคู่แล้ว รอพิมพ์ใบปะสินค้า\" เฉพาะ Order ที่ RSL จัดส่ง (`fulfill_source`='rsl')"
    ],
    [
     "2",
-    "Admin เลือก Order หรือกด \"จับคู่อัตโนมัติทั้งหมด\"",
-    "ระบบเริ่มกระบวนการจับคู่"
+    "Super Admin กด \"จับคู่กับ RSL\" ที่ Order หรือกด \"จับคู่อัตโนมัติทั้งหมด\"",
+    "ปุ่มรายตัวเรียก `matchRslAction(orderId)` → `matchRslUseCase`<br>ปุ่มทั้งหมดเรียก `matchAllRslAction` → `matchAllRslUseCase` ดึงคิว Order ที่จับคู่ได้ **Q1S.1:** `SELECT o.order_id FROM orders o WHERE ( o.order_status = 'ยังไม่ได้จับคู่' OR (o.order_status = 'รอดำเนินการด้วยตนเอง' AND o.manual_reason = 'rsl') ) AND EXISTS ( SELECT 1 FROM order_items oi WHERE oi.order_id = o.order_id AND oi.fulfill_source = 'rsl' ) ORDER BY o.order_date, o.order_id` แล้วเรียก `matchRslUseCase` ทีละ Order"
    ],
    [
     "3",
-    "กด \"จับคู่กับ RSL\"",
-    "**ค้นหาข้อมูลใน RSL** — **Q1S.1:** `SELECT rsl_order_id, rsl_sku, rsl_variation, rsl_stock_qty FROM rsl_shipments WHERE rsl_sku=$1 AND rsl_variation=$2`<br>**ตรวจสอบความถูกต้อง:** เปรียบเทียบ SKU และ Variation ของ Order กับข้อมูลใน RSL; หากไม่พบ SKU ที่ตรงกัน จะแจ้งเตือนว่า \"ไม่พบสินค้านี้ในระบบ RSL\"; หากพบ SKU ตรงกันมากกว่า 1 รายการ (กรณีข้อมูลซ้ำ) จะแจ้งเตือนว่า \"พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง\"<br>**บันทึกผลการจับคู่** — **Q1S.2:** `UPDATE orders SET rsl_matched=true, rsl_reference_id=$1, order_status='รอจัดรูปแบบใบปะสินค้า', matched_at=NOW() WHERE order_id=$2`<br>หากบันทึกสำเร็จ ระบบแสดงข้อความ \"จับคู่ Order กับ RSL สำเร็จ\" พร้อมหมายเลขอ้างอิง RSL และส่งต่อไปทำ **Use Case 6S**"
+    "",
+    "**1. ล็อกและตรวจสอบ Order** — **Q1S.2:** `SELECT o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status, o.manual_reason, o.shipping_address, o.shipping_method, o.rsl_no, o.cancelled_at, o.customer_cancel_requested, item.channel_sku, item.variation, item.qty, item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku, EXISTS ( SELECT 1 FROM labels l WHERE l.order_id = o.order_id AND l.printed_at IS NOT NULL ) AS label_printed, reorder.reorder_id, reorder.reorder_status FROM orders o INNER JOIN LATERAL ( SELECT oi.* FROM order_items oi WHERE oi.order_id = o.order_id ORDER BY oi.order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN reorders reorder ON reorder.reorder_id = o.reorder_id WHERE o.order_id = $1 FOR UPDATE OF o` Order ต้องอยู่ในสถานะตามเงื่อนไขก่อนเริ่ม มี SKU แล้ว และ `fulfill_source`='rsl' (Order ที่บริษัทจัดส่งเองถูกปฏิเสธ)<br>**2. ค้นหาใน RSL** — เรียก `RslAdapter.matchOrder({sku, variation})` แล้วเลือกผลด้วย `chooseRslMatch`: ไม่พบ = ทางเลือก #1, พบมากกว่า 1 รายการและยังไม่ได้เลือก = ทางเลือก #2, พบ 1 รายการ (หรือ Admin เลือกแล้ว) = จับคู่ได้<br>**3. บันทึกผลการจับคู่** — ภายใน `executeWorkflow` ล็อก Order ซ้ำ (**Q1S.2**) แล้วบันทึก `rsl_no` และสถานะ \"รอจัดรูปแบบใบปะสินค้า\" **Q1S.3:** `UPDATE orders SET rsl_no = $2, rsl_matched_at = CASE WHEN $2::text IS NULL THEN NULL ELSE CURRENT_TIMESTAMP END, order_status = $3, manual_reason = $4, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1`<br>ใน transaction เดียวกัน `executeWorkflow` รัน **Use Case 6S** สร้างใบปะสินค้าต่อทันที แล้วแจ้งว่า \"จับคู่ Order กับ RSL สำเร็จ\" กรณีกดทั้งหมดแสดงสรุป \"จับคู่สำเร็จ [n] · ต้องเลือกเอง [m] · ไม่พบใน RSL [k]\""
    ],
    [
     "ทางเลือก #1",
     "ไม่พบ SKU ที่ตรงกันใน RSL",
-    "แจ้งเตือนตามข้อ 3 และนำ Order เข้าสถานะ \"รอดำเนินการด้วยตนเอง\" (Manual Review) เพื่อให้ Admin ตรวจสอบหรือแก้ไขข้อมูล SKU"
+    "บันทึก (**Q1S.3**) ด้วย `rsl_no`=NULL สถานะ \"รอดำเนินการด้วยตนเอง\" และ `manual_reason`='rsl' แจ้งเตือนว่า \"ไม่พบสินค้านี้ในระบบ RSL\" Order ยังอยู่ในคิวให้กดจับคู่ใหม่ได้"
    ],
    [
     "ทางเลือก #2",
     "พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ",
-    "ระบบแสดงรายการที่ตรงกันทั้งหมดให้ Admin เลือกจับคู่ด้วยตนเอง"
+    "แจ้งเตือนว่า \"พบข้อมูล RSL ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง\" และแสดงหน้าต่าง \"เลือกรายการ RSL สำหรับ [Order ID] · [SKU]\" พร้อมจำนวนคงเหลือในคลัง RSL เมื่อ Admin กด \"เลือกรายการนี้\" ระบบเรียก `matchRslAction(orderId, chosen)` และบันทึกตามขั้นตอนที่ 3"
    ],
    [
     "ทางเลือก #3",
-    "Admin ต้องการยกเลิกการจับคู่ที่ทำไปแล้ว (จับคู่ผิด)",
-    "ระบบให้ Admin กด \"ยกเลิกการจับคู่\" และล้างค่า `rsl_reference_id` เพื่อให้ Order กลับไปอยู่ในสถานะ \"ยังไม่ได้จับคู่\""
+    "Super Admin กด \"ยกเลิกการจับคู่\" (จับคู่ผิด)",
+    "`unmatchRslAction` → `unmatchRslUseCase` ล็อก Order (**Q1S.2**) แล้ว **Q1S.4:** `WITH eligible AS ( SELECT order_id FROM orders WHERE order_id = $1 AND rsl_no IS NOT NULL AND ( order_status IN ('รอจัดรูปแบบใบปะสินค้า', 'รอพิมพ์ใบปะสินค้า') OR (order_status = 'รอดำเนินการด้วยตนเอง' AND rsl_no IS NOT NULL) ) ), removed_labels AS ( DELETE FROM labels WHERE order_id IN (SELECT order_id FROM eligible) ) UPDATE orders SET rsl_no = NULL, rsl_matched_at = NULL, order_status = 'ยังไม่ได้จับคู่', manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE order_id IN (SELECT order_id FROM eligible) RETURNING order_id` ทำได้เฉพาะ Order ที่มี `rsl_no` (Order ที่บริษัทจัดส่งเองไม่เคยจับคู่จึงยกเลิกไม่ได้) และอยู่ในสถานะ \"รอจัดรูปแบบใบปะสินค้า\", \"รอพิมพ์ใบปะสินค้า\" หรือ \"รอดำเนินการด้วยตนเอง\" ที่มี `rsl_no` ระบบลบใบปะที่สร้างไว้ ล้าง `rsl_no` และแจ้งว่า \"ยกเลิกการจับคู่ [Order ID] แล้ว กลับไปอยู่ในสถานะ ยังไม่ได้จับคู่\""
    ],
    [
     "ทางเลือก #4",
     "การเชื่อมต่อกับระบบ RSL ล้มเหลวขณะจับคู่",
-    "แจ้งเตือนว่า \"ไม่สามารถเชื่อมต่อกับระบบ RSL ได้ กรุณาลองใหม่ภายหลัง\" และคง Order ไว้ในสถานะ \"ยังไม่ได้จับคู่\" เพื่อให้ระบบลองจับคู่ใหม่อัตโนมัติในรอบถัดไป"
+    "แจ้งเตือนว่า \"ไม่สามารถเชื่อมต่อกับระบบ RSL ได้ กรุณาลองใหม่ภายหลัง\" ไม่เปลี่ยนแปลงข้อมูล Order คงสถานะเดิม กรณีกดทั้งหมดระบบหยุดที่ Order แรกที่เชื่อมต่อไม่ได้ ให้ Super Admin กดใหม่ภายหลัง"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q1S.1": "orders.ts · Q1S_1_QUEUE",
+   "Q1S.2": "orders.ts · Q2A_1_FOR_UPDATE",
+   "Q1S.3": "orders.ts · Q1S_1",
+   "Q1S.4": "orders.ts · Q1S_1_UNMATCH"
+  }
  },
  {
   "id": "2S",
   "name": "จับคู่กฎ SKU",
   "origin": "เพิ่มใหม่",
-  "goal": "ให้ระบบจับคู่ SKU ที่ลูกค้าสั่งใน Marketplace เข้ากับกฎ SKU ภายในระบบได้อย่างถูกต้อง",
-  "pre": "Order อยู่ในสถานะ \"รอจับคู่กฎ SKU\" และมีกฎ SKU ถูกตั้งค่าไว้ในระบบ (3A)",
-  "post": "Order ถูกผูกกับ `sku_rule_id` ที่ถูกต้อง และเปลี่ยนสถานะเป็น \"รอตรวจสอบสต๊อก\" (3S)",
-  "actor": "System (Auto)",
+  "goal": "ให้ระบบจับคู่รหัสสินค้าใน Marketplace (`channel_sku`) ของ Order เข้ากับ SKU ภายในระบบ (`skus.channel_sku`) โดยอัตโนมัติ",
+  "pre": "Order อยู่ในสถานะ \"รอจับคู่กฎ SKU\" (Super Admin ยืนยัน Order แล้วใน 2A) และ SKU ที่ใช้งาน (`sku_status`='active') มี `channel_sku` ตั้งไว้แล้ว (3A)",
+  "post": "`order_items.sku_id` ถูกผูกกับ SKU ที่ตรงกันและ Order เปลี่ยนเป็น \"รอตรวจสอบสต๊อก\" แล้วทำ 3S ต่อทันทีใน transaction เดียวกัน / หากไม่พบหรือพบมากกว่า 1 รายการ Order เปลี่ยนเป็น \"รอดำเนินการด้วยตนเอง\" (`manual_reason`='sku-rule')",
+  "actor": "ระบบทำงานอัตโนมัติ (ทำงานใน `executeWorkflow` ต่อจาก action ของ Super Admin)",
   "steps": [
    [
     "1",
-    "",
-    "ระบบดึงรายการ Order ที่อยู่ในสถานะ \"รอจับคู่กฎ SKU\" ขึ้นมาประมวลผลตามรอบเวลาที่ตั้งไว้"
+    "Super Admin กด \"ยืนยัน\" Order ในหน้าตรวจสอบคำสั่งซื้อ (2A)",
+    "**เริ่มทำงาน** — `verifyOrderAction` เรียก `verifyOrderUseCase` ซึ่งบันทึก Order เป็น \"รอจับคู่กฎ SKU\" ภายใน `executeWorkflow` จากนั้น `runAutomation` ทำงานต่อใน transaction เดียวกัน (ไม่มี Scheduler แยก) โดยล็อก Order ก่อนทุกขั้น **Q2S.1:** `SELECT o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status, o.manual_reason, o.shipping_address, o.shipping_method, o.rsl_no, o.cancelled_at, o.customer_cancel_requested, item.channel_sku, item.variation, item.qty, item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku, EXISTS ( SELECT 1 FROM labels l WHERE l.order_id = o.order_id AND l.printed_at IS NOT NULL ) AS label_printed, reorder.reorder_id, reorder.reorder_status FROM orders o INNER JOIN LATERAL ( SELECT oi.* FROM order_items oi WHERE oi.order_id = o.order_id ORDER BY oi.order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN reorders reorder ON reorder.reorder_id = o.reorder_id WHERE o.order_id = $1 FOR UPDATE OF o`"
    ],
    [
     "2",
     "",
-    "**1. ค้นหากฎ SKU ที่ตรงกัน** — ระบบเทียบ `channel_sku` ของ Order (รหัสที่ใช้ใน Marketplace) กับกฎ SKU ภายในระบบ<br>**Q2S.1:** `SELECT sku_rule_id, sku, variation, product_name, channel_sku FROM sku_rules WHERE channel_sku=$1 AND sales_channel=$2`<br>— หากไม่พบกฎ SKU ที่ตรงกัน จะแจ้งเตือนว่า \"ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน\" และตั้งสถานะ Order เป็น \"รอดำเนินการด้วยตนเอง\" (Manual Review) เพื่อให้ Admin ไปตั้งกฎ SKU (3A) หรือยกเลิก Order (7A)<br>— หากพบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ (ข้อมูลซ้ำ) จะแจ้งเตือนว่า \"พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง\" และแสดงรายการที่ตรงกันทั้งหมดให้ Admin เลือกยืนยัน<br>— หากฐานข้อมูลกฎ SKU เข้าถึงไม่ได้ขณะประมวลผล จะแจ้งเตือนว่า \"ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order เป็น \"รอจับคู่กฎ SKU\" เพื่อให้ระบบ retry อัตโนมัติในรอบถัดไป"
+    "**1. ค้นหา SKU ที่ตรงกัน** — `matchSkuUseCase` เทียบ `channel_sku` และ `sales_channel` ของรายการสินค้าใน Order กับ SKU ที่เปิดใช้งาน **Q2S.2:** `SELECT sku_id, sku, product_name, variation FROM skus WHERE channel_sku = $1 AND sales_channel = $2 AND sku_status = 'active' ORDER BY sku_id`<br>— หากไม่พบ SKU ที่ตรงกัน จะแจ้งเตือนว่า \"ไม่พบกฎ SKU ที่ตรงกับสินค้านี้ กรุณาตั้งกฎ SKU ก่อน\" และตั้ง Order เป็น \"รอดำเนินการด้วยตนเอง\" (`manual_reason`='sku-rule', `sku_id`=NULL) ด้วย **Q2S.3** เพื่อให้ Super Admin ไปตั้ง `channel_sku` ใน 3A หรือยกเลิก Order (7A)<br>— หากพบมากกว่า 1 รายการ จะแจ้งเตือนว่า \"พบกฎ SKU ที่ตรงกันมากกว่า 1 รายการ กรุณาเลือกด้วยตนเอง\" และตั้งสถานะแบบเดียวกัน (`manual_reason`='sku-rule') ด้วย **Q2S.3** ให้ Super Admin แก้ `channel_sku` ใน 3A ให้เหลือรายการเดียว"
    ],
    [
     "3",
     "",
-    "**2. ผูกกฎ SKU เข้ากับ Order และอัปเดตสถานะ**<br>**Q2S.2:** `UPDATE orders SET sku_rule_id=$1, sku=$2, variation=$3, order_status='รอตรวจสอบสต๊อก', sku_matched_at=NOW() WHERE order_id=$4`<br>— หากผูกกฎ SKU สำเร็จ ระบบแสดงผลในหน้าสรุปว่า \"จับคู่กฎ SKU สำเร็จ [จำนวน] รายการ\" และส่ง Order เข้าสู่ขั้นตอนตรวจสอบสต๊อก (3S) โดยอัตโนมัติ<br>— หาก Admin ตั้งกฎ SKU ใหม่เสร็จแล้ว (กลับมาจาก 3A) ระบบนำ Order ที่ค้างในสถานะ \"รอดำเนินการด้วยตนเอง\" กลับเข้าสู่การจับคู่กฎ SKU โดยอัตโนมัติอีกครั้ง"
+    "**2. ผูก SKU และเปลี่ยนสถานะ** **Q2S.3:** `WITH matched_item AS ( UPDATE order_items SET sku_id = $2 WHERE order_id = $1 ) UPDATE orders SET order_status = $3, manual_reason = $4, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'รอจับคู่กฎ SKU'` โดย `$2`=`sku_id` ที่พบ, `$3`='รอตรวจสอบสต๊อก', `$4`=NULL<br>— ระบบแสดงว่า \"จับคู่กฎ SKU สำเร็จ [จำนวน] รายการ\" แล้ว `executeWorkflow` วนกลับไปทำ 3S กับ Order นี้ทันที"
+   ],
+   [
+    "ทางเลือก #1",
+    "(ระบบตรวจพบเอง) อ่านข้อมูลกฎ SKU ไม่ได้ (จำลองด้วย fault `skuRuleDb` ในหน้า /dev)",
+    "บันทึกข้อผิดพลาด **Q2S.4:** `INSERT INTO auto_error_logs ( auto_error_log_id, use_case_id, context_key, error_code, safe_message ) VALUES ($1, $2, $3, $4, $5)` (`use_case_id`='2S', `error_code`='external_unavailable') แจ้งเตือนว่า \"ไม่สามารถอ่านข้อมูลกฎ SKU ได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order เป็น \"รอจับคู่กฎ SKU\" (action 2A ยังสำเร็จ)"
+   ],
+   [
+    "ทางเลือก #2",
+    "(ระบบตรวจพบเอง) มี Order ค้างที่ \"รอจับคู่กฎ SKU\" จากรอบก่อน",
+    "ทุกครั้งที่มี action ใดเรียก `executeWorkflow` ระบบดึง Order ที่ค้างอยู่ (สูงสุด 100 รายการ ข้ามรายการที่ถูกล็อก) **Q2S.5:** `SELECT order_id FROM orders WHERE order_status = 'รอจับคู่กฎ SKU' ORDER BY order_date, order_id LIMIT 100 FOR UPDATE SKIP LOCKED` แล้วทำขั้นตอนที่ 1–3 ใหม่ หากยังอ่านกฎ SKU ไม่ได้จะบันทึก log ด้วย **Q2S.4** อย่างเดียว ไม่แจ้งเตือนบน action ที่ไม่เกี่ยวข้อง<br>เมื่อ Super Admin แก้ `channel_sku` ใน 3A แล้ว Order ที่ `manual_reason`='sku-rule' จะถูกส่งกลับเป็น \"รอจับคู่กฎ SKU\" และถูกจับคู่ใหม่ในรอบถัดไปด้วยวิธีเดียวกัน"
+   ],
+   [
+    "ทางเลือก #3",
+    "(ระบบตรวจพบเอง) ฐานข้อมูลผิดพลาดระหว่างจับคู่",
+    "ยกเลิกทั้ง transaction (รวมการยืนยัน Order ของ 2A) แล้วบันทึกข้อผิดพลาดใน transaction ใหม่ด้วย **Q2S.4** และแจ้งข้อผิดพลาดของฐานข้อมูลบนหน้าจอ"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q2S.1": "orders.ts · Q2A_1_FOR_UPDATE",
+   "Q2S.2": "orders.ts · Q2S_1",
+   "Q2S.3": "orders.ts · Q2S_2",
+   "Q2S.4": "auto-error-logs.ts · Q_AUTO_ERROR_LOG",
+   "Q2S.5": "orders.ts · Q2S_1_RETRY"
+  }
  },
  {
   "id": "3S",
   "name": "ตรวจสอบของสินค้าใน stock + RSL",
   "origin": "เดิม",
-  "goal": "ให้ Admin ทราบปริมาณสินค้าคงเหลือที่ถูกต้อง ทั้งในคลังบริษัทและใน RSL เพื่อใช้ประกอบการตัดสินใจสั่งซื้อเพิ่ม",
-  "pre": "สินค้า (SKU) ต้องมีอยู่ในระบบแล้ว",
-  "post": "Admin เห็นข้อมูลสต๊อกล่าสุดของสินค้าแต่ละ SKU พร้อมสถานะเทียบกับ Reorder Threshold — Order ที่สต๊อกเพียงพอถูกส่งต่อไปจับคู่กับ RSL (1S) ส่วน Order ที่สต๊อกไม่เพียงพอถูกส่งต่อไปคำนวณต้นทุน (4S) และรอ Admin ตัดสินใจสั่งซื้อ (5A)",
-  "actor": "Admin",
+  "goal": "ให้ระบบเลือกแหล่งส่งสินค้าของ Order (คลัง RSL หรือคลังบริษัท) จากยอดสต๊อกจริง หรือส่งต่อไปตัดสินใจสั่งซื้อเพิ่มเมื่อสต๊อกไม่พอ และให้ Super Admin ดูและปรับยอดสต๊อกได้",
+  "pre": "Order อยู่ในสถานะ \"รอตรวจสอบสต๊อก\" (ผ่าน 2S แล้ว) และ SKU มีแถวในตาราง `stock`",
+  "post": "Order ที่ RSL มียอดใช้ได้พอทั้งจำนวน เปลี่ยนเป็น \"ยังไม่ได้จับคู่\" (`fulfill_source`='rsl' ไป 1S) / ถ้า RSL ไม่พอแต่คลังบริษัทพอ เปลี่ยนเป็น \"รอจัดรูปแบบใบปะสินค้า\" (`fulfill_source`='in_house' ข้าม 1S ไป 6S) / ไม่มีแหล่งใดพอ เปลี่ยนเป็น \"รอ Admin ตัดสินใจสั่งซื้อ\" (ไป 4S และ 5A) / Super Admin เห็นยอดสต๊อกล่าสุดเทียบกับ Reorder Threshold",
+  "actor": "ระบบทำงานอัตโนมัติ (ใน `executeWorkflow` ต่อจาก 2S), RSL, Super Admin (ดูและปรับยอดสต๊อก)",
   "steps": [
    [
     "1",
-    "เลือกสินค้าที่ต้องการเช็คสต๊อก",
-    "**Q3S.1:** `SELECT * FROM stock WHERE sku=$1`<br>ระบบดึงข้อมูลสต๊อกล่าสุดของสินค้าที่ผู้ใช้เลือก"
+    "",
+    "**เริ่มทำงาน** — ต่อจาก 2S ใน `executeWorkflow` เดียวกัน เมื่อ Order ที่ล็อกไว้อยู่ในสถานะ \"รอตรวจสอบสต๊อก\" `checkStockUseCase` ล็อกและอ่านแถวสต๊อกของ SKU **Q3S.1:** `SELECT stock.stock_id, stock.sku_id, stock.in_house_qty, stock.rsl_qty FROM stock INNER JOIN skus ON skus.sku_id = stock.sku_id WHERE skus.sku = $1 FOR UPDATE OF stock` การล็อกแถว (`FOR UPDATE`) ทำให้ Order อื่นของ SKU เดียวกันต้องรอตรวจสต๊อกทีละ Order<br>— หากไม่พบแถวสต๊อก ระบบบันทึกข้อผิดพลาดด้วย **Q3S.5** (`error_code`='stock_missing') และคงสถานะ Order ไว้ให้ Super Admin ตรวจสอบ"
    ],
    [
     "2",
-    "กด \"เช็คสต๊อก\" หรือระบบแสดงอัตโนมัติเมื่อเลือกสินค้า",
-    "**ตรวจสอบ:** หากไม่พบ SKU ในระบบ จะแจ้งเตือนว่า \"ไม่พบข้อมูลสินค้านี้ในระบบ\"<br>**คำนวณสต๊อกรวม:** ระบบรวมยอดสต๊อกจากคลังบริษัท (`in_house_qty`) และ RSL (`rsl_qty`) เป็นยอดรวมทั้งหมด แล้วเปรียบเทียบยอดรวมกับ Reorder Threshold ที่ตั้งไว้<br>**แสดงสถานะ:** หากยอดรวม ≤ Reorder Threshold ระบบแสดงสถานะ \"สต๊อกต่ำกว่าเกณฑ์\" (สีแดง/เหลือง) และเตรียมข้อมูลสำหรับการสั่งซื้อเพิ่มอัตโนมัติ; หากยอดรวม > Reorder Threshold ระบบแสดงสถานะ \"สต๊อกปกติ\" (สีเขียว)<br>**ส่งต่อ Order:** หากสต๊อกพอกับจำนวนใน Order ระบบส่ง Order ไปจับคู่กับ RSL (1S) หากไม่พอส่งไปคำนวณต้นทุน (4S) และรอ Admin ตัดสินใจ (5A) — **Q3S.2:** `UPDATE orders SET order_status=$1 WHERE order_id=$2` โดย `$1` เป็น 'ยังไม่ได้จับคู่' หรือ 'รอ Admin ตัดสินใจสั่งซื้อ'"
+    "",
+    "**อ่านยอดจาก RSL** — เรียก `RslAdapter.getStock(sku, client)` (mock adapter อ่านยอด RSL ที่เก็บในฐานข้อมูลภายใน transaction เดียวกัน **Q3S.2:** `SELECT stock.rsl_qty FROM stock INNER JOIN skus ON skus.sku_id = stock.sku_id WHERE skus.sku = $1`)"
+   ],
+   [
+    "3",
+    "",
+    "**หักยอดที่ถูกจองไว้** — รวมจำนวนสินค้าของ Order อื่นที่เป็น SKU เดียวกัน ผ่าน 3S แล้ว ยังไม่ถูกตัดสต๊อก และยังอยู่ระหว่างดำเนินการ (สถานะตั้งแต่ \"ยังไม่ได้จับคู่\" ถึง \"แจ้งเลขติดตามแล้ว\" ตามค่าคงที่ `STOCK_RESERVING_STATUSES`) แยกตามแหล่ง **Q3S.3:** `SELECT COALESCE(SUM(item.qty) FILTER (WHERE item.fulfill_source = 'rsl'), 0) AS rsl_reserved, COALESCE(SUM(item.qty) FILTER (WHERE item.fulfill_source = 'in_house'), 0) AS in_house_reserved FROM order_items item INNER JOIN orders ON orders.order_id = item.order_id WHERE item.sku_id = $1 AND item.stock_deducted = FALSE AND orders.order_status = ANY($2::text[]) AND orders.order_id <> $3` ยอดที่ใช้ได้ของแต่ละแหล่ง = ยอดในแหล่งนั้น − ยอดที่ถูกจอง (Order ที่ยกเลิก ปิดแล้ว ส่งไม่สำเร็จ/ตีกลับ หรือรอดำเนินการด้วยตนเอง ไม่นับ ยอดจองจึงหายไปเองโดยไม่ต้องมีตารางจองแยก)"
+   ],
+   [
+    "4",
+    "",
+    "**เลือกแหล่งส่งสินค้า** (`chooseStockRoute`) — 1) ถ้ายอด RSL ที่ใช้ได้ ≥ `qty` เลือก 'rsl' 2) ถ้าไม่ใช่ และยอดคลังบริษัทที่ใช้ได้ ≥ `qty` เลือก 'in_house' 3) ถ้าไม่มีแหล่งใดพอทั้งจำนวน (แม้รวมสองแหล่งแล้วพอ) ถือว่าสต๊อกไม่พอ เพราะ 7S ตัดสต๊อกจากแหล่งเดียว<br>บันทึกผล **Q3S.4:** `WITH latest_stock AS ( UPDATE stock SET rsl_qty = COALESCE($2, rsl_qty), updated_at = CURRENT_TIMESTAMP WHERE stock_id = $1 ), item_source AS ( UPDATE order_items SET fulfill_source = COALESCE($5, fulfill_source) WHERE order_id = $3 AND EXISTS ( SELECT 1 FROM orders WHERE order_id = $3 AND order_status = 'รอตรวจสอบสต๊อก' ) ) UPDATE orders SET order_status = $4, manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE order_id = $3 AND order_status = 'รอตรวจสอบสต๊อก'` โดย `$2`=ยอด RSL ที่อ่านได้, `$4`=สถานะใหม่, `$5`='rsl' / 'in_house' / NULL<br>— 'rsl': สถานะ \"ยังไม่ได้จับคู่\" ส่งต่อไปจับคู่กับ RSL (**Use Case 1S**) แสดง \"[Order] สต๊อกเพียงพอ ส่งต่อไปจับคู่กับ RSL\"<br>— 'in_house': บริษัทจัดส่งเองจากคลังบริษัท สถานะ \"รอจัดรูปแบบใบปะสินค้า\" ข้าม 1S (ไม่มี `rsl_no`) และ `executeWorkflow` รัน **Use Case 6S** ต่อใน transaction เดียวกันทันที<br>— ไม่พอ: สถานะ \"รอ Admin ตัดสินใจสั่งซื้อ\" แสดง \"[Order] สต๊อกไม่เพียงพอ ส่งต่อไปคำนวณต้นทุนและรอ Admin ตัดสินใจสั่งซื้อ\""
    ],
    [
     "ทางเลือก #1",
-    "ข้อมูลสต๊อกจากคลังบริษัทหรือ RSL ไม่อัปเดตหรือขาดหาย",
-    "แจ้งเตือนว่า \"ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล\" และทำเครื่องหมาย SKU นั้นเป็น \"ข้อมูลไม่สมบูรณ์\" เพื่อรอ Admin ตรวจสอบ"
+    "(ระบบตรวจพบเอง) RSL ไม่ตอบ (fault `rsl`) หรือไม่มียอด RSL",
+    "บันทึกข้อผิดพลาด **Q3S.5:** `INSERT INTO auto_error_logs ( auto_error_log_id, use_case_id, context_key, error_code, safe_message ) VALUES ($1, $2, $3, $4, $5)` (`use_case_id`='3S', `error_code`='external_unavailable') ถือว่า RSL ส่งไม่ได้ ไม่เขียนทับ `rsl_qty` เดิม และเลือกจากคลังบริษัทอย่างเดียวตามขั้นตอนที่ 3–4"
    ],
    [
     "ทางเลือก #2",
-    "Admin ต้องการดูสต๊อกทุก SKU พร้อมกัน (ภาพรวมทั้งหมด)",
-    "ระบบแสดงตารางสรุปสต๊อกทุกสินค้า พร้อมไฮไลต์รายการที่ต่ำกว่า Reorder Threshold ไว้ด้านบนสุดของรายการ"
+    "Super Admin เปิดหน้า \"ตรวจสอบสต๊อก\" เลือกสินค้า แล้วกด \"เช็คสต๊อก\"",
+    "ระบบอ่านสต๊อกทุก SKU **Q3S.6:** `SELECT sku.sku, stock.in_house_qty, stock.rsl_qty, stock.updated_at FROM stock INNER JOIN skus sku ON sku.sku_id = stock.sku_id ORDER BY sku.sku` (โหลดผ่าน `loadAppState`) แสดงคลังบริษัท คลัง RSL และยอดรวม เทียบกับเกณฑ์เติมสต๊อก: ยอดรวม ≤ `reorder_threshold` แสดง \"สต๊อกต่ำกว่าเกณฑ์\" มิฉะนั้นแสดง \"สต๊อกปกติ\"<br>— ไม่พบสินค้า: \"ไม่พบข้อมูลสินค้านี้ในระบบ\"<br>— `rsl_qty` เป็น NULL: ระบุ \"ข้อมูลไม่สมบูรณ์\" และแจ้งว่า \"ข้อมูลสต๊อกไม่ครบถ้วน กรุณาตรวจสอบแหล่งข้อมูล\"<br>— RSL ขัดข้อง: \"ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง\" และแสดงเฉพาะข้อมูลสต๊อกในคลังบริษัท<br>— ตาราง \"ภาพรวมสต๊อกทุกสินค้า\" เรียงรายการที่ต่ำกว่าเกณฑ์ไว้บนสุด"
    ],
    [
     "ทางเลือก #3",
-    "การเชื่อมต่อกับระบบ RSL ล้มเหลวขณะดึงข้อมูลสต๊อก",
-    "แจ้งเตือนว่า \"ไม่สามารถดึงข้อมูลสต๊อกจาก RSL ได้ กรุณาลองใหม่ภายหลัง\" และแสดงเฉพาะข้อมูลสต๊อกในคลังบริษัทพร้อมระบุว่าเป็นข้อมูลบางส่วน"
+    "Super Admin กรอกยอดคลังบริษัท ยอดคลัง RSL (เว้นว่างได้) และเหตุผลที่ปรับ แล้วกด \"บันทึกยอดสต๊อก\"",
+    "`adjustStockAction` เรียก `adjustStockUseCase` ตรวจว่ายอดเป็นจำนวนเต็มตั้งแต่ 0 และมีเหตุผล (ไม่เกิน 500 ตัวอักษร) หากไม่ผ่านแจ้งว่า \"กรอกจำนวนเต็มตั้งแต่ 0 ขึ้นไปและระบุเหตุผล\"<br>จากนั้นใน `executeWorkflow`: ล็อกแถวสต๊อก **Q3S.7:** `SELECT stock.stock_id, stock.sku_id, stock.in_house_qty, stock.rsl_qty FROM stock INNER JOIN skus ON skus.sku_id = stock.sku_id WHERE skus.sku = $1 FOR UPDATE OF stock` บันทึกยอดใหม่และตั้งสถานะซิงก์ Rakuten เป็น 'pending' **Q3S.8:** `WITH adjusted AS ( UPDATE stock SET in_house_qty = $2, rsl_qty = $3, updated_at = CURRENT_TIMESTAMP WHERE stock_id = $1 RETURNING stock_id ) INSERT INTO rakuten_stock_sync_states (stock_id, sync_status) SELECT stock_id, 'pending' FROM adjusted ON CONFLICT (stock_id) DO UPDATE SET sync_status = 'pending', last_error_code = NULL` บันทึกประวัติการปรับ **Q3S.9:** `INSERT INTO stock_adjustment_history ( stock_adjustment_history_id, stock_id, previous_in_house_qty, new_in_house_qty, previous_rsl_qty, new_rsl_qty, reason, admin_id ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)` แล้วซิงก์ยอดไป Rakuten Ichiba ตาม 7S ขั้นตอนที่ 5 แสดง \"บันทึกยอดสต๊อกและประวัติแล้ว\""
    ]
-  ]
+  ],
+  "qmap": {
+   "Q3S.1": "stock.ts · Q3S_1_ORDER",
+   "Q3S.2": "stock.ts · Q3S_1_RSL",
+   "Q3S.3": "stock.ts · Q3S_1_RESERVED",
+   "Q3S.4": "stock.ts · Q3S_1_ROUTE",
+   "Q3S.5": "auto-error-logs.ts · Q_AUTO_ERROR_LOG",
+   "Q3S.6": "stock.ts · Q3S_1",
+   "Q3S.7": "stock.ts · Q3S_1_FOR_UPDATE",
+   "Q3S.8": "stock.ts · Q3S_1_ADJUST",
+   "Q3S.9": "stock.ts · Q3S_1_INSERT_HISTORY"
+  }
  },
  {
   "id": "4S",
   "name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
   "origin": "เดิม",
-  "goal": "ให้ Admin ทราบต้นทุนที่แท้จริงต่อหน่วยของสินค้า เพื่อใช้ประกอบการตัดสินใจสั่งซื้อเติมสต๊อกและกำหนดราคาขาย",
-  "pre": "สินค้า (SKU) ต้องมีข้อมูลต้นทุนพื้นฐานอยู่ในระบบ เช่น ราคาซื้อ ซัพพลายเออร์ และอัตราแลกเปลี่ยน",
-  "post": "ระบบแสดงต้นทุนต่อหน่วย (Unit Cost) ที่คำนวณจากองค์ประกอบต้นทุนทั้งหมดของสินค้านั้น",
-  "actor": "Admin",
+  "goal": "ให้ Super Admin ทราบต้นทุนที่แท้จริงต่อหน่วยของสินค้า เพื่อใช้ประกอบการตัดสินใจสั่งซื้อเติมสต๊อกและกำหนดราคาขาย",
+  "pre": "SKU มีอยู่ในระบบ (3A) Super Admin เข้าสู่ระบบแล้ว",
+  "post": "ระบบแสดงต้นทุนต่อหน่วย (Unit Cost) ทุกครั้งที่คำนวณจะบันทึกประวัติใน `cost_history` และหากเลือก \"บันทึกค่าที่กรอกไว้ใช้ครั้งถัดไป\" จะบันทึกองค์ประกอบและ `unit_cost` ล่าสุดลง `costs` (ใช้ต่อใน 5A)",
+  "actor": "ระบบทำงานอัตโนมัติ (คำนวณเมื่อ Super Admin กด \"คำนวณ\" ที่หน้า `/products/cost` และเมื่อบันทึกสินค้าพร้อมองค์ประกอบต้นทุนใน 3A)",
   "steps": [
    [
     "1",
     "",
-    "แสดงหน้ารายการสินค้า พร้อมช่องค้นหา/กรองตาม SKU หรือชื่อสินค้า"
+    "หน้า `/products/cost` แสดงรายการสินค้าพร้อมช่องค้นหาด้วย SKU หรือชื่อสินค้า ข้อมูลองค์ประกอบต้นทุนที่บันทึกไว้ — **Q4S.1:** `SELECT sku.sku, costs.purchase_price, costs.currency, costs.exchange_rate, costs.exchange_rate_updated_at, costs.intl_freight, costs.duty_fee, costs.marketplace_fee, costs.domestic_shipping, costs.rsl_charge, costs.order_qty, costs.unit_cost, costs.calculated_at FROM costs INNER JOIN skus sku ON sku.sku_id = costs.sku_id ORDER BY sku.sku, costs.calculated_at NULLS LAST, costs.cost_id`<br>และประวัติการคำนวณ — **Q4S.2:** `SELECT sku.sku, history.new_value, history.admin_id, history.changed_at FROM cost_history history INNER JOIN skus sku ON sku.sku_id = history.sku_id ORDER BY history.changed_at, history.cost_history_id`"
    ],
    [
     "2",
-    "เลือกสินค้าที่ต้องการคำนวณต้นทุน หรือกด \"คำนวณต้นทุนเติมสต๊อก\"",
-    "ระบบดึงข้อมูลองค์ประกอบต้นทุนของสินค้านั้น — **Q4S.1:** `SELECT purchase_price, currency, exchange_rate, intl_freight, duty_fee, marketplace_fee, domestic_shipping, rsl_charge, order_qty FROM product_cost WHERE sku=$1`"
+    "เลือกสินค้า หรือกด \"คำนวณต้นทุนเติมสต๊อก\"",
+    "แสดงฟอร์ม \"องค์ประกอบต้นทุน · [SKU]\" เติมค่าที่บันทึกไว้ (สกุลเงินที่ซื้อ, ราคาซื้อทั้งล็อต, อัตราแลกเปลี่ยน, ค่าขนส่งระหว่างประเทศ, ภาษีนำเข้า, จำนวนที่สั่งต่อล็อต, ค่าธรรมเนียมมาร์เก็ตเพลส, ค่าส่งในประเทศ, ค่าธรรมเนียม RSL) และประวัติการคำนวณของ SKU นั้น"
    ],
    [
     "3",
-    "กรอกหรือแก้ไของค์ประกอบต้นทุน (ราคาซื้อ, อัตราแลกเปลี่ยน, ค่าขนส่งระหว่างประเทศ, ภาษีนำเข้า, ค่าธรรมเนียมมาร์เก็ตเพลส, ค่าส่งในประเทศ, ค่า RSL) แล้วกด \"คำนวณ\"",
-    "**ตรวจสอบ:** ข้อมูลที่กรอกต้องไม่เป็นค่าว่างหรือค่าลบ หากพบจะแจ้งเตือนว่า \"กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง\"; หากไม่มีอัตราแลกเปลี่ยนล่าสุด ระบบจะแจ้งเตือนว่า \"ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง\"<br>**คำนวณต้นทุนต่อหน่วย** — **Q4S.2:** `Unit Cost = ((purchase_price × exchange_rate) + intl_freight + duty_fee) / order_qty + marketplace_fee + domestic_shipping + rsl_charge`<br>**บันทึกผลการคำนวณ** — **Q4S.3:** `INSERT INTO cost_calculation_log (sku, unit_cost, calculated_at, calculated_by) VALUES ($1, $2, NOW(), $3)`<br>ระบบแสดงผลต้นทุนต่อหน่วยพร้อมสรุปองค์ประกอบแต่ละรายการ"
+    "กรอก/แก้องค์ประกอบต้นทุน เลือก \"บันทึกค่าที่กรอกไว้ใช้ครั้งถัดไป\" (ค่าเริ่มต้นเลือกไว้) แล้วกด \"คำนวณ\"",
+    "ระบบเรียก Server Action `calculateCostAction` → `calculateCostUseCase` → `saveCostDraft` ใน transaction เดียว<br>**1. ล็อก SKU** — **Q4S.3:** `SELECT sku_id, sku, channel_sku FROM skus WHERE sku = $1 FOR UPDATE`<br>**2. ตรวจสอบค่าที่กรอก** — หากอัตราแลกเปลี่ยนว่าง จะแจ้งเตือนว่า \"ไม่พบอัตราแลกเปลี่ยนล่าสุด กรุณาระบุด้วยตนเอง\" หากช่องใดว่าง ไม่ใช่ตัวเลข ติดลบ หรือ `order_qty`/`exchange_rate` ≤ 0 จะแจ้งเตือนว่า \"กรุณากรอกข้อมูลต้นทุนให้ครบถ้วนและถูกต้อง\"<br>**3. ล็อกต้นทุนเดิม** — **Q4S.4:** `SELECT costs.cost_id, to_jsonb(costs) AS snapshot, costs.exchange_rate, costs.exchange_rate_updated_at FROM costs WHERE costs.sku_id = $1 ORDER BY costs.calculated_at DESC NULLS LAST, costs.cost_id LIMIT 1 FOR UPDATE` (ถ้าอัตราแลกเปลี่ยนไม่เปลี่ยน ใช้ `exchange_rate_updated_at` เดิม ถ้าเปลี่ยน ตั้งเป็นเวลาปัจจุบัน)<br>**4. คำนวณต้นทุนต่อหน่วย** (`calcUnitCost`) — `unit_cost = ((purchase_price × exchange_rate) + intl_freight + duty_fee) / order_qty + marketplace_fee + domestic_shipping + rsl_charge`<br>**5. บันทึกองค์ประกอบ** (เมื่อเลือกบันทึกค่า) — **Q4S.5:** `INSERT INTO costs ( cost_id, purchase_price, currency, exchange_rate, exchange_rate_updated_at, intl_freight, duty_fee, marketplace_fee, domestic_shipping, rsl_charge, order_qty, unit_cost, calculated_at, sku_id ) VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, CURRENT_TIMESTAMP, $13 ) ON CONFLICT (cost_id) DO UPDATE SET purchase_price = EXCLUDED.purchase_price, currency = EXCLUDED.currency, exchange_rate = EXCLUDED.exchange_rate, exchange_rate_updated_at = EXCLUDED.exchange_rate_updated_at, intl_freight = EXCLUDED.intl_freight, duty_fee = EXCLUDED.duty_fee, marketplace_fee = EXCLUDED.marketplace_fee, domestic_shipping = EXCLUDED.domestic_shipping, rsl_charge = EXCLUDED.rsl_charge, order_qty = EXCLUDED.order_qty, unit_cost = EXCLUDED.unit_cost, calculated_at = CURRENT_TIMESTAMP RETURNING cost_id`<br>**6. บันทึกประวัติ** (ทุกครั้ง เก็บค่าก่อน/หลังเป็น JSON) — **Q4S.6:** `INSERT INTO cost_history ( cost_history_id, sku_id, cost_id, previous_value, new_value, admin_id ) VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6)`<br>**7. เทียบราคาขาย** — **Q4S.7:** `SELECT selling_price FROM skus WHERE sku_id = $1`<br>แสดง \"คำนวณต้นทุนต่อหน่วยแล้ว\" พร้อมผลการคำนวณ ราคาซื้อคิดเป็นเงินบาท การหารด้วยจำนวนต่อล็อต ต้นทุนต่อหน่วย ราคาขายปัจจุบัน และกำไรต่อหน่วย"
    ],
    [
     "ทางเลือก #1",
-    "ข้อมูลองค์ประกอบต้นทุนบางรายการยังไม่มีในระบบ (เช่น ยังไม่เคยตั้งค่า RSL Charge)",
-    "แจ้งเตือนตามข้อ 3 และให้ Admin กรอกค่าด้วยตนเองก่อนคำนวณ พร้อมเสนอบันทึกค่านั้นไว้ใช้ครั้งถัดไป"
+    "องค์ประกอบบางรายการยังไม่เคยตั้งค่า (เช่น `rsl_charge` เป็น NULL)",
+    "ฟอร์มเว้นช่องนั้นว่างและไฮไลต์ให้กรอก หากกดคำนวณโดยยังว่าง ระบบแจ้งเตือนตามขั้นตอนที่ 3 ข้อ 2 เมื่อกรอกครบและเลือก \"บันทึกค่าที่กรอกไว้ใช้ครั้งถัดไป\" ค่าจะถูกบันทึกด้วย **Q4S.5**"
    ],
    [
     "ทางเลือก #2",
-    "ต้นทุนต่อหน่วยที่คำนวณได้สูงกว่าราคาขายปัจจุบัน",
-    "ระบบแสดงคำเตือน \"ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน\" (สีแดง) เพื่อให้ Admin พิจารณา"
+    "ต้นทุนต่อหน่วยสูงกว่าราคาขายปัจจุบัน (ผลจาก **Q4S.7**)",
+    "แสดงคำเตือนสีแดง \"ต้นทุนต่อหน่วยสูงกว่าราคาขาย กรุณาตรวจสอบราคาขายหรือองค์ประกอบต้นทุน\""
    ],
    [
     "ทางเลือก #3",
-    "Admin ต้องการเปรียบเทียบต้นทุนจากซัพพลายเออร์หลายราย",
-    "ระบบให้เลือกซัพพลายเออร์ทางเลือก แล้วคำนวณและแสดงต้นทุนต่อหน่วยเปรียบเทียบเป็นตาราง"
+    "ต้องการเปรียบเทียบต้นทุนจากซัพพลายเออร์หลายราย",
+    "ตาราง \"เปรียบเทียบซัพพลายเออร์\" คำนวณ `unit_cost` ด้วยสูตรเดียวกัน ใช้องค์ประกอบอื่นเท่าเดิม เปลี่ยนเฉพาะราคาซื้อ อัตราแลกเปลี่ยน และค่าขนส่งระหว่างประเทศ ตามราคาเสนอของซัพพลายเออร์ทางเลือก (ข้อมูลตัวอย่างในโค้ด ไม่ได้เก็บในฐานข้อมูล) หากไม่มีแสดง \"ยังไม่มีราคาจากซัพพลายเออร์ทางเลือกสำหรับสินค้านี้\""
    ],
    [
     "ทางเลือก #4",
-    "อัตราแลกเปลี่ยนที่ใช้เป็นค่าเก่าเกินกำหนด (เช่น เกิน 24 ชั่วโมง)",
-    "แจ้งเตือนว่า \"อัตราแลกเปลี่ยนอาจไม่เป็นปัจจุบัน กรุณาตรวจสอบก่อนคำนวณ\""
+    "อัตราแลกเปลี่ยนที่บันทึกไว้อัปเดตเกิน 24 ชั่วโมง (`exchange_rate_updated_at`)",
+    "แสดงคำเตือน \"อัตราแลกเปลี่ยนอาจไม่เป็นปัจจุบัน กรุณาตรวจสอบก่อนคำนวณ\" ก่อนกดคำนวณ"
+   ],
+   [
+    "ทางเลือก #5",
+    "บันทึกสินค้าใน 3A พร้อมองค์ประกอบต้นทุน",
+    "`saveProductUseCase` เรียก `saveCostDraft` ใน transaction เดียวกับการบันทึกสินค้า ยอมให้บางช่องว่างได้ (**Q4S.3**-**Q4S.6**) ถ้าครบทุกช่องจึงคำนวณ `unit_cost` ถ้าไม่ครบเก็บ `unit_cost` เป็น NULL"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q4S.1": "costs.ts · Q4S_1",
+   "Q4S.2": "cost-history.ts · Q4S_2_HISTORY",
+   "Q4S.3": "skus.ts · Q3A_1_FOR_UPDATE",
+   "Q4S.4": "costs.ts · Q4S_1_FOR_UPDATE",
+   "Q4S.5": "costs.ts · Q4S_2_SAVE",
+   "Q4S.6": "cost-history.ts · Q4S_2_INSERT_HISTORY",
+   "Q4S.7": "costs.ts · Q4S_1_SELLING_PRICE"
+  }
  },
  {
   "id": "5S",
   "name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
-  "origin": "เดิม",
-  "goal": "ให้ลูกค้าได้รับหมายเลขติดตามพัสดุ (Tracking Number) ผ่านช่องทางขายที่สั่งซื้อ เพื่อให้สามารถติดตามสถานะการจัดส่งได้ด้วยตนเอง",
-  "pre": "Order ต้องมีหมายเลขติดตามพัสดุแล้ว (สถานะ \"อยู่ระหว่างจัดส่ง\") และยังไม่ได้ส่งเลขติดตามให้ลูกค้า",
-  "post": "ลูกค้าได้รับหมายเลขติดตามพัสดุผ่านช่องทางขายที่เกี่ยวข้อง และ Order มีสถานะ \"แจ้งเลขติดตามแล้ว\"",
-  "actor": "System (Auto) / Admin",
+  "origin": "เพิ่มใหม่",
+  "goal": "ให้ลูกค้าได้รับหมายเลขติดตามพัสดุ (Tracking Number) ผ่าน Rakuten Ichiba (RMS) พร้อมเก็บประวัติการส่งทุกครั้ง และส่งต่อให้ระบบตัดสต๊อก (7S) อัตโนมัติ",
+  "pre": "Order มี `tracking_number` และ `carrier_name` จากการส่งมอบ (8A) แล้ว (สถานะ \"อยู่ระหว่างจัดส่ง\" หรือ \"รอแจ้งเลขติดตาม\")",
+  "post": "`tracking_notification_logs` มีรายการผล `sent`, Order มี `tracking_notified`=true และสถานะ \"แจ้งเลขติดตามแล้ว\" (หรือ \"จัดส่งสำเร็จ\" ถ้าผู้ขนส่งยืนยันส่งถึงและตัดสต๊อกครบทุกรายการแล้ว) จากนั้น `executeWorkflow` รัน 7S ใน transaction เดียวกัน",
+  "actor": "Super Admin (กดส่งจากหน้าจอ), Marketplace, Delivery",
   "steps": [
    [
     "1",
     "",
-    "ระบบตรวจสอบ Order ที่มีหมายเลขติดตามพัสดุแล้ว แต่ยังไม่ได้ส่งแจ้งลูกค้า"
+    "หน้า \"จัดส่งสินค้าให้ลูกค้า\" (`/shipping`) ส่วน \"ส่งมอบแล้ว\" แสดงหมายเลขติดตาม ผู้ขนส่ง สถานะจากขนส่ง และสถานะแจ้งลูกค้า (\"แจ้งแล้ว\"/\"ยังไม่แจ้ง\")"
    ],
    [
     "2",
-    "",
-    "แสดงรายการ Order ที่รอส่งเลขติดตามให้ลูกค้าในหน้าสรุปสถานะ"
+    "Super Admin กด \"ส่งเลขติดตามให้ลูกค้า\"",
+    "ระบบเรียก `notifyTrackingAction(orderId, false)` → `notifyTrackingUseCase` ซึ่งทำงานภายใน `executeWorkflow`"
    ],
    [
     "3",
-    "Admin กด \"ส่งเลขติดตามให้ลูกค้า\" หรือระบบส่งอัตโนมัติตามรอบเวลาที่ตั้งไว้",
-    "**ตรวจสอบ:** Order ต้องมี Tracking Number และ Carrier Name ครบถ้วน หากไม่ครบจะแจ้งเตือนว่า \"ข้อมูลหมายเลขติดตามไม่ครบถ้วน ไม่สามารถแจ้งลูกค้าได้\"; Order ต้องยังไม่เคยส่งเลขติดตามมาก่อน หากเคยส่งแล้วจะแจ้งเตือนว่า \"Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่\"<br>**ดึงข้อมูลช่องทางขายของ Order** — **Q5S.1:** `SELECT sales_channel, marketplace_order_id, tracking_number, carrier_name FROM orders WHERE order_id=$1`<br>**ส่งเลขติดตามผ่านช่องทางขาย** — **Q5S.2:** `UPDATE orders SET order_status='แจ้งเลขติดตามแล้ว', tracking_notified=true, tracking_notified_at=NOW() WHERE order_id=$1`<br>ระบบส่งหมายเลขติดตามพัสดุกลับไปยังระบบของช่องทางขาย (Rakuten RMS API) ตามรูปแบบที่ Rakuten กำหนด หากส่งสำเร็จ ระบบแสดงข้อความ \"แจ้งเลขติดตามให้ลูกค้าสำเร็จ\""
+    "",
+    "**1. ล็อกและตรวจสอบ Order** — **Q5S.1:** `SELECT order_id, order_status, marketplace_order_id, tracking_number, carrier_name, tracking_notified, delivery_status FROM orders WHERE order_id = $1 FOR UPDATE`<br>— หากไม่มี `tracking_number` หรือ `carrier_name` จะแจ้งเตือนว่า \"ข้อมูลหมายเลขติดตามไม่ครบถ้วน ไม่สามารถแจ้งลูกค้าได้\"<br>— หาก `tracking_notified`=true และยังไม่ยืนยันส่งซ้ำ ไปทางเลือก #2<br>**2. เตรียม attempt** — ค้นหา attempt เดิมที่ค้างหรือล้มเหลวของเลขเดียวกันเพื่อใช้ `attempt_id` เดิม (กันส่งซ้ำ) **Q5S.2:** `SELECT attempt_id FROM tracking_notification_logs WHERE order_id = $1 AND tracking_number = $2 AND outcome IN ('pending', 'failed') ORDER BY sent_at DESC LIMIT 1` ถ้าไม่มีจึงสร้าง `attempt_id` ใหม่ แล้วบันทึกสถานะ `pending` พร้อม `admin_id` **Q5S.3:** `INSERT INTO tracking_notification_logs ( tracking_notification_log_id, attempt_id, order_id, tracking_number, outcome, sent_at, admin_id, error_code ) VALUES ($1, $2, $3, $4, 'pending', CURRENT_TIMESTAMP, $5, NULL) ON CONFLICT (attempt_id) DO UPDATE SET outcome = 'pending', sent_at = CURRENT_TIMESTAMP, admin_id = EXCLUDED.admin_id, error_code = NULL`<br>**3. ส่งเลขติดตามผ่าน Marketplace** — เรียก `RakutenAdapter.notifyTracking(marketplace_order_id, tracking_number, attemptId)`<br>**4. บันทึกผล** — **Q5S.4:** `WITH finished AS ( UPDATE tracking_notification_logs SET outcome = $2, error_code = $3, sent_at = CURRENT_TIMESTAMP WHERE attempt_id = $1 RETURNING order_id ) UPDATE orders o SET tracking_notified = CASE WHEN $2 = 'sent' THEN TRUE ELSE tracking_notified END, tracking_notified_at = CASE WHEN $2 = 'sent' THEN CURRENT_TIMESTAMP ELSE tracking_notified_at END, order_status = CASE WHEN $2 <> 'sent' AND tracking_notified = FALSE THEN 'รอแจ้งเลขติดตาม' WHEN $2 = 'sent' AND delivery_status = 'delivered' AND EXISTS (SELECT 1 FROM order_items WHERE order_id = o.order_id) AND NOT EXISTS ( SELECT 1 FROM order_items WHERE order_id = o.order_id AND stock_deducted = FALSE ) THEN 'จัดส่งสำเร็จ' WHEN $2 = 'sent' AND tracking_notified = FALSE THEN 'แจ้งเลขติดตามแล้ว' ELSE order_status END, updated_at = CURRENT_TIMESTAMP FROM finished WHERE o.order_id = finished.order_id` ถ้าส่งสำเร็จ ตั้ง `tracking_notified`=true สถานะ \"แจ้งเลขติดตามแล้ว\" (หรือ \"จัดส่งสำเร็จ\" ถ้า `delivery_status`='delivered' และตัดสต๊อกแล้ว) แจ้งว่า \"แจ้งเลขติดตามให้ลูกค้าสำเร็จ\""
+   ],
+   [
+    "4",
+    "",
+    "`executeWorkflow` รันงานอัตโนมัติต่อใน transaction เดียวกัน: Order สถานะ \"แจ้งเลขติดตามแล้ว\" เข้าสู่ **Use Case 7S** (ตัดสต๊อก) และถ้าผู้ขนส่งยืนยันส่งถึงแล้วจะปิดงานเป็น \"จัดส่งสำเร็จ\" (ดู 8A)"
    ],
    [
     "ทางเลือก #1",
     "การส่งข้อมูลไปยัง Marketplace ล้มเหลว (API Error)",
-    "แจ้งเตือนว่า \"ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง\" และคงสถานะเป็น \"รอแจ้งเลขติดตาม\" เพื่อให้ระบบลองส่งใหม่อัตโนมัติในรอบถัดไป"
+    "บันทึกผล `failed` พร้อม `error_code` (**Q5S.4**) Order ที่ยังไม่เคยแจ้งเปลี่ยนเป็น \"รอแจ้งเลขติดตาม\" แจ้งเตือนว่า \"ส่งเลขติดตามไม่สำเร็จ กรุณาลองใหม่ภายหลัง\" เมื่อกดส่งใหม่ ระบบใช้ `attempt_id` เดิม (**Q5S.2**)"
    ],
    [
     "ทางเลือก #2",
-    "Admin ต้องการส่งเลขติดตามซ้ำ (เช่น ลูกค้าแจ้งว่ายังไม่ได้รับ)",
-    "ระบบให้ Admin ยืนยันการส่งซ้ำ แล้วบันทึก Log การส่งซ้ำพร้อมเวลาและผู้ดำเนินการ"
+    "Super Admin ต้องการส่งเลขติดตามซ้ำ (เช่น ลูกค้าแจ้งว่ายังไม่ได้รับ)",
+    "ระบบถามว่า \"Order นี้แจ้งเลขติดตามไปแล้ว ต้องการส่งซ้ำหรือไม่\" และ \"ระบบจะบันทึก Log การส่งซ้ำพร้อมเวลาและผู้ดำเนินการ\" เมื่อกด \"ยืนยันส่งซ้ำ\" ระบบเรียก `notifyTrackingAction(orderId, true)` สร้าง attempt ใหม่พร้อม `admin_id` (**Q5S.3**) ส่งอีกครั้ง และบันทึกผล (**Q5S.4**) โดยไม่เปลี่ยนสถานะ Order"
    ],
    [
     "ทางเลือก #3",
-    "หมายเลขติดตามพัสดุมีการเปลี่ยนแปลงหลังส่งแจ้งลูกค้าไปแล้ว",
-    "ระบบแจ้งเตือน Admin ให้ส่งเลขติดตามใหม่แทนเลขเดิม และบันทึกประวัติการเปลี่ยนแปลงหมายเลขติดตาม"
+    "ผู้ขนส่งยืนยันส่งถึง (`delivered`) และตัดสต๊อกครบทุกรายการแล้วก่อนแจ้งเลขติดตาม",
+    "เมื่อส่งเลขสำเร็จ **Q5S.4** เปลี่ยนสถานะเป็น \"จัดส่งสำเร็จ\" ทันที เพราะครบทั้ง 3 เงื่อนไข"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q5S.1": "shipping.ts · Q5S_1",
+   "Q5S.2": "shipping.ts · Q5S_1_RETRY",
+   "Q5S.3": "shipping.ts · Q5S_1_ATTEMPT",
+   "Q5S.4": "shipping.ts · Q5S_2"
+  }
  },
  {
   "id": "6S",
   "name": "จัดรูปแบบใบปะสินค้า",
-  "origin": "เพิ่มใหม่",
-  "goal": "ให้ระบบสร้างใบปะสินค้า (Shipping Label) ที่มีรูปแบบถูกต้องตามวิธีจัดส่งและช่องทางขายของแต่ละ Order",
-  "pre": "Order อยู่ในสถานะ \"รอจัดรูปแบบใบปะสินค้า\" และมี `rsl_reference_id` ผูกอยู่แล้ว (1S)",
-  "post": "ระบบสร้างไฟล์ใบปะสินค้าพร้อมพิมพ์ และเปลี่ยนสถานะ Order เป็น \"รอพิมพ์ใบปะสินค้า\" (9A)",
-  "actor": "System (Auto)",
+  "origin": "เดิม",
+  "goal": "ให้ระบบสร้างใบปะสินค้า (Shipping Label) ที่มีรูปแบบถูกต้องตามวิธีจัดส่งและช่องทางขายของแต่ละ Order โดยอัตโนมัติ",
+  "pre": "Order อยู่ในสถานะ \"รอจัดรูปแบบใบปะสินค้า\" โดยมาจาก 1S (RSL จัดส่ง มี `rsl_no` แล้ว) หรือมาจาก 3S โดยตรง (บริษัทจัดส่งเองจากคลังบริษัท `fulfill_source`='in_house' ไม่มี `rsl_no`)",
+  "post": "ตาราง `labels` มีใบปะสินค้าของ Order ครบทุกกล่อง (`label_status`='ready') และ Order มีสถานะ \"รอพิมพ์ใบปะสินค้า\" (9A) หรือ \"รอดำเนินการด้วยตนเอง\" ถ้าข้อมูลไม่พอ",
+  "actor": "ระบบทำงานอัตโนมัติ (Label Service)",
   "steps": [
    [
     "1",
     "",
-    "ระบบดึงรายการ Order ที่อยู่ในสถานะ \"รอจัดรูปแบบใบปะสินค้า\" ขึ้นมาประมวลผล"
+    "**จุดเริ่มทำงาน** มี 2 ทาง<br>(ก) ทันทีหลัง 1S บันทึกผลจับคู่ (Order ที่ RSL จัดส่ง) หรือหลัง 3S เลือกคลังบริษัท (Order ที่บริษัทจัดส่งเอง) `executeWorkflow` ล็อก Order **Q6S.1:** `SELECT o.order_id, o.marketplace_order_id, o.sales_channel, o.order_status, o.manual_reason, o.shipping_address, o.shipping_method, o.rsl_no, o.cancelled_at, o.customer_cancel_requested, item.channel_sku, item.variation, item.qty, item.fulfill_source, item.stock_deducted, item.sku_id, sku.sku, EXISTS ( SELECT 1 FROM labels l WHERE l.order_id = o.order_id AND l.printed_at IS NOT NULL ) AS label_printed, reorder.reorder_id, reorder.reorder_status FROM orders o INNER JOIN LATERAL ( SELECT oi.* FROM order_items oi WHERE oi.order_id = o.order_id ORDER BY oi.order_item_id LIMIT 1 ) item ON TRUE LEFT JOIN skus sku ON sku.sku_id = item.sku_id LEFT JOIN reorders reorder ON reorder.reorder_id = o.reorder_id WHERE o.order_id = $1 FOR UPDATE OF o` แล้วทำ 6S ใน transaction เดียวกัน<br>(ข) เมื่อ Super Admin เปิดหน้า `/shipping/label` ระบบเรียก `formatLabelsAction` → `formatLabelsUseCase` ดึง Order ที่รอจัดรูปแบบทั้งหมด **Q6S.2:** `SELECT o.order_id, o.sales_channel, o.rsl_no, o.shipping_address, o.shipping_method, item.qty, item.fulfill_source, o.order_status FROM orders o INNER JOIN LATERAL ( SELECT qty, fulfill_source FROM order_items WHERE order_id = o.order_id ORDER BY order_item_id LIMIT 1 ) item ON TRUE WHERE o.order_status = 'รอจัดรูปแบบใบปะสินค้า' ORDER BY o.order_date, o.order_id` แล้วทำทีละ Order (transaction แยกต่อ Order)"
    ],
    [
     "2",
     "",
-    "**1. ตรวจสอบข้อมูล Order และเลือกรูปแบบใบปะสินค้า** — Order ต้องมี `shipping_address` และ `shipping_method` ครบถ้วน<br>**Q6S.1:** `SELECT label_template FROM shipping_rules WHERE shipping_method=$1 AND sales_channel=$2`<br>— หากข้อมูลที่อยู่จัดส่งไม่ครบถ้วน จะแจ้งเตือนว่า \"ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้\"<br>— หากไม่พบ `label_template` ที่ตรงกับ `shipping_method` และ `sales_channel` ของ Order จะแจ้งเตือนว่า \"ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน\" และตั้งสถานะ Order เป็น \"รอดำเนินการด้วยตนเอง\" (Manual Review)<br>— หาก Order เคยสร้างใบปะสินค้าไปแล้ว จะแจ้งเตือนว่า \"Order นี้มีใบปะสินค้าอยู่แล้ว ต้องการสร้างใหม่หรือไม่\" และหากยืนยัน ระบบจะสร้างทับพร้อมบันทึก Log เวอร์ชันเดิมไว้"
+    "**1. ตรวจสอบข้อมูล Order และเลือกรูปแบบใบปะสินค้า**<br>— หาก `shipping_address` หรือ `shipping_method` ว่าง ระบบบันทึก **Q6S.3:** `UPDATE orders SET order_status = 'รอดำเนินการด้วยตนเอง', manual_reason = $2, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'รอจัดรูปแบบใบปะสินค้า'` ด้วย `manual_reason`='address' และแจ้งเตือนว่า \"ข้อมูลที่อยู่จัดส่งไม่ครบถ้วน ไม่สามารถสร้างใบปะสินค้าได้\"<br>— ระบบหา label rule จากกฎการจัดส่ง (`SHIPPING_RULES` ใน `src/mock/delivery.ts`) ตามแหล่งที่จัดส่ง (`fulfill_source` ที่ 3S บันทึก, `findLabelRule`): Order ที่ RSL จัดส่งใช้รูปแบบตามวิธีจัดส่ง (RSL ปกติ: RSL-STD-A6 กล่องละ 5 ชิ้น, RSL ขนาดใหญ่: RSL-LARGE-A5 กล่องละ 1 ชิ้น) และพิมพ์เลข RSL บนใบปะ Order ที่บริษัทจัดส่งเองใช้รูปแบบของบริษัท INHOUSE-YAMATO-A6 (กล่องละ 5 ชิ้น) โดย `labels.rsl_no` เป็น NULL หากไม่พบ บันทึก (**Q6S.3**) ด้วย `manual_reason`='template' และแจ้งเตือนว่า \"ไม่พบรูปแบบใบปะสินค้าที่เหมาะสม กรุณาตั้งค่า Label Template ก่อน\""
    ],
    [
     "3",
     "",
-    "**2. สร้างใบปะสินค้าและอัปเดตสถานะ**<br>**Q6S.2:** `INSERT INTO label (order_id, label_template, rsl_reference_id, parcel_seq, parcel_total, label_status, created_at) VALUES ($1, $2, $3, $4, $5, 'รอพิมพ์', NOW())`<br>**Q6S.3:** `UPDATE orders SET order_status='รอพิมพ์ใบปะสินค้า' WHERE order_id=$1`<br>— หากสร้างสำเร็จ ระบบแสดงข้อความ \"สร้างใบปะสินค้าสำเร็จ [จำนวน] ใบ\" และส่ง Order เข้าสู่ขั้นตอนพิมพ์ใบปะสินค้า (9A)<br>— หาก Order มีสินค้าหลายรายการที่ต้องแยกพัสดุ (Multi-parcel) ระบบสร้างใบปะสินค้าแยกตามจำนวนพัสดุ พร้อมระบุลำดับกล่อง เช่น 1/2, 2/2 บนใบปะสินค้าแต่ละใบ และผูกทุกใบกับ `order_id` เดียวกัน<br>— หากสร้างไฟล์ใบปะสินค้าไม่สำเร็จ หรือเรียกบริการสร้าง Label ไม่ได้ จะแจ้งเตือนว่า \"ไม่สามารถสร้างใบปะสินค้าได้ กรุณาลองใหม่ภายหลัง\" และคงสถานะ Order เป็น \"รอจัดรูปแบบใบปะสินค้า\" เพื่อให้ระบบ retry อัตโนมัติ"
+    "**2. สร้างใบปะสินค้าและอัปเดตสถานะ**<br>เรียก `LabelServiceAdapter.generateLabels(order, rules)` แล้วตรวจผลด้วย `validGeneratedLabels`<br>บันทึกใบปะทีละกล่อง (`label_id` = `[Order ID]-LABEL-[ลำดับ]`, ซ้ำไม่ได้ จึงรันซ้ำได้ปลอดภัย) **Q6S.4:** `INSERT INTO labels ( label_id, label_template, rsl_no, parcel_seq, parcel_total, label_status, created_at, order_id ) SELECT $1, $2, $3, $4, $5, 'ready', CURRENT_TIMESTAMP, o.order_id FROM orders o WHERE o.order_id = $6 AND o.order_status = 'รอจัดรูปแบบใบปะสินค้า' ON CONFLICT (order_id, parcel_seq) DO NOTHING`<br>เลื่อนสถานะเป็น \"รอพิมพ์ใบปะสินค้า\" **Q6S.5:** `UPDATE orders SET order_status = 'รอพิมพ์ใบปะสินค้า', manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'รอจัดรูปแบบใบปะสินค้า' AND EXISTS (SELECT 1 FROM labels WHERE order_id = $1)`<br>— แจ้งว่า \"สร้างใบปะสินค้าสำเร็จ [จำนวน] ใบ\" และส่ง Order ไปที่ **Use Case 9A**<br>— Order หลายกล่อง (Multi-parcel): จำนวนกล่องคำนวณจาก `max_items_per_parcel` ของ rule ใบปะแต่ละใบมี `parcel_seq`/`parcel_total` เช่น 1/2, 2/2"
+   ],
+   [
+    "ทางเลือก #1",
+    "",
+    "บริการสร้าง Label ล้มเหลวหรือส่งผลที่ไม่ถูกต้อง: แจ้งเตือนว่า \"ไม่สามารถสร้างใบปะสินค้าได้ กรุณาลองใหม่ภายหลัง\" คงสถานะ \"รอจัดรูปแบบใบปะสินค้า\" และบันทึก error<br>— ทาง (ข) และกรณีผลไม่ถูกต้อง (`invalid_response`): **Q6S.6:** `INSERT INTO auto_error_logs ( auto_error_log_id, use_case_id, context_key, error_code, safe_message ) VALUES ($1, '6S', $2, $3, 'Label service could not generate labels')`<br>— ทาง (ก) เมื่อ adapter ล้มเหลว: `logAdapterFailure` บันทึก **Q6S.7:** `INSERT INTO auto_error_logs ( auto_error_log_id, use_case_id, context_key, error_code, safe_message ) VALUES ($1, $2, $3, $4, $5)`<br>ระบบลองใหม่เมื่อเปิดหน้า `/shipping/label` ครั้งถัดไป"
+   ],
+   [
+    "ทางเลือก #2",
+    "",
+    "เกิด error ของฐานข้อมูลระหว่าง 6S ในทาง (ก): ทั้ง transaction (รวมผลจับคู่ 1S) ถูก rollback แล้ว `executeWorkflow` บันทึก error ใน transaction ใหม่ (**Q6S.7**) ด้วย `use_case_id`='6S'"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q6S.1": "orders.ts · Q2A_1_FOR_UPDATE",
+   "Q6S.2": "shipping.ts · Q6S_1",
+   "Q6S.3": "shipping.ts · Q6S_2_MANUAL",
+   "Q6S.4": "shipping.ts · Q6S_2_INSERT",
+   "Q6S.5": "shipping.ts · Q6S_2_ADVANCE",
+   "Q6S.6": "shipping.ts · Q6S_2_ERROR",
+   "Q6S.7": "auto-error-logs.ts · Q_AUTO_ERROR_LOG"
+  }
  },
  {
   "id": "7S",
   "name": "ตัดสต๊อกสินค้า",
   "origin": "เพิ่มใหม่",
   "goal": "ให้ยอดสต๊อกในระบบถูกตัดตามจำนวนที่จัดส่งจริง และจำนวนสินค้าคงเหลือใน Marketplace ตรงกับความเป็นจริง",
-  "pre": "Order อยู่ในสถานะ \"แจ้งเลขติดตามแล้ว\" (5S) และยังไม่ได้ตัดสต๊อก",
-  "post": "ยอด `in_house_qty` หรือ `rsl_qty` ถูกหักตามจำนวนที่ส่ง และจำนวนคงเหลือถูกอัปเดตกลับไปยัง Rakuten Ichiba",
-  "actor": "System (Auto)",
+  "pre": "Order อยู่ในสถานะ \"แจ้งเลขติดตามแล้ว\" (5S ส่งเลขติดตามสำเร็จ) รายการสินค้ายังไม่ถูกตัดสต๊อก และมี `fulfill_source` จาก 3S",
+  "post": "ยอด `in_house_qty` หรือ `rsl_qty` ถูกหักตามแหล่งที่ส่ง `order_items.stock_deducted`=TRUE และยอดคงเหลือรวมถูกซิงก์ไป Rakuten Ichiba (`rakuten_stock_sync_states`='synced') / Order เปลี่ยนเป็น \"จัดส่งสำเร็จ\" ก็ต่อเมื่อขนส่งยืนยันว่าส่งถึงแล้ว แจ้งเลขติดตามแล้ว และตัดสต๊อกครบทุกรายการแล้ว ครบทั้งสามข้อ / Order ที่ค้างตัดสต๊อกถูกหยิบมาทำซ้ำใน action ถัดไป (ยกเว้นสต๊อกไม่พอซึ่งไปที่ \"รอดำเนินการด้วยตนเอง\")",
+  "actor": "ระบบทำงานอัตโนมัติ (ใน `executeWorkflow` ต่อจาก 5S และรอบ retry ของทุก action), Marketplace",
   "steps": [
    [
     "1",
-    "",
-    "ระบบดึงรายการ Order ที่แจ้งเลขติดตามแล้วแต่ยังไม่ได้ตัดสต๊อก ขึ้นมาประมวลผล"
+    "Super Admin กด \"แจ้งเลขติดตาม\" ในหน้าจัดส่ง (5S)",
+    "**เริ่มทำงาน** — `notifyTrackingAction` เรียก `notifyTrackingUseCase` ภายใน `executeWorkflow` เมื่อ Rakuten Ichiba รับเลขติดตามสำเร็จ Order เป็น \"แจ้งเลขติดตามแล้ว\" แล้ว `runAutomation` เรียก `deductStockUseCase` ต่อใน transaction เดียวกัน<br>**ลองตัดสต๊อกซ้ำ (retry)** — ทุก action ที่รัน `executeWorkflow` (เช่น ยืนยัน Order, ปรับสต๊อก, รับสินค้า, บันทึก SKU, ดึงสถานะขนส่ง) ค้นหา Order ที่ค้างอยู่ \"แจ้งเลขติดตามแล้ว\" แต่ยังตัดสต๊อกไม่ครบ หรือขนส่งยืนยันส่งถึงแล้วแต่ยังไม่ปิด — **Q7S.1:** `SELECT o.order_id FROM orders o WHERE o.order_status = 'แจ้งเลขติดตามแล้ว' AND ( EXISTS ( SELECT 1 FROM order_items item WHERE item.order_id = o.order_id AND item.stock_deducted = FALSE ) OR (o.delivery_status = 'delivered' AND o.tracking_notified = TRUE) ) ORDER BY o.order_date, o.order_id LIMIT 100 FOR UPDATE OF o SKIP LOCKED` (ครั้งละไม่เกิน 100 รายการ ข้ามแถวที่ถูกล็อก) แล้วทำขั้นตอนที่ 2–4 กับแต่ละ Order"
    ],
    [
     "2",
     "",
-    "**1. ดึงยอดสต๊อกและตรวจสอบก่อนตัด**<br>**Q7S.1:** `SELECT s.sku, s.variation, s.in_house_qty, s.rsl_qty, o.qty, o.fulfill_source, o.stock_deducted FROM stock s JOIN orders o USING (sku, variation) WHERE o.order_id=$1`<br>— หาก `stock_deducted = true` (Order นี้ถูกตัดสต๊อกไปแล้ว) ระบบจะข้ามรายการนั้นเพื่อป้องกันการตัดสต๊อกซ้ำซ้อน และบันทึก Log ว่า \"Order นี้ตัดสต๊อกไปแล้วเมื่อ [วันที่/เวลา]\"<br>— หากไม่พบ SKU ในตาราง `stock` หรือยอดคงเหลือในแหล่งที่จัดส่ง (`fulfill_source`) น้อยกว่า `qty` จะแจ้งเตือนว่า \"ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก กรุณาตรวจสอบ\" ไม่ตัดสต๊อก และตั้งสถานะเป็น \"รอดำเนินการด้วยตนเอง\" (Manual Review) เพื่อให้ Admin ตรวจนับสต๊อกจริง"
+    "**1. ล็อกรายการสินค้าและสต๊อก** **Q7S.2:** `SELECT item.order_item_id, item.sku_id, item.channel_sku, item.fulfill_source, item.qty, item.stock_deducted, stock.stock_id, stock.in_house_qty, stock.rsl_qty FROM order_items item INNER JOIN stock ON stock.sku_id = item.sku_id WHERE item.order_id = $1 ORDER BY stock.stock_id, item.order_item_id FOR UPDATE OF item, stock` (ล็อกทั้ง `order_items` และ `stock` ทีละแถว เรียงตาม `stock_id` เพื่อกันการตัดซ้ำและ deadlock)<br>— ไม่พบรายการหรือแถวสต๊อก: แจ้งว่า \"ยอดสต๊อกไม่เพียงพอสำหรับการตัดสต๊อก กรุณาตรวจสอบ\" และตั้ง Order เป็น \"รอดำเนินการด้วยตนเอง\" (`manual_reason`='stock-deduct') **Q7S.3:** `UPDATE orders SET order_status = 'รอดำเนินการด้วยตนเอง', manual_reason = 'stock-deduct', updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'แจ้งเลขติดตามแล้ว'`<br>— ทุกรายการ `stock_deducted`=TRUE แล้ว: ข้าม ไม่ตัดซ้ำ<br>— รวมจำนวนตามแถวสต๊อกและแหล่งที่ส่ง หากยอดในแหล่งนั้นน้อยกว่าจำนวนที่ต้องตัด (หรือ `rsl_qty` เป็น NULL) ใช้ **Q7S.3** เช่นกัน และไม่ตัดสต๊อกรายการใดเลย"
    ],
    [
     "3",
     "",
-    "**2. ตัดสต๊อกตามแหล่งที่จัดส่ง** — หาก `fulfill_source` เป็นคลังบริษัท (**Q7S.2:** `UPDATE stock SET in_house_qty = in_house_qty - $1, updated_at=NOW() WHERE sku=$2 AND variation=$3`); หาก `fulfill_source` เป็น RSL (**Q7S.3:** `UPDATE stock SET rsl_qty = rsl_qty - $1, updated_at=NOW() WHERE sku=$2 AND variation=$3`)<br>**3. อัปเดตจำนวนคงเหลือไปยัง Rakuten Ichiba**<br>**Q7S.4:** `Available Qty = in_house_qty + rsl_qty`<br>**Q7S.5:** `UPDATE orders SET stock_deducted=true, mp_stock_synced=true, order_status='จัดส่งสำเร็จ', deducted_at=NOW() WHERE order_id=$1`<br>— หากตัดสต๊อกและซิงค์สำเร็จ ระบบส่งยอดคงเหลือใหม่กลับไปยัง Rakuten Ichiba ที่ลงขาย SKU นั้น และแสดงข้อความ \"ตัดสต๊อกและอัปเดตจำนวนสินค้าสำเร็จ\""
+    "**2. ตัดสต๊อกตามแหล่งที่ส่ง** **Q7S.4:** `UPDATE stock SET in_house_qty = CASE WHEN $2 = 'in_house' THEN in_house_qty - $3 ELSE in_house_qty END, rsl_qty = CASE WHEN $2 = 'rsl' THEN rsl_qty - $3 ELSE rsl_qty END, updated_at = CURRENT_TIMESTAMP WHERE stock_id = $1 AND CASE WHEN $2 = 'in_house' THEN in_house_qty >= $3 ELSE rsl_qty IS NOT NULL AND rsl_qty >= $3 END RETURNING stock_id, sku_id, in_house_qty, rsl_qty` (หัก `in_house_qty` หรือ `rsl_qty` ตาม `fulfill_source` และมีเงื่อนไขกันยอดติดลบอีกชั้น หากไม่สำเร็จจะยกเลิกทั้ง transaction)<br>ตั้ง `stock_deducted`=TRUE ให้รายการสินค้า **Q7S.5:** `UPDATE order_items SET stock_deducted = TRUE, deducted_at = CURRENT_TIMESTAMP WHERE order_item_id = ANY($1::text[]) AND stock_deducted = FALSE`<br>ตั้งสถานะซิงก์ Rakuten ของแถวสต๊อกเป็น 'pending' **Q7S.6:** `INSERT INTO rakuten_stock_sync_states ( stock_id, sync_status, last_error_code ) VALUES ($1, 'pending', NULL) ON CONFLICT (stock_id) DO UPDATE SET sync_status = 'pending', last_error_code = NULL`<br>— แสดงข้อความ \"ตัดสต๊อกและอัปเดตจำนวนสินค้าสำเร็จ\""
+   ],
+   [
+    "4",
+    "",
+    "**3. ปิด Order หากส่งถึงแล้ว** (กติกาเดียวกับ 8A) **Q7S.7:** `UPDATE orders SET order_status = 'จัดส่งสำเร็จ', manual_reason = NULL, updated_at = CURRENT_TIMESTAMP WHERE order_id = $1 AND order_status = 'แจ้งเลขติดตามแล้ว' AND tracking_notified = TRUE AND delivery_status = 'delivered' AND EXISTS (SELECT 1 FROM order_items WHERE order_id = $1) AND NOT EXISTS ( SELECT 1 FROM order_items WHERE order_id = $1 AND stock_deducted = FALSE )` — เปลี่ยนเป็น \"จัดส่งสำเร็จ\" เมื่อ `delivery_status`='delivered' และ `tracking_notified`=TRUE และตัดสต๊อกครบทุกรายการ หากขนส่งยังไม่ยืนยัน Order คงเป็น \"แจ้งเลขติดตามแล้ว\" จนกว่าการ poll ขนส่งใน 8A จะยืนยัน (`deductStockUseCase` เองไม่ตั้ง \"จัดส่งสำเร็จ\")"
+   ],
+   [
+    "5",
+    "",
+    "**4. ซิงก์ยอดคงเหลือไป Rakuten Ichiba** — ท้าย `runAutomation` ทุกครั้ง `syncRakutenStockUseCase` ล็อกแถวที่รอซิงก์พร้อมคำนวณ Available Qty = `in_house_qty` + `rsl_qty` **Q7S.8:** `SELECT sync.stock_id, sku.channel_sku, (stock.in_house_qty + COALESCE(stock.rsl_qty, 0)) AS available_qty FROM rakuten_stock_sync_states sync INNER JOIN stock ON stock.stock_id = sync.stock_id INNER JOIN skus sku ON sku.sku_id = stock.sku_id WHERE sync.sync_status = 'pending' AND ($1::text[] IS NULL OR sync.stock_id = ANY($1::text[])) ORDER BY sync.stock_id FOR UPDATE OF sync, stock` บันทึกเวลาที่พยายาม **Q7S.9:** `UPDATE rakuten_stock_sync_states SET last_attempt_at = CURRENT_TIMESTAMP WHERE stock_id = $1 AND sync_status = 'pending'` แล้วเรียก `RakutenAdapter.syncStock(channel_sku, qty)`<br>— สำเร็จ: **Q7S.10:** `UPDATE rakuten_stock_sync_states sync SET sync_status = 'synced', last_synced_qty = $2, last_synced_at = CURRENT_TIMESTAMP, last_error_code = NULL FROM stock WHERE sync.stock_id = $1 AND stock.stock_id = sync.stock_id AND stock.in_house_qty + COALESCE(stock.rsl_qty, 0) = $2` ตั้งเป็น 'synced' เฉพาะเมื่อยอดในระบบยังเท่ากับที่ส่งไป หากยอดเปลี่ยนระหว่างนั้นจะคง 'pending' ไว้ซิงก์รอบถัดไป"
    ],
    [
     "ทางเลือก #1",
-    "(ระบบตรวจพบเอง) อัปเดตจำนวนคงเหลือกลับไปยัง Marketplace ไม่สำเร็จ",
-    "แจ้งเตือนว่า \"ไม่สามารถอัปเดตจำนวนสินค้าใน [ชื่อช่องทางขาย] ได้ กรุณาลองใหม่ภายหลัง\" โดยตัดสต๊อกในระบบไว้ก่อน และคงสถานะการซิงค์เป็น \"รอซิงค์\" เพื่อ retry อัตโนมัติ"
+    "(ระบบตรวจพบเอง) อัปเดตจำนวนคงเหลือใน Rakuten Ichiba ไม่สำเร็จ (fault `mpStockSync`)",
+    "สต๊อกในระบบถูกตัดไว้แล้ว คงสถานะซิงก์เป็น 'pending' พร้อม error code **Q7S.11:** `UPDATE rakuten_stock_sync_states SET sync_status = 'pending', last_error_code = $2 WHERE stock_id = $1` และบันทึกข้อผิดพลาด **Q7S.12:** `INSERT INTO auto_error_logs ( auto_error_log_id, use_case_id, context_key, error_code, safe_message ) VALUES ($1, $2, $3, $4, $5)` (`use_case_id`='7S', `context_key`=`stock_id`) ระบบลองซิงก์ใหม่อัตโนมัติทุกครั้งที่มี action เรียก `executeWorkflow`"
    ],
    [
     "ทางเลือก #2",
-    "(ระบบตรวจพบเอง) Order ถูกตีกลับหรือคืนสินค้าหลังตัดสต๊อกไปแล้ว",
-    "ระบบคืนยอดสต๊อกกลับเข้าคลังตามจำนวนที่คืน อัปเดตจำนวนคงเหลือไปยัง Marketplace อีกครั้ง และบันทึก Log การคืนสต๊อกพร้อมเหตุผล"
+    "(ระบบตรวจพบเอง) ฐานข้อมูลผิดพลาดระหว่างตัดสต๊อก",
+    "ยกเลิกทั้ง transaction (รวมผลของ 5S ในฐานข้อมูล) แล้วบันทึกข้อผิดพลาดใน transaction ใหม่ด้วย **Q7S.12**"
+   ],
+   [
+    "ทางเลือก #3",
+    "Order ถูกยกเลิกหรือคืนสินค้าหลังตัดสต๊อกแล้ว",
+    "การคืนยอดสต๊อกทำใน UC 7A (ยกเลิก Order) ไม่ใช่ใน 7S"
    ]
-  ]
+  ],
+  "qmap": {
+   "Q7S.1": "orders.ts · Q7S_1_RETRY",
+   "Q7S.2": "stock.ts · Q7S_1",
+   "Q7S.3": "stock.ts · Q7S_1_MANUAL",
+   "Q7S.4": "stock.ts · Q7S_2",
+   "Q7S.5": "stock.ts · Q7S_3",
+   "Q7S.6": "stock-sync.ts · Q7S_4_PENDING",
+   "Q7S.7": "shipping.ts · Q8A_1_DELIVERED",
+   "Q7S.8": "stock-sync.ts · Q7S_4_LOCK_PENDING",
+   "Q7S.9": "stock-sync.ts · Q7S_5_ATTEMPT",
+   "Q7S.10": "stock-sync.ts · Q7S_5_SUCCESS",
+   "Q7S.11": "stock-sync.ts · Q7S_5_FAILURE",
+   "Q7S.12": "auto-error-logs.ts · Q_AUTO_ERROR_LOG"
+  }
  }
 ]

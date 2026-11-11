@@ -1,192 +1,246 @@
 {
- "users": {
-  "title": "ตารางผู้ใช้ระบบ (USERS)",
-  "cols": {
-   "user_id": "รหัสผู้ใช้ระบบ",
-   "user_email": "อีเมลที่ใช้เข้าสู่ระบบ",
-   "user_password": "รหัสผ่านที่เข้ารหัสแบบ hash แล้ว",
-   "fail_attempts": "จำนวนครั้งที่เข้าสู่ระบบผิดติดกัน ครบ 5 ครั้งจะถูกพักการเข้าสู่ระบบ",
-   "last_login": "วันเวลาที่เข้าสู่ระบบสำเร็จครั้งล่าสุด"
+  "admins": {
+    "title": "ตารางผู้ดูแลระบบ (ADMINS)",
+    "cols": {
+      "admin_id": "รหัสผู้ดูแลระบบ",
+      "user_email": "อีเมลที่ใช้เข้าสู่ระบบ",
+      "user_password": "รหัสผ่านที่เข้ารหัสแบบ hash (scrypt) แล้ว",
+      "fail_attempts": "จำนวนครั้งที่เข้าสู่ระบบผิดติดกัน ครบ 5 ครั้งบัญชีถูกล็อก 15 นาที",
+      "last_login": "วันเวลาที่เข้าสู่ระบบสำเร็จครั้งล่าสุด",
+      "created_at": "วันเวลาที่สร้างบัญชี",
+      "locked_until": "เวลาสิ้นสุดการล็อกบัญชีหลังเข้าสู่ระบบผิด 5 ครั้ง (NULL = ไม่ถูกล็อก) ครบเวลาแล้วปลดล็อกเอง"
+    }
+  },
+  "suppliers": {
+    "title": "ตารางซัพพลายเออร์ (SUPPLIERS)",
+    "cols": {
+      "supplier_id": "รหัสซัพพลายเออร์",
+      "supplier_name": "ชื่อซัพพลายเออร์",
+      "contact_info": "ช่องทางติดต่อสำหรับส่งคำสั่งซื้อ",
+      "lead_time_days": "จำนวนวันตั้งแต่สั่งซื้อจนได้รับสินค้า",
+      "created_at": "วันเวลาที่เพิ่มซัพพลายเออร์"
+    }
+  },
+  "skus": {
+    "title": "ตารางสินค้าและกฎ SKU (SKUS)",
+    "cols": {
+      "sku_id": "รหัสรายการสินค้าในระบบ",
+      "sku": "รหัสสินค้าภายในร้าน ใช้เชื่อมข้อมูลทุกระบบ",
+      "product_name": "ชื่อสินค้า",
+      "variation": "ตัวเลือกของสินค้า เช่น สี ขนาด",
+      "sales_channel": "ช่องทางขาย (เฟส 1 มีเฉพาะ Rakuten Ichiba)",
+      "channel_sku": "รหัสสินค้าในช่องทางขาย ใช้เป็นกฎจับคู่ SKU (2S) หนึ่งสินค้ามีหนึ่งกฎ",
+      "selling_price": "ราคาขายปัจจุบัน",
+      "reorder_threshold": "จุดสั่งซื้อ ถ้าสต๊อกไม่เกินค่านี้ต้องสั่งเพิ่ม",
+      "reorder_qty": "จำนวนที่สั่งซื้อต่อครั้ง",
+      "sku_status": "สถานะการขาย (active, inactive)",
+      "created_at": "วันเวลาที่เพิ่มสินค้า",
+      "supplier_id": "ซัพพลายเออร์ที่สั่งซื้อสินค้านี้"
+    }
+  },
+  "stock": {
+    "title": "ตารางสต๊อกสินค้า (STOCK)",
+    "cols": {
+      "stock_id": "รหัสรายการสต๊อก",
+      "in_house_qty": "จำนวนคงเหลือในคลังบริษัท",
+      "rsl_qty": "จำนวนคงเหลือในคลัง RSL (ว่างได้เมื่ออ่านข้อมูลจาก RSL ไม่ได้)",
+      "updated_at": "วันเวลาที่ปรับปรุงยอดล่าสุด",
+      "sku_id": "สินค้าของสต๊อกนี้ (หนึ่งสินค้ามีหนึ่งรายการ)"
+    }
+  },
+  "orders": {
+    "title": "ตารางคำสั่งซื้อ (ORDERS)",
+    "cols": {
+      "order_id": "รหัส Order ในระบบ",
+      "marketplace_order_id": "เลขคำสั่งซื้อใน Rakuten Ichiba",
+      "sales_channel": "ช่องทางขาย",
+      "order_date": "วันเวลาที่ลูกค้าสั่งซื้อ",
+      "shipping_address": "ที่อยู่จัดส่ง",
+      "shipping_method": "วิธีจัดส่ง",
+      "order_status": "สถานะของ Order (ดู State Diagram)",
+      "rsl_no": "เลขอ้างอิง RSL หลังจับคู่ (1S)",
+      "rsl_matched_at": "วันเวลาที่จับคู่ RSL",
+      "tracking_number": "หมายเลขติดตามพัสดุจากขนส่ง (8A)",
+      "carrier_name": "ชื่อบริษัทขนส่ง",
+      "dispatched_at": "วันเวลาที่ส่งมอบให้ขนส่ง",
+      "tracking_notified": "แจ้งเลขติดตามไป Rakuten แล้วหรือยัง (5S)",
+      "tracking_notified_at": "วันเวลาที่แจ้งเลขติดตามสำเร็จ",
+      "cancel_reason": "เหตุผลที่ยกเลิก (7A)",
+      "cancelled_at": "วันเวลาที่ยกเลิก",
+      "verified_at": "วันเวลาที่ Admin ยืนยันคำสั่งซื้อ (2A)",
+      "created_at": "วันเวลาที่นำเข้า Order",
+      "updated_at": "วันเวลาที่แก้ไขล่าสุด",
+      "manual_reason": "สาเหตุที่ต้องดำเนินการด้วยตนเอง เช่น ข้อมูลไม่ครบ ไม่พบ SKU ไม่พบ template",
+      "customer_cancel_requested": "ลูกค้าขอยกเลิกผ่าน Rakuten หรือไม่",
+      "edit_log": "ประวัติการแก้ไขข้อมูล Order (JSON)",
+      "reorder_decision": "ผลการตัดสินใจสั่งซื้อเพิ่ม (5A) คุ้มค่า หรือ ไม่คุ้มค่า",
+      "decided_qty": "จำนวนที่ตัดสินใจสั่งซื้อ",
+      "delivery_status": "สถานะพัสดุล่าสุดจากขนส่ง (in_transit, delivered, failed, returned)",
+      "reorder_id": "คำสั่งซื้อเติมสต๊อกที่ Order นี้รออยู่ (6A ผูก, ว่างได้) คำสั่งซื้อหนึ่งรายการครอบคลุมได้หลาย Order"
+    }
+  },
+  "order_items": {
+    "title": "ตารางรายการสินค้าในคำสั่งซื้อ (ORDER_ITEMS)",
+    "cols": {
+      "order_item_id": "รหัสรายการสินค้าใน Order",
+      "channel_sku": "รหัสสินค้าตามช่องทางขายที่มากับ Order",
+      "variation": "ตัวเลือกสินค้า",
+      "qty": "จำนวนที่สั่ง",
+      "fulfill_source": "คลังที่ใช้ส่งสินค้า (rsl, in_house) กำหนดตอนตรวจสต๊อก (3S)",
+      "stock_deducted": "ตัดสต๊อกแล้วหรือยัง (7S)",
+      "deducted_at": "วันเวลาที่ตัดสต๊อก",
+      "order_id": "Order ที่รายการนี้อยู่",
+      "sku_id": "สินค้าในระบบหลังจับคู่กฎ SKU (2S) ว่างได้ถ้ายังไม่จับคู่"
+    }
+  },
+  "costs": {
+    "title": "ตารางต้นทุนสินค้า (COSTS)",
+    "cols": {
+      "cost_id": "รหัสรายการต้นทุน",
+      "purchase_price": "ราคาซื้อทั้งล็อตในสกุลเงินของซัพพลายเออร์",
+      "currency": "สกุลเงินที่ซื้อ",
+      "exchange_rate": "อัตราแลกเปลี่ยนที่ใช้แปลงราคาซื้อ",
+      "intl_freight": "ค่าขนส่งระหว่างประเทศทั้งล็อต",
+      "duty_fee": "ภาษีนำเข้าทั้งล็อต",
+      "marketplace_fee": "ค่าธรรมเนียม Marketplace ต่อชิ้น",
+      "domestic_shipping": "ค่าส่งในประเทศต่อชิ้น",
+      "rsl_charge": "ค่าธรรมเนียม RSL ต่อชิ้น",
+      "order_qty": "จำนวนชิ้นในล็อตที่ใช้หารต้นทุน",
+      "unit_cost": "ต้นทุนต่อหน่วยที่คำนวณได้ (4S)",
+      "calculated_at": "วันเวลาที่คำนวณล่าสุด",
+      "sku_id": "สินค้าของต้นทุนนี้",
+      "order_id": "Order ที่อ้างอิงต้นทุนนี้ (ว่างได้)",
+      "exchange_rate_updated_at": "วันเวลาที่อัปเดตอัตราแลกเปลี่ยน ใช้ตรวจว่าอัตราเก่าเกินไปหรือไม่"
+    }
+  },
+  "reorders": {
+    "title": "ตารางคำสั่งซื้อเติมสต๊อก (REORDERS)",
+    "cols": {
+      "reorder_id": "เลขที่คำสั่งซื้อเติมสต๊อก",
+      "order_qty": "จำนวนที่สั่งซื้อ",
+      "decision": "ผลการตัดสินใจที่มาของคำสั่งซื้อ",
+      "decided_at": "วันเวลาที่ตัดสินใจ",
+      "reorder_status": "สถานะคำสั่งซื้อ (รอส่งคำสั่งซื้อ, สั่งซื้อแล้ว, ได้รับสินค้าแล้ว, ยกเลิกแล้ว)",
+      "ordered_at": "วันเวลาที่ส่งคำสั่งซื้อให้ซัพพลายเออร์ (6A)",
+      "expected_date": "วันที่คาดว่าจะได้รับสินค้า",
+      "supplier_tracking_no": "เลขติดตามพัสดุจากซัพพลายเออร์",
+      "received_at": "วันเวลาที่ Admin บันทึกการรับสินค้า (6A)",
+      "created_at": "วันเวลาที่สร้างคำสั่งซื้อ",
+      "sku_id": "สินค้าที่สั่งซื้อ",
+      "supplier_id": "ซัพพลายเออร์ที่สั่งซื้อ",
+      "supplier_request_id": "รหัสคำขอที่ส่งให้ซัพพลายเออร์ ใช้ซ้ำเมื่อส่งใหม่เพื่อไม่ให้สั่งซ้ำ",
+      "supplier_reference": "เลขอ้างอิงที่ซัพพลายเออร์ตอบกลับ",
+      "last_error_code": "รหัสข้อผิดพลาดล่าสุดตอนส่งคำสั่งซื้อ",
+      "received_qty": "จำนวนที่ได้รับจริงจากซัพพลายเออร์ (6A รับสินค้า) ว่างได้จนกว่าจะรับสินค้า"
+    }
+  },
+  "labels": {
+    "title": "ตารางใบปะสินค้า (LABELS)",
+    "cols": {
+      "label_id": "รหัสใบปะสินค้า",
+      "label_template": "รูปแบบใบปะสินค้าตามวิธีจัดส่ง",
+      "rsl_no": "เลขอ้างอิง RSL ที่พิมพ์บนใบปะ",
+      "parcel_seq": "ลำดับกล่อง",
+      "parcel_total": "จำนวนกล่องทั้งหมดของ Order",
+      "label_status": "สถานะใบปะ (ready, printed)",
+      "created_at": "วันเวลาที่สร้างใบปะ (6S)",
+      "printed_at": "วันเวลาที่พิมพ์สำเร็จ (9A)",
+      "order_id": "Order ที่ใบปะนี้ใช้"
+    }
+  },
+  "sessions": {
+    "title": "ตารางเซสชันเข้าสู่ระบบ (SESSIONS)",
+    "cols": {
+      "session_id": "รหัสเซสชัน",
+      "admin_id": "ผู้ดูแลระบบเจ้าของเซสชัน",
+      "token_hash": "ค่า hash ของ token ใน cookie (ไม่เก็บ token จริง)",
+      "created_at": "วันเวลาที่เข้าสู่ระบบ (1A)",
+      "expires_at": "วันเวลาที่เซสชันหมดอายุ",
+      "revoked_at": "วันเวลาที่ออกจากระบบ (ว่างถ้ายังใช้งาน)"
+    }
+  },
+  "auto_error_logs": {
+    "title": "ตารางบันทึกข้อผิดพลาดของงานอัตโนมัติ (AUTO_ERROR_LOGS)",
+    "cols": {
+      "auto_error_log_id": "รหัสบันทึก",
+      "use_case_id": "Use Case อัตโนมัติที่เกิดข้อผิดพลาด เช่น 2S, 3S, 6S, 7S",
+      "context_key": "รายการที่เกี่ยวข้อง เช่น รหัส Order",
+      "error_code": "รหัสข้อผิดพลาด เช่น external_unavailable",
+      "safe_message": "ข้อความที่แสดงได้โดยไม่เปิดเผยรายละเอียดภายใน",
+      "occurred_at": "วันเวลาที่เกิดข้อผิดพลาด"
+    }
+  },
+  "deletion_history": {
+    "title": "ตารางประวัติการลบข้อมูล (DELETION_HISTORY)",
+    "cols": {
+      "deletion_history_id": "รหัสบันทึกการลบ",
+      "order_reference": "รหัส Order ที่ถูกลบ",
+      "order_snapshot": "สำเนาข้อมูล Order ก่อนลบ (JSON)",
+      "admin_id": "ผู้ดูแลระบบที่สั่งลบ (10A)",
+      "deleted_at": "วันเวลาที่ลบ"
+    }
+  },
+  "cost_history": {
+    "title": "ตารางประวัติการแก้ไขต้นทุน (COST_HISTORY)",
+    "cols": {
+      "cost_history_id": "รหัสบันทึก",
+      "sku_id": "สินค้าที่แก้ต้นทุน",
+      "cost_id": "รายการต้นทุนที่ถูกแก้",
+      "previous_value": "ค่าก่อนแก้ (JSON) ว่างถ้าเป็นการสร้างครั้งแรก",
+      "new_value": "ค่าหลังแก้ (JSON)",
+      "admin_id": "ผู้ดูแลระบบที่แก้ (4S)",
+      "changed_at": "วันเวลาที่แก้"
+    }
+  },
+  "tracking_notification_logs": {
+    "title": "ตารางบันทึกการแจ้งเลขติดตาม (TRACKING_NOTIFICATION_LOGS)",
+    "cols": {
+      "tracking_notification_log_id": "รหัสบันทึก",
+      "order_id": "Order ที่แจ้งเลขติดตาม",
+      "tracking_number": "หมายเลขติดตามที่แจ้ง",
+      "outcome": "ผลการแจ้ง (pending, sent, failed)",
+      "sent_at": "วันเวลาที่ส่งแจ้งล่าสุด",
+      "admin_id": "ผู้ดูแลระบบที่สั่งแจ้งซ้ำ (ว่างถ้าระบบแจ้งเองใน 5S)",
+      "attempt_id": "รหัสความพยายามส่ง ใช้ซ้ำตอน retry เพื่อไม่ให้แจ้งซ้ำ",
+      "error_code": "รหัสข้อผิดพลาดเมื่อแจ้งไม่สำเร็จ"
+    }
+  },
+  "rakuten_stock_sync_states": {
+    "title": "ตารางสถานะซิงก์สต๊อกกับ Rakuten (RAKUTEN_STOCK_SYNC_STATES)",
+    "cols": {
+      "stock_id": "รายการสต๊อกที่ซิงก์ (เป็นทั้ง PK และ FK)",
+      "sync_status": "สถานะการซิงก์ (pending, synced)",
+      "last_synced_qty": "จำนวนที่ส่งไป Rakuten สำเร็จครั้งล่าสุด",
+      "last_attempt_at": "วันเวลาที่พยายามซิงก์ล่าสุด",
+      "last_synced_at": "วันเวลาที่ซิงก์สำเร็จล่าสุด",
+      "last_error_code": "รหัสข้อผิดพลาดล่าสุดตอนซิงก์ (7S)"
+    }
+  },
+  "stock_adjustment_history": {
+    "title": "ตารางประวัติการปรับสต๊อก (STOCK_ADJUSTMENT_HISTORY)",
+    "cols": {
+      "stock_adjustment_history_id": "รหัสบันทึก",
+      "stock_id": "รายการสต๊อกที่ปรับ",
+      "previous_in_house_qty": "จำนวนในคลังบริษัทก่อนปรับ",
+      "new_in_house_qty": "จำนวนในคลังบริษัทหลังปรับ",
+      "previous_rsl_qty": "จำนวนในคลัง RSL ก่อนปรับ",
+      "new_rsl_qty": "จำนวนในคลัง RSL หลังปรับ",
+      "reason": "เหตุผลที่ปรับสต๊อก",
+      "admin_id": "ผู้ดูแลระบบที่ปรับ",
+      "adjusted_at": "วันเวลาที่ปรับ"
+    }
+  },
+  "label_print_history": {
+    "title": "ตารางประวัติการพิมพ์ใบปะ (LABEL_PRINT_HISTORY)",
+    "cols": {
+      "label_print_history_id": "รหัสบันทึก",
+      "print_attempt_id": "รหัสการสั่งพิมพ์หนึ่งครั้ง (หนึ่งครั้งพิมพ์ได้หลายใบ)",
+      "label_id": "ใบปะที่พิมพ์",
+      "admin_id": "ผู้ดูแลระบบที่สั่งพิมพ์ (9A)",
+      "is_reprint": "เป็นการพิมพ์ซ้ำหรือไม่",
+      "outcome": "ผลการพิมพ์ (printed, failed)",
+      "error_code": "รหัสข้อผิดพลาดเมื่อพิมพ์ไม่สำเร็จ",
+      "attempted_at": "วันเวลาที่สั่งพิมพ์"
+    }
   }
- },
- "suppliers": {
-  "title": "ตารางซัพพลายเออร์ (SUPPLIERS)",
-  "cols": {
-   "supplier_id": "รหัสซัพพลายเออร์",
-   "supplier_name": "ชื่อซัพพลายเออร์",
-   "contact_info": "ช่องทางติดต่อสำหรับส่งคำสั่งซื้อ",
-   "lead_time": "จำนวนวันตั้งแต่สั่งซื้อจนได้รับสินค้า"
-  }
- },
- "products": {
-  "title": "ตารางสินค้า (PRODUCTS)",
-  "cols": {
-   "sku": "รหัสสินค้าภายในร้าน ใช้เชื่อมข้อมูลทุกระบบ",
-   "product_name": "ชื่อสินค้า",
-   "variation": "ตัวเลือกของสินค้า เช่น สี ขนาด",
-   "sales_channel": "ช่องทางขาย",
-   "supplier_id": "ซัพพลายเออร์ที่สั่งซื้อสินค้านี้",
-   "reorder_threshold": "จุดสั่งซื้อ ถ้าสต๊อกรวมไม่เกินค่านี้ต้องสั่งเพิ่ม",
-   "reorder_qty": "จำนวนที่สั่งซื้อต่อครั้ง",
-   "selling_price": "ราคาขายปัจจุบัน",
-   "active": "สถานะการขาย (false = ปิดการขาย)"
-  }
- },
- "sku_rules": {
-  "title": "ตารางกฎจับคู่ SKU (SKU_RULES)",
-  "cols": {
-   "sku_rule_id": "รหัสกฎ SKU",
-   "channel_sku": "รหัสสินค้าที่ใช้ในช่องทางขาย",
-   "sales_channel": "ช่องทางขาย",
-   "sku": "SKU ภายในที่จับคู่ด้วย",
-   "variation": "ตัวเลือกสินค้าที่จับคู่ด้วย",
-   "product_name": "ชื่อสินค้าที่จับคู่ด้วย"
-  }
- },
- "stock": {
-  "title": "ตารางสต๊อกสินค้า (STOCK)",
-  "cols": {
-   "sku": "รหัสสินค้า",
-   "variation": "ตัวเลือกสินค้า",
-   "in_house_qty": "จำนวนคงเหลือในคลังบริษัท",
-   "rsl_qty": "จำนวนคงเหลือในคลัง RSL (ว่างได้เมื่อดึงข้อมูลจาก RSL ไม่ได้)",
-   "updated_at": "วันเวลาที่ปรับปรุงยอดล่าสุด"
-  }
- },
- "product_cost": {
-  "title": "ตารางองค์ประกอบต้นทุน (PRODUCT_COST)",
-  "cols": {
-   "sku": "รหัสสินค้า",
-   "purchase_price": "ราคาซื้อทั้งล็อตในสกุลเงินของซัพพลายเออร์",
-   "currency": "สกุลเงินที่ซื้อ",
-   "exchange_rate": "อัตราแลกเปลี่ยนที่ใช้แปลงราคาซื้อ",
-   "intl_freight": "ค่าขนส่งระหว่างประเทศทั้งล็อต",
-   "duty_fee": "ภาษีนำเข้าทั้งล็อต",
-   "marketplace_fee": "ค่าธรรมเนียม Marketplace ต่อชิ้น",
-   "domestic_shipping": "ค่าส่งในประเทศต่อชิ้น",
-   "rsl_charge": "ค่าธรรมเนียม RSL ต่อชิ้น",
-   "order_qty": "จำนวนชิ้นในล็อตที่ใช้หารต้นทุน"
-  }
- },
- "cost_calculation_log": {
-  "title": "ตารางประวัติการคำนวณต้นทุน (COST_CALCULATION_LOG)",
-  "cols": {
-   "cost_id": "รหัสผลการคำนวณ",
-   "sku": "รหัสสินค้าที่คำนวณ",
-   "unit_cost": "ต้นทุนต่อหน่วยที่คำนวณได้",
-   "calculated_at": "วันเวลาที่คำนวณ",
-   "calculated_by": "ผู้ใช้ที่สั่งคำนวณ"
-  }
- },
- "purchase_orders": {
-  "title": "ตารางคำสั่งซื้อเติมสต๊อก (PURCHASE_ORDERS)",
-  "cols": {
-   "po_id": "เลขที่คำสั่งซื้อ",
-   "sku": "รหัสสินค้าที่สั่งซื้อ",
-   "supplier_id": "ซัพพลายเออร์ที่สั่งซื้อ",
-   "order_qty": "จำนวนที่สั่งซื้อ",
-   "order_date": "วันเวลาที่สั่งซื้อ",
-   "eta": "วันที่คาดว่าจะได้รับสินค้า",
-   "status": "สถานะคำสั่งซื้อ"
-  }
- },
- "shipping_rules": {
-  "title": "ตารางรูปแบบใบปะสินค้า (SHIPPING_RULES)",
-  "cols": {
-   "rule_id": "รหัสกฎการจัดส่ง",
-   "shipping_method": "วิธีจัดส่ง",
-   "sales_channel": "ช่องทางขาย",
-   "label_template": "รูปแบบใบปะสินค้าที่ใช้กับวิธีจัดส่งนี้"
-  }
- },
- "orders": {
-  "title": "ตารางคำสั่งซื้อ (ORDERS)",
-  "cols": {
-   "order_id": "รหัส Order ในระบบ",
-   "marketplace_order_id": "เลขคำสั่งซื้อใน Rakuten Ichiba",
-   "sales_channel": "ช่องทางขาย",
-   "order_date": "วันเวลาที่ลูกค้าสั่งซื้อ",
-   "channel_sku": "รหัสสินค้าตามช่องทางขาย",
-   "sku": "SKU ภายในหลังจับคู่กฎ",
-   "variation": "ตัวเลือกสินค้า",
-   "qty": "จำนวนที่สั่ง",
-   "shipping_address": "ที่อยู่จัดส่ง",
-   "shipping_method": "วิธีจัดส่ง",
-   "order_status": "สถานะของ Order (ดู State Diagram 2.16)",
-   "verified_at": "วันเวลาที่ Admin ยืนยันคำสั่งซื้อ (2A)",
-   "verified_by": "ผู้ยืนยันคำสั่งซื้อ",
-   "sku_rule_id": "กฎ SKU ที่ใช้จับคู่ (2S)",
-   "sku_matched_at": "วันเวลาที่จับคู่กฎ SKU",
-   "decision": "ผลการตัดสินใจสั่งซื้อเพิ่ม (5A)",
-   "decided_at": "วันเวลาที่ตัดสินใจ",
-   "decided_by": "ผู้ตัดสินใจ",
-   "po_id": "คำสั่งซื้อเติมสต๊อกที่ผูกกับ Order (6A)",
-   "rsl_matched": "จับคู่กับ RSL แล้วหรือยัง (1S)",
-   "rsl_reference_id": "เลขอ้างอิง RSL",
-   "matched_at": "วันเวลาที่จับคู่ RSL",
-   "fulfill_source": "คลังที่ส่งสินค้า (in_house หรือ rsl)",
-   "tracking_number": "หมายเลขติดตามพัสดุ (8A)",
-   "carrier_name": "ชื่อบริษัทขนส่ง",
-   "dispatched_at": "วันเวลาที่ส่งมอบให้ขนส่ง",
-   "tracking_notified": "แจ้งเลขติดตามให้ลูกค้าแล้วหรือยัง (5S)",
-   "tracking_notified_at": "วันเวลาที่แจ้งเลขติดตาม",
-   "stock_deducted": "ตัดสต๊อกแล้วหรือยัง (7S)",
-   "mp_stock_synced": "อัปเดตจำนวนใน Marketplace แล้วหรือยัง",
-   "deducted_at": "วันเวลาที่ตัดสต๊อก",
-   "cancel_reason": "เหตุผลที่ยกเลิก (7A)",
-   "cancelled_at": "วันเวลาที่ยกเลิก",
-   "cancelled_by": "ผู้ยกเลิก"
-  }
- },
- "label": {
-  "title": "ตารางใบปะสินค้า (LABEL)",
-  "cols": {
-   "label_id": "รหัสใบปะสินค้า",
-   "order_id": "Order ที่ใบปะนี้ใช้",
-   "label_template": "รูปแบบใบปะสินค้า",
-   "rsl_reference_id": "เลขอ้างอิง RSL ที่พิมพ์บนใบปะ",
-   "parcel_seq": "ลำดับกล่อง",
-   "parcel_total": "จำนวนกล่องทั้งหมดของ Order",
-   "label_status": "สถานะการพิมพ์",
-   "created_at": "วันเวลาที่สร้างใบปะ (6S)",
-   "printed_at": "วันเวลาที่พิมพ์ (9A)"
-  }
- },
- "rsl_shipments": {
-  "title": "ตารางสินค้าในคลัง RSL (RSL_SHIPMENTS)",
-  "cols": {
-   "rsl_order_id": "รหัสรายการสินค้าในระบบ RSL",
-   "rsl_sku": "SKU ของสินค้าใน RSL",
-   "rsl_variation": "ตัวเลือกสินค้าใน RSL",
-   "rsl_stock_qty": "จำนวนคงเหลือใน RSL"
-  }
- },
- "delivery_partners": {
-  "title": "ตารางการส่งมอบให้ขนส่ง (DELIVERY_PARTNERS)",
-  "cols": {
-   "tracking_number": "หมายเลขติดตามพัสดุ",
-   "order_id": "Order ที่ส่งมอบ",
-   "carrier_name": "ชื่อบริษัทขนส่ง",
-   "pickup_date": "วันที่ขนส่งรับพัสดุ"
-  }
- },
- "carrier_tracking": {
-  "title": "ตารางสถานะพัสดุ (CARRIER_TRACKING)",
-  "cols": {
-   "tracking_number": "หมายเลขติดตามพัสดุ",
-   "delivery_status": "สถานะพัสดุจากบริษัทขนส่ง",
-   "last_location": "จุดที่พัสดุอยู่ล่าสุด",
-   "updated_at": "วันเวลาที่ขนส่งอัปเดตสถานะ"
-  }
- },
- "deletion_log": {
-  "title": "ตารางบันทึกการลบข้อมูล (DELETION_LOG)",
-  "cols": {
-   "log_id": "รหัสบันทึก",
-   "data_type": "ประเภทข้อมูลที่ลบ",
-   "record_id": "รหัสของรายการที่ลบ",
-   "deleted_at": "วันเวลาที่ลบ",
-   "deleted_by": "ผู้ลบ"
-  }
- }
 }
