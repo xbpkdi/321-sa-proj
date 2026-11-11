@@ -1,23 +1,26 @@
-% เตรียมตอบคำถามหลังนำเสนอระบบหลังบ้าน Colorado แยกตามคนตอบ
+% เตรียมตอบคำถามหลังนำเสนอระบบหลังบ้าน Colorado จัดตามหัวข้อในสไลด์
 % สร้าง PDF:  ./qna_prep/build.sh
-% ตัวเลขทั้งหมดตรงกับรายงาน (report-doc/content และ 04-chapter2-diagrams-database)
+% ตัวเลขมาจาก report-doc/content (ch1.py ch2.py usecases.json), 04-chapter2-diagrams-database/sql และโค้ดเว็บ 01418321-final-project/src
 \documentclass[12pt,a4paper]{article}
 \usepackage[a4paper,margin=1.8cm,top=1.6cm,bottom=1.8cm]{geometry}
 \usepackage{fontspec}
 \usepackage{xcolor}
 \usepackage[most]{tcolorbox}
 \usepackage{enumitem}
-\usepackage{tabularx,booktabs,array}
+\usepackage{tabularx,booktabs,array,longtable}
 \usepackage{fancyhdr}
 \usepackage{pifont}
 
 \setmainfont{Sukhumvit Set}[UprightFont={* Text}, BoldFont={* Semi Bold}]
 \newfontfamily\heavy{Sukhumvit Set}[UprightFont={* Bold}]
+\newfontfamily\mono{Menlo}[Scale=0.82]
 \XeTeXlinebreaklocale "th"
 \XeTeXlinebreakskip = 0pt plus 1pt
 \linespread{1.25}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{3pt}
+\AtBeginDocument{\raggedright}
+\renewcommand{\tabularxcolumn}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \definecolor{ink}{HTML}{292A2E}    % color.text
 \definecolor{muted}{HTML}{505258}  % color.text.subtle
@@ -30,175 +33,1157 @@
 \newcommand{\speakerC}{นางสาวปิยากร ผลพานิช}
 
 \setlist[itemize]{leftmargin=1.3em, itemsep=2pt, topsep=2pt, label=\textcolor{cur}{\textbullet}}
+\setlist[itemize,2]{leftmargin=1.2em, itemsep=0pt, topsep=1pt, label=\textcolor{cur}{--}}
+\setlist[enumerate]{leftmargin=1.5em, itemsep=2pt, topsep=2pt}
+
 \pagestyle{fancy}\fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \fancyfoot[L]{\small\color{muted} Colorado Back-Office System  เตรียมตอบคำถาม}
 \fancyfoot[R]{\small\color{muted}\thepage}
 
-\newcommand{\speaker}[3]{% #1 สี  #2 ชื่อ  #3 หมวด
-  \clearpage\colorlet{cur}{#1}%
-  \begin{tcolorbox}[enhanced,colback=#1,colframe=#1,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
-    \color{white}{\heavy\Huge #2}\\[2pt]{\large #3}
-  \end{tcolorbox}\vspace{2pt}}
+% ---------- หน้าเริ่มของแต่ละหมวด  นับจำนวนข้อเองผ่าน \closetopic
 \newcounter{qa}
+\newcounter{tq}
+\makeatletter
+\newcommand{\closetopic}[1]{\edef\@currentlabel{\arabic{tq}}\label{cnt:#1}}
+\newcommand{\closeall}{\edef\@currentlabel{\arabic{qa}}\label{cnt:all}}
+\makeatother
+\newcommand{\topic}[5]{% #1 สี  #2 key  #3 หมวด  #4 สไลด์/หัวข้อในเล่ม  #5 ผู้ตอบหลัก
+  \clearpage\colorlet{cur}{#1}\setcounter{tq}{0}%
+  \begin{tcolorbox}[enhanced,colback=#1,colframe=#1,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
+    \color{white}{\heavy\huge #3}\hfill{\Large \ref{cnt:#2} ข้อ}\\[2pt]
+    {\large #4}\\[1pt]{\normalsize ผู้ตอบหลัก #5}
+  \end{tcolorbox}\vspace{2pt}}
+
+% ---------- กล่องหนึ่งคำถาม
 \newcommand{\must}{\quad{\small\textcolor{white}{\ding{72} ทุกคนต้องตอบได้}}}
-\newenvironment{q}[1]{\refstepcounter{qa}%
+\newenvironment{q}[1]{\refstepcounter{qa}\stepcounter{tq}%
   \begin{tcolorbox}[enhanced,colback=white,colframe=cur,boxrule=1pt,arc=4pt,breakable,
     left=8pt,right=8pt,top=4pt,bottom=6pt,before skip=6pt,after skip=6pt,
     title={\heavy Q\theqa\quad #1},colbacktitle=cur,coltitle=white,fonttitle=\large]}
   {\end{tcolorbox}}
 \newcommand{\ans}{\par{\heavy\textcolor{cur}{ตอบ}}\par}
 \newcommand{\evidence}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{เปิดหลักฐาน}}\quad #1\par}
+\newcommand{\tip}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{วิธีตอบ}}\quad{\color{muted}#1}\par}
+\newcommand{\careful}[1]{\par\vspace{4pt}\begin{tcolorbox}[colback=cur!10,colframe=cur!10,arc=3pt,left=6pt,right=6pt,top=3pt,bottom=3pt]
+  {\heavy\textcolor{cur}{ระวัง}}\quad #1\end{tcolorbox}}
+\newcommand{\pending}[1]{\par\vspace{4pt}\begin{tcolorbox}[colback=sA!8,colframe=sA,boxrule=0.8pt,arc=3pt,left=6pt,right=6pt,top=3pt,bottom=3pt]
+  {\heavy\textcolor{sA}{รอยืนยัน}}\quad #1\end{tcolorbox}}
 \newcommand{\num}[1]{{\heavy\textcolor{cur}{#1}}}
+\newcommand{\code}[1]{{\mono #1}}
 
 \begin{document}
 \colorlet{cur}{ink}
+
+% ================================================================ หน้าแรก
 \begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=12pt,right=12pt,top=12pt,bottom=12pt]
   \color{white}{\heavy\huge เตรียมตอบคำถาม Colorado Back-Office System}\\[4pt]
-  {\large 01418321 System Analysis and Design}
+  {\large 01418321 System Analysis and Design  หมู่ 200}\\[2pt]
+  {\large ระบบจัดการหลังบ้านเฟส 1  Rakuten Ichiba, Rakuten RMS และ RSL}
 \end{tcolorbox}
 
-\vspace{6pt}
-{\heavy\Large ใครตอบเรื่องอะไร}\par
-\renewcommand{\arraystretch}{1.5}
-\begin{tabularx}{\linewidth}{>{\bfseries}p{4.3cm} X}
+\vspace{4pt}
+{\heavy\Large หมวดคำถาม}\par
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{5.6cm} X p{3.1cm} r}
 \toprule
-คนตอบ & หมวด\\
+หมวด & สไลด์ / หัวข้อในเล่ม & ผู้ตอบหลัก & จำนวน\\
 \midrule
-\textcolor{sA}{\speakerA} & ธุรกิจ ปัญหา ตัวเลขประมาณการ ขอบเขต\\
-\textcolor{sB}{\speakerB} & Business Process, Use Case, CRUD, diagram, ER\\
-\textcolor{sC}{\speakerC} & SQL, ฐานข้อมูล, เว็บ, การทดสอบ, ขั้นต่อไป\\
+\textcolor{sA}{1. ธุรกิจ ปัญหา ขอบเขต} & สไลด์ 3--6 / 1.1--1.5 & ธนภัทร & \ref{cnt:biz}\\
+\textcolor{sA}{2. Business Process} & สไลด์ 7--11 / 2.1--2.7 & ธนภัทร & \ref{cnt:bp}\\
+\textcolor{sA}{3. Use Case, Actor, CRUD} & สไลด์ 12--14 / 2.8--2.12 & ธนภัทร & \ref{cnt:uc}\\
+\textcolor{sB}{4. Use Case Description} & สไลด์ 15--33 / 2.13 & อชิระ & \ref{cnt:desc}\\
+\textcolor{sB}{5. Sequence, Collaboration} & สไลด์ 17--33 / 2.13 & อชิระ & \ref{cnt:seq}\\
+\textcolor{sC}{6. ER และโครงสร้างตาราง} & สไลด์ 34--36 / 2.14--2.17 & ปิยากร & \ref{cnt:er}\\
+\textcolor{sC}{7. Class, State Diagram} & สไลด์ 37--43 / 2.18--2.19 & ปิยากร & \ref{cnt:cls}\\
+\textcolor{sC}{8. สถาปัตยกรรมเว็บจริง} & สไลด์ 44--48 / 2.18, 2.20 & ปิยากร & \ref{cnt:arch}\\
+\textcolor{sC}{9. Platform, Site map, รายงาน} & สไลด์ 49--51 / 2.20--2.22 & ปิยากร & \ref{cnt:plat}\\
+\textcolor{sC}{10. SQL} & สไลด์ 36, 52 / 2.16, 2.23 & ปิยากร & \ref{cnt:sql}\\
+\textcolor{sC}{11. การทดสอบและเดโม} & สไลด์ 53--54 / 2.24 & ปิยากร & \ref{cnt:test}\\
+\textcolor{ink}{12. ทำไมไม่ทำแบบอื่น ข้อจำกัด} & สไลด์ 56 & ทุกคน & \ref{cnt:why}\\
+\textcolor{ink}{13. คำถามถึงตัวบุคคล} & สไลด์ 55 & ทุกคน & \ref{cnt:me}\\
+\midrule
+ & & รวม & \ref{cnt:all}\\
 \bottomrule
 \end{tabularx}
+{\small\color{muted} ผู้ตอบหลักตามช่วงสไลด์ที่แต่ละคนพูด ธนภัทร 1--14, อชิระ 15--33, ปิยากร 34--57}
 
-\vspace{8pt}
+\vspace{6pt}
+{\heavy\Large วิธีใช้เล่มนี้}\par
+\begin{itemize}
+  \item หัวข้อ \textbf{ตอบ} เขียนเป็นประโยคที่พูดต่อกันได้ ส่วน\textbf{วิธีตอบ}เป็นคำแนะนำ ไม่ต้องพูดออกมา
+  \item ข้อที่มีดาว \ding{72} มีโอกาสโดนถามสูง ทุกคนต้องตอบได้ ไม่ใช่แค่ผู้ตอบหลัก
+  \item ทุกคำตอบอิงโค้ดจริงที่ branch \code{dev} (commit \code{8c4c7ef} รวม PR \#28 และ \#29) และรายงานฉบับล่าสุด 297 หน้า ถ้าเล่มกับโค้ดขัดกัน ให้ยึดโค้ด
+  \item เลข Q เรียงต่อกันทั้งเล่ม ใช้สุ่มเลขตอนซ้อมได้ ท้ายเล่มมีตารางว่าเกณฑ์ 36 ข้อแต่ละข้อน่าจะโดนถามที่ Q ไหน
+\end{itemize}
+
+% ================================================================ ก่อนเริ่ม
+\clearpage
+\begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
+  \color{white}{\heavy\huge ก่อนเริ่ม}\hfill{\Large อ่านทุกคน}\\[2pt]
+  {\large เรื่องที่ต้องตกลงกันก่อน และวิธีตอบ}
+\end{tcolorbox}
+
+{\heavy\Large ต้องตกลงกันก่อนวันนำเสนอ}\par
+\begin{enumerate}
+  \item \textbf{หัวหน้าทีมและการแบ่งงาน} ตาราง 2.25 ต้องมีชื่อหัวหน้าและคะแนนการทำงาน (Q\ref{q:role})
+  \item \textbf{รหัสผ่านบัญชีเดโม} มาจาก \code{SEED\_ADMIN\_PASSWORD} ใน \code{.env.local} คนเดโมต้องรู้ แต่ห้ามขึ้นสไลด์ (Q\ref{q:demo})
+\end{enumerate}
+
 {\heavy\Large ตอบ 4 จังหวะ จบใน 30 ถึง 45 วินาที}\par
 \begin{enumerate}
-  \item ฟังให้จบ แล้วทวนคำถามสั้น ๆ
-  \item ประโยคแรกคือคำตอบ
-  \item ให้หลักฐาน 1 อย่าง เช่น เปิดหน้าในรายงานหรือเปิดเว็บ
-  \item โยงกลับไปที่ human-in-the-loop หรือปัญหาของเจ้าของ
+  \item \textbf{ฟังให้จบ} แล้วทวนคำถามสั้น ๆ
+  \item \textbf{ตอบตรง ๆ} ประโยคแรกคือคำตอบ
+  \item \textbf{ให้หลักฐาน} เปิดหน้าในเล่ม เปิดสไลด์ หรือเปิดเว็บ 1 อย่าง
+  \item \textbf{โยงกลับ} เชื่อมกับ human-in-the-loop หรือปัญหาของเจ้าของ
 \end{enumerate}
+
+{\heavy\Large ประโยคที่ใช้ได้เลย}\par
+\begin{itemize}
+  \item \textbf{ไม่รู้คำตอบ} ``เรื่องนี้เรายังไม่ได้ออกแบบไว้ครับ/ค่ะ แต่ถ้าจะทำ จะเพิ่มที่...'' ห้ามเดาตัวเลขหรือแต่งว่าทำไปแล้ว
+  \item \textbf{ถูกชี้จุดผิด} ``ขอบคุณครับ/ค่ะ จุดนี้เราพลาด จะแก้ให้ตรงกันในเล่มฉบับส่ง'' ยอมรับแล้วบอกวิธีแก้ ดีกว่าเถียง
+  \item \textbf{ถามหลายข้อพร้อมกัน} ``ขอตอบทีละข้อนะครับ/คะ'' แล้วจดไว้
+  \item \textbf{นอกขอบเขต} ``เรื่องนี้อยู่นอกเฟส 1 ที่ตกลงกับเจ้าของไว้ แต่ออกแบบให้ต่อได้ที่...''
+  \item \textbf{เพื่อนตอบไม่ครบ} ``ขอเสริมนิดหนึ่งครับ/ค่ะ...'' แล้วพูดแค่ส่วนที่ขาด
+\end{itemize}
 
 {\heavy\Large ห้ามพูด}\par
 \begin{tcolorbox}[colback=ink!6,colframe=ink!6,arc=4pt]
 \begin{itemize}
-  \item ``เจ้าของใช้เวลา 2 ชั่วโมงต่อวัน'' แบบไม่มีคำว่าประมาณ ตัวเลขเวลาทั้งหมดเป็น\textbf{ค่าประมาณ} จากขั้นตอนที่เจ้าของเล่า
-  \item ``ระบบสั่งซื้อให้อัตโนมัติ'' ที่ถูกคือระบบ\textbf{เตรียม}คำสั่งซื้อ แต่เจ้าของต้องกดอนุมัติ (5A) ก่อน
+  \item ``เจ้าของใช้เวลา 2 ชั่วโมงต่อวัน'' แบบไม่มีคำว่าประมาณ ตัวเลขเวลาทั้งหมดเป็น\textbf{ค่าประมาณ}จากขั้นตอนที่เจ้าของเล่า
+  \item ``ระบบสั่งซื้อให้อัตโนมัติ'' ที่ถูกคือระบบ\textbf{เตรียม}ข้อมูลให้ แต่เจ้าของต้องกดตัดสินใจใน 5A และกดสั่งซื้อใน 6A เสมอ
+  \item ``เว็บเก็บข้อมูลใน localStorage'' หรือ ``มี 15 ตาราง 63 SQL'' เป็นข้อมูลรุ่นเก่า ตอนนี้เว็บอ่านเขียน \textbf{PostgreSQL จริง 17 ตาราง} และ SQL ในเล่ม \textbf{113 ข้อ}
+  \item ``มี Controller, Repository, Scheduler'' โค้ดจริงไม่มีคลาสเหล่านี้ ชั้นจริงคือ หน้าจอ $\rightarrow$ Server Action $\rightarrow$ use-case $\rightarrow$ queries $\rightarrow$ db.ts
+  \item ``เชื่อม Rakuten RMS และ RSL แล้ว'' ที่ถูกคือเรียกผ่าน adapter ที่ตอนนี้เป็น\textbf{ตัวจำลอง (mock)} ทั้ง 6 ตัว
 \end{itemize}
 \end{tcolorbox}
 
-% ================================================================ คนที่ 1
-\speaker{sA}{\speakerA}{ธุรกิจ ปัญหา ขอบเขต}
+% ================================================================ 1 ธุรกิจ
+\topic{sA}{biz}{1. ธุรกิจ ปัญหา ขอบเขต}{สไลด์ 3--6  ในเล่ม บทคัดย่อ และ 1.1--1.5}{\speakerA}
 
-\begin{q}{ทำไมเฟส 1 ทำแค่ Rakuten \must}
+\begin{q}{Please introduce the business in English \must}\label{q:english}
+\tip{เกณฑ์การนำเสนอกำหนดให้แนะนำธุรกิจเป็นภาษาอังกฤษ ถ้าอาจารย์ขอให้พูดซ้ำหรือถามต่อเป็นภาษาอังกฤษ ใช้ 4 ประโยคนี้ พูดช้า ๆ}
 \ans
-Rakuten เป็นช่องทางขายหลักที่มีคำสั่งซื้อจริงให้ทดสอบทันที และร้านใช้ RSL ซึ่งอยู่ในระบบเดียวกับ Rakuten อยู่แล้ว Rakuten RMS มี API ครอบคลุมทั้งดึงคำสั่งซื้อ ใบปะ และสต๊อก การทำทีละแพลตฟอร์มยังลดความเสี่ยงจากการเชื่อมหลายระบบพร้อมกัน
-\evidence{รายงานหัวข้อ 1.1 และ 1.5}
+\begin{itemize}
+  \item ``Colorado Company Limited sells imported and OEM products on Rakuten Ichiba in Japan, such as fishing lures, outdoor goods and Thai herbal inhalers.''
+  \item ``It started in 2009 as a side business and is run by one owner. Rakuten Super Logistics, or RSL, stores and ships the parcels.''
+  \item ``Every order needs the same manual steps: check stock in two warehouses, match the order with RSL, print the label and send the tracking number. We estimate one to two hours a day.''
+  \item ``Our system automates these repeated steps, but the owner still approves every purchase that spends money.''
+\end{itemize}
+\evidence{สไลด์ 3 (บทพูดอยู่ใน notes ของสไลด์), บทคัดย่อภาษาอังกฤษ}
 \end{q}
 
-\begin{q}{ตัวเลข 1 ถึง 2 ชั่วโมงต่อวันมาจากไหน \must}
+\begin{q}{ทำไมเฟส 1 ทำแค่ Rakuten \must}\label{q:rakuten}
 \ans
-มาจากจำนวนขายประมาณ \num{5 ถึง 10 ชิ้นต่อวัน} ตาม requirement คูณเวลาต่อคำสั่งซื้อประมาณ \num{12 นาที} ที่แยกเป็น 5 งาน เป็นค่าประมาณจากขั้นตอนที่เจ้าของเล่า ยังไม่ได้จับเวลาจริง ถ้าเจ้าของจับเวลาจริงให้ภายหลังจะแก้ตัวเลขในตารางที่ 1-1
-\evidence{ตารางที่ 1-1 ในหัวข้อ 1.2}
+\begin{itemize}
+  \item Rakuten Ichiba เป็นช่องทางขายหลัก มีคำสั่งซื้อจริงให้ทดสอบได้ทันที
+  \item ร้านใช้ RSL เป็นคลังหลักอยู่แล้ว ซึ่งอยู่ในระบบเดียวกับ Rakuten จึงเชื่อมคำสั่งซื้อ สต๊อก และใบปะได้ต่อเนื่อง
+  \item Rakuten RMS มี API ครอบคลุมทั้งดึงคำสั่งซื้อ รูปแบบใบปะ และสต๊อก ตรงกับ 3 งานหลัก
+  \item ทำทีละแพลตฟอร์มลดความเสี่ยงจากการเชื่อมหลายระบบพร้อมกัน Yahoo! Auctions กับ Amazon อยู่เฟสถัดไป
+\end{itemize}
+\evidence{รายงาน 1.1 และ 1.5}
 \end{q}
 
-\begin{q}{ปัญหาไม่ใช่แค่ "ไม่มีคอมพิวเตอร์" หรือ}
+\begin{q}{ตัวเลข 1 ถึง 2 ชั่วโมงต่อวันมาจากไหน \must}\label{q:time}
 \ans
-ไม่ใช่ เจ้าของใช้คอมพิวเตอร์และ Rakuten RMS อยู่แล้ว ปัญหาคือข้อมูลอยู่คนละที่ ต้องคัดลอกและเทียบเองทุกคำสั่งซื้อ เช่น สต๊อกอยู่ทั้งคลังบริษัทและ RSL ต้นทุนต้องรวม 8 รายการ ระบบใหม่รวมข้อมูลไว้ที่เดียวและทำขั้นตอนซ้ำให้ ปัญหาวัดผลได้จากเวลาต่อวันที่ลดลง
+\begin{itemize}
+  \item มาจากจำนวนขายประมาณ \num{5 ถึง 10 ชิ้นต่อวัน} ตาม requirement คูณเวลาต่อคำสั่งซื้อประมาณ \num{12 นาที}
+  \item 12 นาทีแยกเป็น 5 งาน ตรวจคำสั่งซื้อ 2 เช็กสต๊อก 3 จับคู่ RSL 2 จัดรูปแบบและพิมพ์ใบปะ 3 แจ้งเลขติดตาม 2 นาที
+  \item ได้ \num{60 ถึง 120 นาทีต่อวัน} หรือ 30 ถึง 60 ชั่วโมงต่อเดือน ยังไม่รวมการคำนวณต้นทุน 20 ถึง 30 นาทีต่อครั้ง
+  \item ตัวเลขเวลาเป็นค่าประมาณจากขั้นตอนที่เจ้าของเล่าตอนสัมภาษณ์ ยังไม่ได้จับเวลาจริง
+\end{itemize}
+\evidence{ตารางที่ 1-1 ในหัวข้อ 1.2, สไลด์ 4}
+\careful{ตัวเลขที่ได้มาจากเจ้าของโดยตรงคือ 5--10 ชิ้นต่อวัน ค่าส่ง 600 กับ 200 เยน และค่า RSL 60 เยน ส่วนนาทีต่องานเป็นของเราประมาณเอง}
 \end{q}
 
-\begin{q}{ทำไมไม่ให้ระบบสั่งซื้อจาก Supplier เองเลย \must}
+\begin{q}{ปัญหาไม่ใช่แค่ ``ไม่มีคอมพิวเตอร์'' หรือ}\label{q:notcomputer}
 \ans
-เพราะเป็นขั้นที่ใช้เงินจริง ถ้าข้อมูลสต๊อกหรือต้นทุนผิด ระบบอาจสั่งของผิดจำนวนโดยไม่มีใครเห็น อาจารย์แนะนำให้ใช้ human-in-the-loop เราจึงให้ระบบคำนวณต้นทุน กำไรที่คาด และเตรียมคำสั่งซื้อ แต่ Use Case 5A ให้เจ้าของกดอนุมัติก่อนทุกครั้ง
-\evidence{สไลด์ 9 และ Use Case Description 5A}
+\begin{itemize}
+  \item ไม่ใช่ครับ/ค่ะ เจ้าของใช้คอมพิวเตอร์และ Rakuten RMS อยู่แล้ว
+  \item ปัญหาคือข้อมูลอยู่คนละที่ ต้องคัดลอกและเทียบเองทุกคำสั่งซื้อ เช่น สต๊อกอยู่ทั้งคลังบริษัทและ RSL ต้นทุนต้องรวม 8 ค่าเอง
+  \item และตัดสินใจสั่งซื้อด้วยความรู้สึก ไม่มีจุดสั่งซื้อที่ชัดเจน
+  \item ทุกปัญหาวัดได้ว่าลดลงหรือไม่ เช่น เวลาต่อวัน และเวลาคำนวณต้นทุน
+\end{itemize}
+\evidence{รายงาน 1.2 และ 2.3}
 \end{q}
 
-\begin{q}{อะไรที่ยังทำด้วยมือ}
+\begin{q}{วัดอย่างไรว่าระบบแก้ปัญหาได้จริง}\label{q:kpi}
 \ans
-วางแผนสินค้า จัดหา เจรจาโรงงาน ตัดสินใจเรื่องคุณภาพ อนุมัติการสั่งซื้อ กดพิมพ์ใบปะ และส่งมอบพัสดุให้ขนส่ง ส่วนลูกค้ายังสั่งและชำระเงินผ่าน Rakuten ตามเดิม
+ตั้งตัวชี้วัดไว้ภายใน 3 เดือนหลังเปิดใช้งาน 4 ข้อ
+\begin{itemize}
+  \item คำสั่งซื้อ Rakuten ใหม่\textbf{ทุกรายการ}ได้ใบปะที่ถูกต้องโดยไม่ต้องจัดรูปแบบเอง
+  \item สต๊อกที่ต่ำกว่าเกณฑ์ถูกแจ้งเตือนครบทุก SKU
+  \item คำนวณต้นทุนต่อหน่วยได้ภายใน \num{1 นาที} แทน 20 ถึง 30 นาที
+  \item เวลางานหลังบ้านต่อวันลดลง\textbf{อย่างน้อยครึ่งหนึ่ง}จากตารางที่ 1-1
+\end{itemize}
+\evidence{รายงาน 1.3, สไลด์ 5}
 \end{q}
 
-% ================================================================ คนที่ 2
-\speaker{sB}{\speakerB}{Business Process, Use Case, diagram, ER}
-
-\begin{q}{Use Case ที่เพิ่มจากการวิเคราะห์ CRUD มีอะไรบ้าง \must}
+\begin{q}{ขายแค่ 5 ถึง 10 ชิ้นต่อวัน คุ้มไหมที่จะทำระบบ}\label{q:worth}
 \ans
-ตรวจคำสั่งซื้อ (2A) จับคู่กฎ SKU (2S) และตั้งกฎ SKU (3A) พิมพ์ใบปะ (9A) แยกจากการจัดรูปแบบ (6S) ส่งเลขติดตาม (5S) ตัดสต๊อก (7S) และลบข้อมูลเก่า (10A) ซึ่งเป็น Use Case เดียวที่มีการ Delete
-\evidence{หัวข้อ 2.10 และ 2.12}
+\begin{itemize}
+  \item งานมือ 1 ถึง 2 ชั่วโมงต่อวัน คือ 30 ถึง 60 ชั่วโมงต่อเดือน ของเจ้าของที่ทำทุกอย่างคนเดียว เวลานี้ควรไปพัฒนาสินค้าใหม่และเจรจาโรงงาน
+  \item เรื่องเงินก็มีผล ส่งเองประมาณ \num{600 เยน} ต่อชิ้น คู่แข่งประมาณ 200 เยน ต่างกัน 400 เยน หรือ 2,000 ถึง 4,000 เยนต่อวัน ขณะที่ RSL คิดค่าหยิบประมาณ 60 เยน ต้องมีต้นทุนต่อหน่วยที่ถูกต้องจึงเลือกวิธีส่งและตัดสินใจสั่งซื้อได้
+  \item ร้านจะขยายไป Yahoo! Auctions และ Amazon งานจะเพิ่มขึ้นตามช่องทาง ระบบจึงวางโครงไว้ตั้งแต่ตอนนี้
+\end{itemize}
+\evidence{รายงาน 1.2 และ 1.7, สไลด์ 4}
 \end{q}
 
-\begin{q}{ทำไม 1A และ 10A ไม่อยู่ใน Business Process}
+\begin{q}{ทำไมไม่ให้ระบบสั่งซื้อจาก Supplier เองเลย \must}\label{q:hitl}
 \ans
-1A เข้าสู่ระบบเป็นเงื่อนไขก่อนเริ่มทุกขั้นตอน ส่วน 10A เป็นงานดูแลระบบที่ทำเป็นระยะ ไม่ได้ผูกกับการรับส่งคำสั่งซื้อ จึงเขียนเหตุผลไว้ใต้ตารางจับคู่ BP กับ UC
-\evidence{หัวข้อ 2.7}
+\begin{itemize}
+  \item เพราะเป็นขั้นที่ใช้เงินจริง ถ้าข้อมูลสต๊อกหรือต้นทุนผิด ระบบอาจสั่งของผิดจำนวนโดยไม่มีใครเห็น
+  \item อาจารย์แนะนำให้ใช้ human-in-the-loop ระบบตรวจสต๊อก (3S) คำนวณต้นทุน (4S) และแสดงกำไรต่อหน่วยที่คาด แต่ 5A ให้เจ้าของกด ``คุ้มค่า'' หรือ ``ไม่คุ้มค่า'' เอง และใน 6A เจ้าของต้องกดปุ่มสั่งซื้อ
+  \item ใน Use Case Diagram มีเส้นประสีแดง ``ต้องอนุมัติ (5A) ก่อน'' ระหว่าง 5A กับ 6A
+\end{itemize}
+\evidence{สไลด์ 6 และ 10, รายงาน 2.5 ขั้นตอนที่ 13, Use Case Description 5A}
+\careful{requirement ข้อ 5 เขียนว่า Auto Reorder ส่งคำสั่งซื้อ\textbf{โดยอัตโนมัติ} ถ้าถูกถามว่าขัดกับ requirement ไหม ให้ตอบว่า requirement ข้อเดียวกันเขียนว่า ``การอนุมัติขั้นสุดท้าย'' ยังทำด้วยมือ ส่วนที่อัตโนมัติคือการเช็กสต๊อกและเตรียมข้อมูลการสั่งซื้อ}
 \end{q}
 
-\begin{q}{object ที่ติดกับ actor ใน Sequence Diagram คืออะไร \must}
+\begin{q}{อะไรที่ยังทำด้วยมือ และอะไรอยู่นอกขอบเขต}\label{q:manual}
 \ans
-เป็นหน้าจอทุกตัว เช่น LoginScreen หรือ ReorderDecisionScreen ไม่ใช้ชื่อ View และทุก diagram ต่อฐานข้อมูลผ่าน DBConnector เรามีสคริปต์ check\_diagrams.py ตรวจทุก diagram ว่า Admin ไม่ส่งข้อความตรงไปที่ controller และ object ใน Collaboration ตรงกับ Sequence
+\begin{itemize}
+  \item ยังทำด้วยมือ วางแผนสินค้า จัดหา เจรจาโรงงาน ตัดสินใจเรื่องคุณภาพ อนุมัติการสั่งซื้อ กดรับสินค้าเมื่อของมาถึง กดพิมพ์ใบปะ และส่งมอบพัสดุให้ขนส่ง
+  \item นอกขอบเขตเฟส 1 Yahoo! Auctions, Amazon SP-API, การสื่อสารกับลูกค้าโดยตรง การรับชำระเงิน และ 2FA ส่วน Mercari Shops เลิกใช้แล้ว
+  \item ผู้ใช้หลักคือเจ้าของในฐานะ Super Admin ลูกค้ายังสั่งและจ่ายเงินผ่าน Rakuten ตามเดิม ไม่มีหน้าร้าน
+\end{itemize}
+\evidence{รายงาน 1.5}
+\end{q}
+\closetopic{biz}
+
+% ================================================================ 2 BP
+\topic{sA}{bp}{2. Business Process}{สไลด์ 7--11  ในเล่ม 2.1--2.7}{\speakerA}
+
+\begin{q}{อธิบาย Business Process เดิมตั้งแต่ต้นจนจบ}\label{q:asis}
+\ans
+\begin{itemize}
+  \item มี 4 lane คือ Marketplace, Super Admin, Delivery และ Supplier โดย Super Admin กับเจ้าของคือคนเดียวกัน
+  \item ลูกค้าสั่งและจ่ายเงินที่ Marketplace แล้ว Super Admin ตรวจคำสั่งซื้อเอง เช็กว่าสต๊อกพอไหม
+  \item ถ้าพอ จับคู่เลข RSL กับ order\_id เอง พิมพ์ใบปะเอง ส่งให้ Delivery แล้วส่งเลขติดตามกลับไปที่ Marketplace เอง
+  \item ถ้าไม่พอ คำนวณต้นทุนเองว่าคุ้มไหม ถ้าคุ้มสั่ง Supplier ถ้า Supplier มีของ ส่งของเข้าร้านแล้ววนกลับไปจับคู่ RSL ถ้าไม่คุ้มหรือ Supplier ไม่มีของ ยกเลิกคำสั่งซื้อ
+\end{itemize}
+\evidence{รูป 2.1 และคำอธิบาย 2.2.1--2.2.15, สไลด์ 7}
 \end{q}
 
-\begin{q}{เลข query อ่านอย่างไร}
+\begin{q}{จุดที่เป็นปัญหาในรูปมีกี่จุด แต่ละจุดเสียเวลาเท่าไร}\label{q:pain}
 \ans
-Q ตามด้วยเลข Use Case และลำดับในขั้นตอน เช่น Q3A.1 คือ query แรกของ Use Case 3A เลขเดียวกันใช้ใน Use Case Description, Sequence Diagram, ER Diagram พร้อม Query, Query Table และคอมเมนต์ในโค้ด
+มี 4 จุดสีแดง แต่ละจุดผูกกับเวลาประมาณในตารางที่ 1-1
+\begin{itemize}
+  \item 2.3.1 จับคู่ Order กับสต๊อกเอง ประมาณ \num{5 นาที} ต่อ Order (เช็กสต๊อก 3 จับคู่ RSL 2)
+  \item 2.3.2 คำนวณความคุ้มค่าเอง รวม 8 ค่า ประมาณ \num{20 ถึง 30 นาที} ต่อครั้ง
+  \item 2.3.3 จัดรูปแบบใบปะเอง ประมาณ \num{3 นาที} ต่อ Order
+  \item 2.3.4 ติดตามพัสดุและแจ้งลูกค้าเอง ประมาณ \num{2 นาที} ต่อ Order
+\end{itemize}
+\evidence{รูป 2.3 และหัวข้อ 2.3, สไลด์ 8}
 \end{q}
 
-\begin{q}{Class Diagram มีความสัมพันธ์แบบไหนบ้าง}
+\begin{q}{Business Process ใหม่ต่างจากเดิมตรงไหน \must}\label{q:tobe}
 \ans
-มีครบ 4 แบบ สืบทอดจาก BaseScreen, BaseController และ BaseRepository, association จากหน้าจอไปที่ Controller, dependency จาก Controller ไปที่ Repository และ aggregation ระหว่าง Repository กับ DBConnector
-\evidence{รูป Class Diagram 15 รูปในหัวข้อ 2.14}
+\begin{itemize}
+  \item เพิ่ม lane ``ระบบ (System)'' รับขั้นที่ทำซ้ำได้ 7 Use Case คือ 1S ถึง 7S เช่น เช็กสต๊อก จับคู่ RSL จัดรูปแบบใบปะ แจ้งเลขติดตาม ตัดสต๊อก
+  \item หลังเช็กสต๊อก (3S) มี 3 ทาง RSL พอ $\rightarrow$ จับคู่ RSL (1S), RSL ไม่พอแต่คลังบริษัทพอ $\rightarrow$ ข้ามไปจัดรูปแบบใบปะ (6S) เลย, ไม่มีแหล่งใดพอ $\rightarrow$ คำนวณต้นทุน (4S) และตัดสินใจ (5A)
+  \item คนยังทำขั้นที่ต้องตัดสินใจหรือใช้มือ เช่น ตรวจคำสั่งซื้อ (2A) ตั้งกฎ SKU (3A) ตัดสินใจ (5A) สั่งซื้อและรับสินค้า (6A) ยกเลิก (7A) ส่งมอบพัสดุ (8A) พิมพ์ใบปะ (9A)
+  \item ตาราง 2.5 มีคอลัมน์ ``แก้ปัญหาข้อ'' บอกว่าขั้นไหนแก้ปัญหาข้อไหนใน 2.3 และเพิ่ม 10A ลบข้อมูลเก่า ตามคำแนะนำของอาจารย์
+\end{itemize}
+\evidence{รูป 2.4 และตาราง 2.5, สไลด์ 9--10}
 \end{q}
 
-\begin{q}{State Diagram บอก SQL อย่างไร}
+\begin{q}{requirement บอกว่าพิมพ์ใบปะอัตโนมัติ ทำไม 9A ยังให้คนกด}\label{q:print}
 \ans
-ทุกเส้นเขียนเป็น [เงื่อนไข] event / Use Case และกำกับเลข query ที่ UPDATE ค่า order\_status เช่น จากรอตรวจสอบคำสั่งซื้อไปรอจับคู่กฎ SKU ใช้ Q2A.4
+\begin{itemize}
+  \item ส่วนที่เสียเวลาคือการจัดรูปแบบ ซึ่งระบบทำให้แล้วใน 6S ทันทีหลัง 1S จับคู่ RSL หรือหลัง 3S เลือกคลังบริษัท เลือก template ตามแหล่งจัดส่งและวิธีส่งเอง (RSL-STD-A6, RSL-LARGE-A5, INHOUSE-YAMATO-A6)
+  \item การพิมพ์เป็นขั้นทางกายภาพ ต้องมีคนใส่กระดาษ ติดใบปะ และเตรียมพัสดุอยู่แล้ว จึงเหลือแค่กดพิมพ์
+  \item ถ้าพิมพ์เองโดยไม่มีคนอยู่ เครื่องพิมพ์ไม่พร้อมจะไม่มีใครเห็น ใน 9A จึงมีทางเลือกกรณีเครื่องพิมพ์ไม่พร้อมและพิมพ์ซ้ำ ทุกครั้งบันทึกลง label\_print\_history
+\end{itemize}
+\evidence{ตาราง 2.5 ขั้นตอนที่ 7--8, Use Case Description 6S และ 9A, สไลด์ 23}
 \end{q}
 
-\begin{q}{ER มี M:N ไหม total participation ดูตรงไหน}
+\begin{q}{แปลง Business Process เป็น Use Case อย่างไร}\label{q:bpuc}
 \ans
-ไม่มี M:N ทุก relationship เป็น 1:1 หรือ 1:N เส้นคู่คือ total participation เช่น ใบปะทุกใบต้องมี Order ส่วนเส้นเดี่ยวคือ partial เช่น Order ไม่จำเป็นต้องมีคำสั่งซื้อเติมสต๊อก
-\evidence{หัวข้อ 2.18}
+\begin{itemize}
+  \item นำรูป BP ใหม่มาเขียนเลข Use Case กำกับทุกกล่อง ทั้งกล่องที่ระบบทำ (S) และกล่องที่คนทำ (A) ได้รูป 2.6
+  \item ตาราง 2.7 จับคู่ทีละขั้น 16 แถว ทุก Use Case มาจากกล่องใน BP
+  \item กล่องที่เป็นจุดตัดสินใจ เช่น ``มีกฎ SKU ที่ตรงกันในระบบไหม'' กลายเป็น 2S
+\end{itemize}
+\evidence{รูป 2.6 และตาราง 2.7, สไลด์ 11}
 \end{q}
 
-\begin{q}{ทำไม ER แบ่งเป็นหลายรูป}
+\begin{q}{ทำไม 1A และ 10A ไม่อยู่ใน Business Process}\label{q:1a10a}
 \ans
-ตาราง orders มี 34 คอลัมน์ ถ้ารวมทุก attribute ไว้ในรูปเดียวจะอ่านไม่ออกในกระดาษ A4 จึงมีรูปภาพรวมที่แสดงทุก entity และ relationship แล้วแยกรายละเอียด attribute เป็น 3 ส่วน
+\begin{itemize}
+  \item 1A เข้าสู่ระบบเป็นเงื่อนไขก่อนเริ่มทุกขั้น ไม่ใช่ขั้นหนึ่งในการรับส่งคำสั่งซื้อ
+  \item 10A เป็นงานดูแลระบบที่ทำเป็นระยะ ไม่ได้ผูกกับคำสั่งซื้อใดคำสั่งซื้อหนึ่ง
+  \item เขียนเหตุผลไว้ใต้ตารางจับคู่ BP กับ UC ส่วน 10A ยังมีในตาราง BP ใหม่ขั้นตอนที่ 16
+\end{itemize}
+\evidence{หัวข้อ 2.7 (ใต้ตาราง), สไลด์ 11}
+\end{q}
+\closetopic{bp}
+
+% ================================================================ 3 Use Case CRUD
+\topic{sA}{uc}{3. Use Case, Actor, CRUD}{สไลด์ 12--14  ในเล่ม 2.8--2.12}{\speakerA}
+
+\begin{q}{เลข Use Case และเลข query อ่านอย่างไร \must}\label{q:ucid}
+\ans
+\begin{itemize}
+  \item เลขตามด้วย A คือ Admin เป็นผู้เริ่ม มี 10 ตัว 1A--10A ส่วน S คือระบบทำเอง มี 7 ตัว 1S--7S รวม \num{17 Use Case}
+  \item query ใช้รูปแบบ Q ตามด้วยเลข Use Case และลำดับในขั้นตอน เช่น Q6A.11 คือ query ที่ 11 ของ 6A (บันทึกรับสินค้า) รวมทั้งเล่ม \num{113 query}
+  \item เลขเดียวกันใช้ใน description, Sequence, Collaboration, ER พร้อม Query, Query Table และผล SQL
+  \item ในโค้ด SQL เก็บเป็นค่าคงที่ชื่อ \code{Q<UC>\_<n>\_...} ใน \code{src/lib/queries} ชื่อในโค้ดไม่จำเป็นต้องตรงเลขในเล่ม เพราะ query เดียวใช้ซ้ำหลาย Use Case Query Table 2.16 มีคอลัมน์บอกชื่อค่าคงที่ในโค้ดของทุกข้อ
+\end{itemize}
+\careful{Use Case Diagram ก่อนปรับปรุงมีเลขชุดของตัวเอง เช่น 1A เดิมคือ ``ตรวจสอบ Order แบบ manual'' แต่ 1A ใหม่คือเข้าสู่ระบบ ถ้าถูกถามให้บอกว่าเรียงเลขใหม่หลังทบทวน}
+\evidence{Query Table 2.16, สไลด์ 15 และ 36}
 \end{q}
 
-% ================================================================ คนที่ 3
-\speaker{sC}{\speakerC}{SQL ฐานข้อมูล เว็บ การทดสอบ}
-
-\begin{q}{SQL รันจริงหรือเปล่า ผลดูตรงไหน \must}
+\begin{q}{Actor มีใครบ้าง RSL เป็น Actor ไหม}\label{q:actor}
 \ans
-รันจริง เราสร้างฐานข้อมูล PostgreSQL 15 ตารางพร้อมข้อมูลตัวอย่าง แล้วรันทั้ง \num{63 คำสั่ง} ผ่านครบ แต่ละคำสั่งรันแยกจากข้อมูลตั้งต้นชุดเดียวกัน คำสั่งที่แก้ข้อมูลแสดงข้อมูลหลังรันด้วย
-\evidence{หัวข้อ 2.25 และไฟล์ sql/schema.sql, seed.sql}
+\begin{itemize}
+  \item Actor ที่ใช้ระบบคือเจ้าของในฐานะ \textbf{Super Admin} คนเดียว
+  \item Actor ภายนอกมี 4 ตัว คือ Marketplace (Rakuten Ichiba ผ่าน RMS), Supplier, Delivery และ \textbf{RSL} เพราะระบบส่งข้อมูลไปจับคู่ (1S) และอ่านยอดสต๊อกจาก RSL (3S) โดยตรง
+  \item ``ระบบ'' ไม่ใช่ Actor ใน Use Case Diagram เพราะกรอบของ diagram คือระบบเองแล้ว Use Case แบบ S จึงไม่มีเส้นจาก Super Admin
+\end{itemize}
+\evidence{รายงาน 2.11 (รูป 2-6 และรายการ Actor), สไลด์ 13}
 \end{q}
 
-\begin{q}{ทำไม SQL ไม่ใช้ JOIN ซับซ้อน}
+\begin{q}{Use Case ที่เพิ่มจากการวิเคราะห์ CRUD มีอะไรบ้าง \must}\label{q:added}
 \ans
-เกณฑ์ของวิชาให้ใช้ SQL ที่อ่านเข้าใจง่าย เราจึงแตกเป็นคำสั่งสั้น ๆ หลายข้อ เช่น 10A แยก query ของต้นทุน ใบปะ และคำสั่งซื้อเติมสต๊อกออกจากกัน
+\begin{itemize}
+  \item ก่อนปรับปรุงมี \num{9 Use Case} หลังทบทวนมี \num{17} โดยเพิ่ม \num{7 ตัว} คือ 2A ตรวจสอบคำสั่งซื้อ, 3A ตั้งกฎ SKU, 9A พิมพ์ใบปะ, 10A ลบข้อมูลเก่า, 2S จับคู่กฎ SKU, 5S ส่งเลขติดตาม, 7S ตัดสต๊อก
+  \item เหตุผลมาจาก 2.10 ไม่มีกฎ SKU (2.10.1) งานอัตโนมัติยังผูกกับคน (2.10.2) ไม่มีขั้นตัดสต๊อก (2.10.3) และไม่มีการลบข้อมูลเก่า (2.10.4)
+  \item ชุดนี้ตรงกันทั้ง usecases.json (ช่อง origin = เพิ่มใหม่), รายงาน 2.12 และแถวสีแดงในสไลด์ 14
+\end{itemize}
+\evidence{รายงาน 2.10 และ 2.12, สไลด์ 12--14}
 \end{q}
 
-\begin{q}{ตอนนี้เว็บต่อฐานข้อมูลจริงหรือยัง}
+\begin{q}{Actor ของ 3S และ 4S เป็น Admin หรือระบบ}\label{q:sactor}
 \ans
-หน้าจอทั้ง 12 หน้าใช้ข้อมูลตัวอย่างชุดเดียวกับฐานข้อมูลที่รัน SQL และเก็บใน localStorage ระหว่างพัฒนา โครงสร้างข้อมูลตรงกับ schema ทุกคอลัมน์ ขั้นต่อไปคือเปลี่ยนไปต่อ PostgreSQL จริงที่ไฟล์เดียว
+\begin{itemize}
+  \item ตามรหัส S ระบบเป็นผู้ทำ 3S รันเองใน \code{executeWorkflow} ต่อจาก 2S ทันที (และหลังรับสินค้าใน 6A) แล้วแยกเส้นทางตามสต๊อก Admin มีหน้า StockCheckScreen ไว้ดูและปรับยอดสต๊อก
+  \item 4S คำนวณเมื่อ Super Admin กด ``คำนวณ'' ที่หน้า \code{/products/cost} หรือเมื่อบันทึกสินค้าพร้อมองค์ประกอบต้นทุนใน 3A ขั้นการคำนวณทั้งหมดระบบทำ
+  \item 1S, 4S และ 5S เริ่มจากการกดปุ่ม แต่ทุกขั้นหลังจากนั้นระบบทำเอง จึงไม่วาดเส้นจาก Super Admin (เขียนไว้ใน 2.11)
+\end{itemize}
+\evidence{usecases.json ช่อง actor, รายงาน 2.11, สไลด์ 15}
+\careful{ถ้าถูกถามว่า ``4A ทำไมเป็น A'' ตอบว่าในเว็บ Admin กดนำเข้า Order ที่ Dashboard เอง ไม่มีการดึงตามรอบเวลา จึงเป็น A}
 \end{q}
 
-\begin{q}{ทดสอบกรณีระบบภายนอกล่มอย่างไร \must}
+\begin{q}{Use Case Diagram ก่อนปรับปรุงได้มาอย่างไร}\label{q:ucasis}
 \ans
-มีหน้า /dev ที่ไม่อยู่ในเมนู ใช้จำลองข้อผิดพลาดตามทางเลือกของแต่ละ Use Case เช่น Rakuten เชื่อมต่อไม่ได้ หรือเครื่องพิมพ์ไม่พร้อม แล้วดูว่าระบบแสดงข้อความตรงกับ Use Case Description คำต่อคำ ทดสอบ \num{34 กรณี} ผ่านทุกกรณี
-\evidence{หัวข้อ 2.26}
+\begin{itemize}
+  \item แปลงจากกล่องใน BP เดิม ชื่อ Use Case ตรงกับชื่อกล่อง ได้ 9 Use Case ที่เจ้าของทำเองเกือบทั้งหมด
+  \item Actor วางตาม swim lane ของ BP คือ Super Admin, Marketplace, Delivery และ Supplier
+\end{itemize}
+\evidence{รูป 2.8, สไลด์ 12}
 \end{q}
 
-\begin{q}{ต้นทุนต่อหน่วยคำนวณอย่างไร}
+\begin{q}{CRUD Table สร้างอย่างไร entity มาจากไหน}\label{q:crud}
 \ans
-Unit Cost = ((purchase\_price × exchange\_rate) + intl\_freight + duty\_fee) / order\_qty + marketplace\_fee + domestic\_shipping + rsl\_charge ตามสูตร Q4S.2 เช่น FSH-MLR-240 ได้ \num{418.61} ผลบันทึกใน cost\_calculation\_log ด้วย Q4S.3
+\begin{itemize}
+  \item ตารางก่อนปรับปรุง (2.9) ได้จากการหาคำนามในขั้นตอนทำงาน 9 Use Case
+  \item ตารางที่ทบทวนแล้ว (2.12) สร้างจาก SQL ทุกข้อใน description แปลง INSERT, SELECT, UPDATE, DELETE เป็น C, R, U, D ได้ 17 Use Case คูณ \num{17 entity} ชื่อตรงกับตารางใน ER และฐานข้อมูลจริงทุกตัว
+  \item ข้อดีคือ CRUD ไม่มีทางหลุดจาก SQL เพราะสร้างจากที่เดียวกัน (\code{npm run dict} สร้าง crud.json)
+\end{itemize}
+\evidence{ตาราง 2.9 และ 2.12, ไฟล์ sql/crud.json, สไลด์ 14}
 \end{q}
 
-\begin{q}{ถ้าจะขยายไป Amazon ต้องแก้อะไร}
+\begin{q}{บางตารางไม่มี Use Case ไหน Create เลย ใครเพิ่มข้อมูล}\label{q:crudgap}
+\tip{เป็นคำถามที่อาจารย์ใช้ CRUD Table จับจุดขาดได้ง่าย ตอบตรง ๆ ว่าเห็นแล้ว และบอกว่าจะเพิ่มอะไร}
 \ans
-เพิ่มค่าช่องทางขายและกฎ SKU ของช่องทางใหม่ในตาราง sku\_rules และ shipping\_rules ส่วน Use Case เดิมใช้ได้เพราะออกแบบให้ทุกตารางมี sales\_channel อยู่แล้ว
+\begin{itemize}
+  \item suppliers มีแค่ R และ admins มีแค่ R กับ U (นับครั้งผิด ล็อกบัญชี เวลาเข้าสู่ระบบล่าสุด) เพราะเฟส 1 ตั้งค่าไว้ครั้งเดียวผ่านข้อมูลตั้งต้น (\code{npm run db:reset})
+  \item ตารางประวัติ เช่น auto\_error\_logs, stock\_adjustment\_history, label\_print\_history มีแค่ C เพราะเป็น log ที่เขียนอย่างเดียว
+  \item เรายอมรับว่าเป็นช่องว่าง ถ้าทำต่อจะเพิ่ม Use Case ``จัดการ Supplier'' และ ``จัดการบัญชีผู้ใช้'' ตาม requirement ที่บอกว่าเจ้าของเป็นผู้กำหนดกฎ supplier
+\end{itemize}
+\evidence{ตาราง 2.12 (คอลัมน์ suppliers, admins)}
 \end{q}
+
+\begin{q}{ทำไมต้องมี 10A ลบข้อมูล ลบแล้วข้อมูลหายไหม}\label{q:10a}
+\ans
+\begin{itemize}
+  \item อาจารย์แนะนำเรื่อง data retention ไม่ให้ฐานข้อมูลโตไปเรื่อย ๆ โดยไม่มีประโยชน์
+  \item ลบได้เฉพาะข้อมูลที่ปิดแล้ว คือ Order ``จัดส่งสำเร็จ'' หรือ ``ยกเลิกแล้ว'' ประวัติต้นทุน ใบปะ และคำสั่งซื้อเติมสต๊อกที่ยกเลิก ได้รับของแล้ว หรือเลยวันรับและไม่มี Order ที่ยังเปิดอ้างถึง แบบตามช่วงวันที่ต้องเก่ากว่า \num{12 เดือน}
+  \item Order ที่ลบเก็บ snapshot (Order + รายการสินค้า + ใบปะ) ลง \code{deletion\_history} ดาวน์โหลด CSV สำรองก่อนลบได้ ทั้งชุดทำใน transaction เดียว ถ้าพลาด rollback ทั้งชุด
+\end{itemize}
+\evidence{Use Case Description 10A, สไลด์ 14 (แถว 10A มีตัว D) และ 31}
+\end{q}
+\closetopic{uc}
+
+% ================================================================ 4 UC description
+\topic{sB}{desc}{4. Use Case Description}{สไลด์ 15--33  ในเล่ม 2.13}{\speakerB}
+
+\begin{q}{อธิบาย Use Case Description ของ 5A \must}\label{q:5a}
+\ans
+\begin{itemize}
+  \item 5A เป็นจุด human-in-the-loop ของระบบ Pre-condition คือ Order อยู่ที่ ``รอ Admin ตัดสินใจสั่งซื้อ'' (3S หาแหล่งที่พอไม่ได้) และ 4S คำนวณ unit\_cost แล้ว
+  \item หน้าจอแสดงต้นทุนต่อหน่วย ราคาขาย กำไรต่อหน่วยที่คาด (selling\_price $-$ unit\_cost) และ lead time ของ Supplier
+  \item กดยืนยันแล้ว ทำใน transaction เดียว ตรวจจำนวนเป็นจำนวนเต็มบวก แล้ว \textbf{Q5A.1} ล็อก Order (FOR UPDATE) และอ่านราคาขายกับต้นทุนล่าสุด \textbf{Q5A.2} บันทึก reorder\_decision, decided\_qty และสถานะใหม่ คุ้มค่า $\rightarrow$ ``รอสั่งซื้อจาก Supplier'' (6A) ไม่คุ้มค่า $\rightarrow$ ``รอยกเลิก Order'' (7A)
+  \item ถ้าไม่มีราคาขาย \textbf{Q5A.3} พัก Order ไว้ที่ ``รอดำเนินการด้วยตนเอง'' (manual\_reason = price) พร้อมลิงก์ไปตั้งราคาใน 3A
+  \item ตัวอย่าง FSH-RDS-180 ราคาขาย 2,690 ต้นทุน 2,462.20 กำไรที่คาด \num{227.80 บาท} ต่อชิ้น
+\end{itemize}
+\evidence{สไลด์ 25--27, รายงาน 2.13 (5A)}
+\careful{5A มีแค่ 3 query คือ Q5A.1--Q5A.3 เลขอย่าง Q5A.4, Q5A.7, Q5A.9 เป็นของรุ่นเก่า ไม่มีแล้ว}
+\end{q}
+
+\begin{q}{ทางเลือก (alternative) ใน description เขียนอย่างไร}\label{q:alt}
+\ans
+แต่ละ Use Case มีทางเลือก 3 กลุ่ม
+\begin{itemize}
+  \item ข้อมูลไม่ครบหรือไม่ถูกต้อง เช่น 7A ไม่ใส่เหตุผล ระบบแจ้ง ``กรุณาระบุเหตุผลการยกเลิก'' หรือ 5A จำนวนไม่ใช่จำนวนเต็มบวก
+  \item ทำซ้ำหรือสถานะไม่ตรง เช่น 5A Order ถูกตัดสินใจไปแล้ว, 6A รับสินค้าซ้ำได้ ``already'' และ 7S ตัดเฉพาะรายการที่ stock\_deducted = FALSE
+  \item ระบบภายนอกล่ม เช่น 1S เชื่อม RSL ไม่ได้ คงสถานะเดิม, 3S แสดงเฉพาะสต๊อกคลังบริษัท, 7S อัปเดต Rakuten ไม่ได้ ตัดสต๊อกในระบบไว้ก่อนแล้วตั้ง sync เป็น pending ให้ลองใหม่
+\end{itemize}
+กรณีที่ระบบตัดสินเองไม่ได้ จะส่ง Order ไปสถานะ ``รอดำเนินการด้วยตนเอง'' พร้อม manual\_reason บอกสาเหตุ (เช่น sku-rule, sku-unregistered, price, stock-deduct)
+\evidence{รายงาน 2.13 ทุก Use Case}
+\end{q}
+
+\begin{q}{description สอดคล้องกับหน้าจออย่างไร}\label{q:descui}
+\ans
+\begin{itemize}
+  \item ปุ่มและช่องกรอกในหน้าจอตรงกับคอลัมน์ User Action เช่น 5A มีปุ่ม ``คุ้มค่า - สั่งซื้อเพิ่ม'' และ ``ไม่คุ้มค่า - ยกเลิก''
+  \item ข้อความแจ้งเตือนบนเว็บคัดจาก description คำต่อคำ และตอนทดสอบเทียบคำต่อคำ
+  \item description ยังเขียนชื่อ Server Action และ use-case ที่ถูกเรียกจริง เช่น \code{decideReorderAction} $\rightarrow$ \code{decideReorderUseCase}
+  \item รายงานวางรูปหน้าจอต่อท้าย description, Sequence และ Collaboration ของ Use Case เดียวกัน ตามเกณฑ์ที่ให้เรียงทีละ Use Case
+\end{itemize}
+\evidence{รายงาน 2.13.x, 2.24}
+\end{q}
+
+\begin{q}{3S เลือกแหล่งสต๊อกอย่างไร \must}\label{q:3s}
+\tip{เป็นหัวใจของ Auto Reorder ตอบเป็นลำดับขั้นตามเลข query}
+\ans
+\begin{itemize}
+  \item ทำใน transaction เดียวกับ action ที่กระตุ้น \textbf{Q3S.1} ล็อกแถว stock ของ SKU (FOR UPDATE OF stock) \textbf{Q3S.2} อ่านยอด RSL ผ่าน adapter \textbf{Q3S.3} รวมจำนวนที่ถูกจองโดย Order อื่นที่ยังไม่ตัดสต๊อก แยกตาม fulfill\_source
+  \item กฎ: \textbf{RSL ก่อน} ถ้า RSL หักยอดจองแล้วพอทั้ง Order $\rightarrow$ fulfill\_source = rsl ไป ``ยังไม่ได้จับคู่'' รอ 1S
+  \item ถ้า RSL ไม่พอแต่\textbf{คลังบริษัทพอทั้ง Order} $\rightarrow$ fulfill\_source = in\_house ข้าม 1S ไป ``รอจัดรูปแบบใบปะสินค้า'' แล้ว 6S สร้างใบปะ INHOUSE-YAMATO-A6 ทันทีใน transaction เดียวกัน
+  \item ถ้าไม่มีแหล่งใดพอ $\rightarrow$ ``รอ Admin ตัดสินใจสั่งซื้อ'' (5A) บันทึกด้วย \textbf{Q3S.4}
+  \item ไม่แบ่งส่ง (ไม่เอา RSL ครึ่ง คลังบริษัทครึ่ง) เพราะจะได้ 2 พัสดุ 2 ใบปะ ค่าส่งเพิ่ม และ 1 Order ใช้ได้แหล่งเดียว
+\end{itemize}
+\evidence{Use Case Description 3S, Sequence 3S (สไลด์ 20--22), test/3S-inhouse-ok.png (ORD-24194)}
+\careful{การล็อกและหักยอดจองกันกรณี Order สองรายการแย่งของชิ้นสุดท้ายพร้อมกัน ตัวที่สองต้องรอตัวแรก commit แล้วเห็นยอดจองใหม่}
+\end{q}
+
+\begin{q}{6A ทำอะไรบ้าง รับสินค้าเข้าคลังอยู่ตรงไหน \must}\label{q:receive}
+\ans
+\begin{itemize}
+  \item ส่งคำสั่งซื้อ: Q6A.1--Q6A.5 อ่านรายการ Supplier SKU และคำสั่งซื้อที่ค้าง Q6A.6 ขอเลขใบสั่งซื้อ \code{SELECT nextval('reorder\_no\_seq')} (migration 008 เลขไม่ซ้ำแม้ลบใบล่าสุดใน 10A) Q6A.7 สร้างแถว reorders ``รอส่งคำสั่งซื้อ'' Q6A.8 ผูก Order ที่รอของ SKU นี้\textbf{ทุกรายการ}ด้วย \code{orders.reorder\_id} Q6A.9 เมื่อ Supplier รับ เปลี่ยนเป็น ``สั่งซื้อแล้ว''
+  \item รับสินค้า (เพิ่มในรอบนี้ ไม่ได้เพิ่ม Use Case ใหม่ เป็นขั้นที่ 4--5 ของ 6A): Q6A.10 ล็อก reorder กับ stock, Q6A.11 เปลี่ยนเป็น ``ได้รับสินค้าแล้ว'' พร้อม received\_qty (ทำได้ครั้งเดียว), Q6A.12--Q6A.13 เพิ่ม in\_house\_qty และบันทึก stock\_adjustment\_history, Q6A.14 ส่ง Order ที่ผูกไว้กลับ ``รอตรวจสอบสต๊อก'' แล้ว 3S และ 6S รันต่อทันที
+  \item ตัวอย่างทดสอบ PO-0091 รับ 60 ชิ้น ได้ ``เพิ่ม OUT-CHR-003 เข้าสต๊อกในบริษัท 60 ชิ้นแล้ว'' และ Order ที่ผูกไว้ 2 รายการกลับไปตรวจสต๊อก
+\end{itemize}
+\evidence{Use Case Description 6A, สไลด์ 28--30, test/6A-receive-ok.png}
+\careful{ER เปลี่ยนเป็น reorders ``ครอบคลุม'' orders 1:N เพราะคำสั่งซื้อหนึ่งครอบคลุมได้หลาย Order ของ SKU เดียวกัน ส่วน Order หนึ่งรอคำสั่งซื้อได้ครั้งละรายการ}
+\end{q}
+
+\begin{q}{7A คืนสต๊อกได้อย่างไร}\label{q:7a}
+\ans
+\begin{itemize}
+  \item ถ้า Order ยังไม่ส่งมอบ 7A ยกเลิกเป็น ``ยกเลิกแล้ว'' ถ้ามีรายการที่ตัดสต๊อกไปแล้ว คืนเข้าแหล่งเดิมตาม fulfill\_source (rsl หรือ in\_house) แล้วตั้ง stock\_deducted กลับเป็น FALSE
+  \item ถ้าส่งมอบให้ขนส่งแล้ว ไม่ยกเลิกทันที แต่ไปที่ ``รอดำเนินการพิเศษ'' ให้ประสานขนส่ง
+  \item ถ้าเลือก ``ยกเลิกคำสั่งซื้อด้วย'' จะยกเลิกเฉพาะคำสั่งซื้อที่ยังเปิด และ \textbf{Q7A.5} ส่ง Order อื่นที่ผูกกับคำสั่งซื้อนั้นกลับไป ``รอ Admin ตัดสินใจสั่งซื้อ'' (5A)
+\end{itemize}
+\evidence{Use Case Description 7A, สไลด์ 33}
+\end{q}
+
+\begin{q}{ถ้า Admin เปิดสองแท็บแล้วกดอนุมัติ 5A พร้อมกันจะเกิดอะไร}\label{q:race}
+\ans
+\begin{itemize}
+  \item Q5A.1 ล็อกแถว Order ด้วย \code{FOR UPDATE} คำขอที่สองต้องรอคำขอแรก commit ก่อน แล้วจะเห็นว่าสถานะไม่ใช่ ``รอ Admin ตัดสินใจสั่งซื้อ'' แล้ว จึงได้ข้อความว่า Order ถูกตัดสินใจไปแล้ว ไม่บันทึกซ้ำ
+  \item แบบเดียวกันใช้กับ 6A รับสินค้า สองคำขอพร้อมกันได้ ok หนึ่งครั้ง และ already หนึ่งครั้ง สต๊อกเพิ่มครั้งเดียว (ทดสอบแล้วใน code review)
+\end{itemize}
+\evidence{Use Case Description 5A ขั้นที่ 3, สไลด์ 46}
+\end{q}
+\closetopic{desc}
+
+% ================================================================ 5 Sequence
+\topic{sB}{seq}{5. Sequence และ Collaboration Diagram}{สไลด์ 17--33  ในเล่ม 2.13}{\speakerB}
+
+\begin{q}{object ที่ติดกับ actor ใน Sequence Diagram คืออะไร \must}\label{q:screen}
+\ans
+\begin{itemize}
+  \item เป็นหน้าจอ (page ของ Next.js) ชื่อ \code{:<X>Screen} เช่น \code{:OrderVerifyScreen} คือ\textbf{ชั้น View ของ MVC} Actor กดที่หน้าจอนี้เท่านั้น
+  \item ทำไมชื่อ Screen ไม่ใช่ View: เกณฑ์ข้อ 24 เขียนว่า object ติด actor ต้องเป็น user interface และ\textbf{ห้ามใช้ชื่อว่า view} จึงตั้งชื่อว่า Screen แต่หน้าที่ยังเป็น View ของ MVC ตามที่อาจารย์สอน
+  \item ลำดับทุกรูป: Super Admin $\rightarrow$ Screen (หน้าจอ) $\rightarrow$ Controller (Server Action ใน \code{actions.ts}) $\rightarrow$ Model (UseCase / ExecuteWorkflow + Queries) $\rightarrow$ \code{:DBConnector} และ Adapter สำหรับระบบภายนอก
+  \item ทุกเส้นที่ต่อฐานข้อมูลผ่าน DBConnector มีเลข query กำกับ \code{check\_diagrams.py} ตรวจว่าเลข query ทุกข้อใน description อยู่ใน Sequence และ Collaboration ครบ และตรวจว่าไม่มีลูกศรกลับหา Actor
+\end{itemize}
+\evidence{สไลด์ 17 (ตาราง MVC) และ 21, 26, ไฟล์ mmd/<UC>-sequence.mmd}
+\careful{ทุกรูปในเล่ม สไลด์ และ Class Diagram ใช้ชื่อ Screen ไม่มี object ชื่อ View \code{check\_diagrams.py} ตรวจว่าไม่มีชื่อ object ที่มีคำว่า View ตอบสั้น ๆ ว่า ``Screen คือชั้น View ของ MVC ตั้งชื่อตามเกณฑ์ข้อ 24''}
+\end{q}
+
+\begin{q}{โค้ดใช้ Server Action ไม่มีคลาส Controller ทำไมใน Sequence มี Screen และ Controller \must}\label{q:mvc}
+\ans
+\begin{itemize}
+  \item Screen (ชั้น View) กับ Controller เป็น\textbf{ชื่อบทบาท (stereotype)} ตามแบบ MVC ที่อาจารย์สอน จับคู่กับไฟล์จริงหนึ่งต่อหนึ่ง ไม่ได้สร้างคลาสใหม่ในโค้ด
+  \item Screen = \code{src/app/(app)/.../page.tsx} รับคลิกและแสดงผล
+  \item Controller = Server Action ใน \code{src/app/(app)/actions.ts} เช่น \code{verifyOrderAction} ตรวจ session รับค่าจากหน้าจอ แล้วเรียก use-case Next.js ส่งคำขอจากหน้าจอมาที่ฟังก์ชันนี้ ทำหน้าที่เดียวกับ Controller
+  \item Model = \code{src/lib/use-cases/*} (ลำดับขั้นของ UC) + \code{src/lib/queries/*} (SQL ค่าคงที่ \code{Q<UC>\_<n>}) และ \code{db.ts} คือ DBConnector
+  \item วงเล็บใต้ชื่อ object ในรูปบอกชื่อไฟล์จริง เช่น \code{(actions.ts)} เปิดโค้ดเทียบได้ทันที
+\end{itemize}
+\evidence{สไลด์ 17, สไลด์ 44 (Layers), รายงาน 2.18 Class Diagram}
+\tip{ห้ามพูดว่าโค้ดมีคลาส Controller หรือ Repository ให้พูดว่า ``Controller ในรูปคือ Server Action''}
+\end{q}
+
+\begin{q}{ทำไมไม่มีลูกศรส่งกลับไปที่ Actor \must}\label{q:noreturn}
+\ans
+\begin{itemize}
+  \item Actor เป็นคน ไม่ใช่ object ในระบบ ระบบส่ง message ให้คนไม่ได้ สิ่งที่คนเห็นคือหน้าจอเปลี่ยน
+  \item ผลลัพธ์จึงย้อนกลับเป็นเส้นประ (return) จาก DBConnector $\rightarrow$ Model $\rightarrow$ Controller $\rightarrow$ Screen แล้ว Screen แสดงผลเองเป็น \textbf{self message} เช่น \code{showSuccess()}, \code{showError(...)}
+  \item ตามที่อาจารย์สอน และ \code{check\_diagrams.py} ตรวจทุก Sequence ว่าไม่มีเส้นที่ปลายทางเป็น Actor
+  \item Use Case ที่ระบบทำเอง (S) ไม่มีหน้าจอของตัวเอง ผลขึ้นเป็นข้อความแจ้งเตือนในหน้าที่ Admin เปิดอยู่ ก็เป็น self message บน Screen เช่นกัน
+\end{itemize}
+\evidence{สไลด์ 17 บรรทัด \code{Screen ->> Screen : showSuccess()}, สไลด์ 21}
+\end{q}
+
+\begin{q}{Sequence กับ Collaboration ต่างกันอย่างไร}\label{q:collab}
+\ans
+\begin{itemize}
+  \item Sequence เน้นลำดับเวลา อ่านจากบนลงล่าง
+  \item Collaboration แปลงจาก Sequence ใช้ object ชุดเดียวกัน แต่จัดตามความสัมพันธ์ของ object และใส่เลขลำดับบนทุกข้อความแทนแกนเวลา กรณีแยกทางเขียนเงื่อนไขในวงเล็บเหลี่ยม
+  \item สร้างด้วยสคริปต์ \code{gen\_collab.py} จาก mmd ของ Sequence จึงไม่หลุดกัน แล้ว render ด้วย Graphviz
+\end{itemize}
+\evidence{สไลด์ 21--22 และ 29--30}
+\end{q}
+
+\begin{q}{DBConnector ใน diagram โปรแกรมใช้จริงไหม \must}\label{q:dbconn}
+\ans
+\begin{itemize}
+  \item ใช้จริงครับ/ค่ะ DBConnector คือ \code{src/lib/db.ts} สร้าง connection pool ของ node-postgres (\code{pg}) ตัวเดียว
+  \item มีฟังก์ชัน \code{withTransaction} เปิด BEGIN บน connection เดียว แล้ว COMMIT หรือ ROLLBACK ทุก action ที่เขียนข้อมูลผ่านตัวนี้
+  \item ทุกหน้าในเว็บอ่านเขียน PostgreSQL จริง ไม่เก็บข้อมูลใน localStorage แล้ว (เหลือแค่จำภาษาที่เลือก) ข้อมูลตั้งต้นสร้างด้วย \code{npm run db:reset} จาก migrations 001--008
+\end{itemize}
+\evidence{01418321-final-project/src/lib/db.ts, รายงาน 2.20, สไลด์ 44}
+\end{q}
+
+\begin{q}{ทำไมแยกชั้น ไม่ให้หน้าจอเรียกฐานข้อมูลเลย}\label{q:layer}
+\ans
+\begin{itemize}
+  \item Server Action (\code{actions.ts}) ตรวจ session และรับค่าจากหน้าจอ use-case คุมลำดับขั้นของ Use Case เช่น เช็กสถานะก่อนบันทึก ส่วน queries รู้แค่ SQL ตามเลข Q
+  \item Use Case ที่ระบบทำเอง (2S, 3S, 6S, 7S) ไม่มีหน้าจอ เรียก use-case ตัวเดียวกันได้จาก \code{executeWorkflow}
+  \item ระบบภายนอกแยกอยู่หลัง adapter ตอนเปลี่ยนจาก mock เป็นของจริงไม่ต้องแก้ use-case
+\end{itemize}
+\evidence{Class Diagram 2.18, Component Diagram, สไลด์ 44}
+\careful{พูดคำว่า Controller ได้ในความหมายบทบาท (= Server Action) แต่ห้ามบอกว่าโค้ดมีคลาส Controller หรือ Repository (Q\ref{q:mvc})}
+\end{q}
+\closetopic{seq}
+
+% ================================================================ 6 ER
+\topic{sC}{er}{6. ER Diagram และโครงสร้างตาราง}{สไลด์ 34--36  ในเล่ม 2.14--2.17}{\speakerC}
+
+\begin{q}{ER มี M:N ไหม total participation ดูตรงไหน \must}\label{q:mn}
+\ans
+\begin{itemize}
+  \item ER แบบ Chen มี \num{17 entity} และ \num{22 relationship} เป็น 1:1 อยู่ 2 คู่ (skus--stock และ stock--rakuten\_stock\_sync\_states) ที่เหลือ 1:N ทั้งหมด \textbf{ไม่มี M:N} จึงไม่ต้องมีรูป logical schema เพิ่ม
+  \item เส้นคู่คือ total participation (FK เป็น NOT NULL) เช่น order\_items ทุกแถวต้องมี Order ส่วนเส้นเดี่ยวคือ partial เช่น Order ไม่จำเป็นต้องผูกกับคำสั่งซื้อเติมสต๊อก
+  \item attribute ที่ขีดเส้นใต้คือ primary key ตัวเอียงคือ foreign key
+\end{itemize}
+\evidence{รูป 2.14, สไลด์ 34}
+\end{q}
+
+\begin{q}{ทำไมเดิมบอก 15 ตาราง ตอนนี้เป็น 17 \must}\label{q:tables17}
+\tip{ตอบว่าแบบแรกเป็นแบบวิเคราะห์ แล้วเราปรับให้ตรงฐานข้อมูลจริงของเว็บ ไม่ต้องอาย เป็นหลักฐานว่าแบบกับโค้ดตรงกัน}
+\ans
+\begin{itemize}
+  \item 17 ตารางตรงกับ migrations 001--008 ของเว็บ ไม่นับ \code{schema\_migrations} ที่ตัวรัน migration ใช้จดว่ารันไฟล์ไหนแล้ว
+  \item \textbf{เปลี่ยนชื่อ}: users $\rightarrow$ admins, products $\rightarrow$ skus, purchase\_orders $\rightarrow$ reorders, label $\rightarrow$ labels, deletion\_log $\rightarrow$ deletion\_history, product\_cost + cost\_calculation\_log $\rightarrow$ costs + cost\_history
+  \item \textbf{แยก}: orders แยกเป็น orders + order\_items (แก้ปัญหา Order กับสินค้าเป็น M:N)
+  \item \textbf{ตัดออก}: sku\_rules (ย้ายเป็นคอลัมน์ skus.channel\_sku), shipping\_rules (กฎใบปะอยู่ในโค้ด), rsl\_shipments, delivery\_partners, carrier\_tracking (ข้อมูลมาจาก adapter ไม่ต้องเก็บ)
+  \item \textbf{เพิ่ม}: sessions, auto\_error\_logs, tracking\_notification\_logs, rakuten\_stock\_sync\_states, stock\_adjustment\_history, label\_print\_history
+\end{itemize}
+\evidence{รายงาน 2.14 และ 2.17, sql/schema.sql}
+\end{q}
+
+\begin{q}{Order หนึ่งมีสินค้าหลายชนิดได้ไหม Order กับสินค้าเป็น M:N หรือเปล่า}\label{q:items}
+\ans
+\begin{itemize}
+  \item ในแบบมีตาราง \code{order\_items} เป็นตัวกลาง orders 1:N order\_items และ skus 1:N order\_items จึงไม่มี M:N ตรง ๆ
+  \item แต่ละรายการเก็บ channel\_sku, qty, fulfill\_source และ stock\_deducted ของตัวเอง การตัดสต๊อก (7S) และคืนสต๊อก (7A) ทำทีละรายการ
+\end{itemize}
+\careful{query ที่แสดงผลหลายข้อ (เช่น Q2A.1, Q6S.1) อ่านรายการแรกด้วย LIMIT 1 และข้อมูลตัวอย่างทุก Order มี 1 รายการ ถ้าถูกถามว่ารองรับหลายรายการเต็มที่ไหม ให้ตอบว่าตารางรองรับแล้ว ส่วนหน้าจอและ 3S ยังทำงานแบบ 1 รายการต่อ Order ในเฟส 1}
+\evidence{sql/schema.sql ตาราง order\_items}
+\end{q}
+
+\begin{q}{ทำไม ER แบ่งเป็นหลายรูป ER พร้อม Query อ่านอย่างไร}\label{q:erq}
+\ans
+\begin{itemize}
+  \item 17 ตาราง \num{159 attribute} รวมในรูปเดียวอ่านไม่ออกบน A4 จึงมีรูปภาพรวม แล้วแยกรายละเอียดเป็น 4 ส่วน
+  \item ER พร้อม Query แสดงเฉพาะ entity พร้อม PK และ FK ป้ายสีแดงบอกเลข query ที่กระทำกับ entity นั้น query ที่เป็น UPDATE แสดง attribute ที่ถูกแก้ด้วย ครบทั้ง 113 query
+\end{itemize}
+\evidence{รูป 2.14--2.15, สไลด์ 34--35}
+\end{q}
+
+\begin{q}{ฐานข้อมูล normalize ถึงขั้นไหน มีข้อมูลซ้ำไหม}\label{q:norm}
+\ans
+\begin{itemize}
+  \item ตารางหลักอยู่ในรูป 3NF ทุก attribute ขึ้นกับ primary key ของตัวเอง
+  \item ที่ตั้งใจเก็บซ้ำคือ labels เก็บ label\_template และ rsl\_no เป็นภาพ ณ ตอนสร้างใบปะ ถ้ากฎใบปะเปลี่ยนภายหลัง ใบที่พิมพ์ไปแล้วต้องไม่เปลี่ยนตาม และ deletion\_history เก็บ snapshot แบบ JSON ของ Order ที่ลบ
+  \item cost\_history เก็บค่าก่อนและหลังเป็น JSON เพื่อเป็นประวัติ ไม่ได้ใช้แทนข้อมูลปัจจุบันใน costs
+\end{itemize}
+\evidence{sql/schema.sql}
+\end{q}
+
+\begin{q}{Table Structure มีอะไรบ้าง}\label{q:dict}
+\ans
+\begin{itemize}
+  \item \num{17 ตาราง} รวม \num{159 attribute} แต่ละ attribute มีชื่อ คำอธิบาย PK/FK, Not Null, ชนิดข้อมูลและขนาด และช่วงค่าหรือการตรวจสอบ
+  \item ช่วงค่าเขียนเป็น CHECK จริงในฐานข้อมูล เช่น order\_status ต้องเป็น 1 ใน 22 ค่า, reorder\_status 4 ค่า, received\_qty $>$ 0
+  \item ทุกตารางมีตัวอย่างข้อมูล 5 แถว ยกเว้น admins มี 2 แถว เพราะมี Super Admin คนเดียว ดึงจากข้อมูลตั้งต้นของเว็บ (\code{npm run db:reset}) ตารางอื่นที่มีไม่ถึง 5 แถว (เช่น sessions) เติมแถวตัวอย่างเฉพาะในเล่ม (\code{sql/sample\_extra.sql}) ผล SQL ใน 2.23 ยังใช้ข้อมูลตั้งต้นเดิม
+\end{itemize}
+\evidence{รายงาน 2.17, sql/dictionary.json, สไลด์ 36}
+\end{q}
+\closetopic{er}
+
+% ================================================================ 7 Class State
+\topic{sC}{cls}{7. Class และ State Diagram}{สไลด์ 37--43  ในเล่ม 2.18--2.19}{\speakerC}
+
+\begin{q}{Class Diagram ได้มาจากไหน มีความสัมพันธ์แบบไหนบ้าง \must}\label{q:class}
+\ans
+\begin{itemize}
+  \item นำ object ทุกตัวใน Sequence และ Collaboration ของทั้ง 17 Use Case (56 participant) มาทำเป็นคลาส ตรงกับชั้นในโค้ดแบบ MVC คือ Screen (หน้าจอ ชั้น View), Controller (Server Action), UseCase (รวม ExecuteWorkflow), Queries, DBConnector, Adapter และคลาสข้อมูล (Entity) ที่ตรงกับตาราง
+  \item ความสัมพันธ์ที่ใช้
+  \begin{itemize}
+    \item association หน้าจอ (Screen) เรียก Controller
+    \item dependency Controller เรียก UseCase และ UseCase เรียก Queries กับ Adapter
+    \item aggregation Queries ทุกโมดูลใช้ pool ของ DBConnector ตัวเดียวกัน
+    \item realization MockAdapters ใน mock.ts implement interface ของ Adapter ทุกตัว (เทียบได้กับ super/sub)
+  \end{itemize}
+  \item ทุกคลาสมี attribute และ method
+\end{itemize}
+\evidence{รายงาน 2.18, สไลด์ 37}
+\end{q}
+
+\begin{q}{ทำไม Class Diagram มี 15 รูป และทำไม DBConnector เป็น aggregation}\label{q:class15}
+\ans
+\begin{itemize}
+  \item 12 รูปแบ่งตามกลุ่มงาน กลุ่มละไม่เกิน 2 Use Case ให้ตัวอักษรอ่านได้ อีก 3 รูปเป็นคลาสข้อมูล
+  \item DBConnector มีอยู่ได้เองและใช้ร่วมกันทุกโมดูล queries ถ้าโมดูลหนึ่งหายไป pool ไม่ได้หายตาม จึงเป็น aggregation ไม่ใช่ composition
+\end{itemize}
+\evidence{รายงาน 2.18 (Class Diagram 1/15 ถึง 15/15)}
+\end{q}
+
+\begin{q}{State Diagram บอก SQL อย่างไร \must}\label{q:state}
+\ans
+\begin{itemize}
+  \item มี State Diagram ทุกคอลัมน์สถานะที่ถูก update (Q\ref{q:stateonly}) รูปหลักคือ Order.order\_status เขียนแบบ class.state ทุกเส้นเขียนแบบ [เงื่อนไข] event / Use Case และกำกับเลข query ที่ UPDATE order\_status
+  \item ครบทั้ง \num{22 สถานะ} ใน order-status.ts หลัง 3S มี 3 ทาง [RSL พอ] $\rightarrow$ ยังไม่ได้จับคู่, [RSL ไม่พอ คลังบริษัทพอ] $\rightarrow$ รอจัดรูปแบบใบปะสินค้า, [ไม่มีแหล่งใดพอ] $\rightarrow$ รอ Admin ตัดสินใจสั่งซื้อ
+  \item ``สั่งซื้อแล้ว'' ออกได้ 2 ทาง รับสินค้า (Q6A.14) กลับไป ``รอตรวจสอบสต๊อก'' หรือ 7A ยกเลิกคำสั่งซื้อ (Q7A.5) กลับไป 5A
+  \item ``จัดส่งสำเร็จ'' ได้เมื่อครบ 3 เงื่อนไข ขนส่งแจ้ง delivered, แจ้งเลขติดตามแล้ว และตัดสต๊อกครบทุกรายการ ตรวจที่ Q7S.7, Q5S.4 และ Q8A.4/Q8A.5
+\end{itemize}
+\evidence{รายงาน 2.19, สไลด์ 38}
+\end{q}
+
+\begin{q}{มี State Diagram ของตารางอื่นไหม ข้อมูลไหนบ้างที่ถูก update \must}\label{q:stateonly}
+\ans
+\begin{itemize}
+  \item มีครบทุกคอลัมน์สถานะที่โค้ด UPDATE รวม 5 คลาส 6 รูป (Order แบ่ง 2 รูป) ทุกเส้นเขียน [เงื่อนไข] event / Use Case (Query)
+  \item \code{Order.order\_status} 22 สถานะ (สไลด์ 38--40)
+  \item \code{Reorder.reorder\_status} รอส่งคำสั่งซื้อ (Q6A.7) $\rightarrow$ สั่งซื้อแล้ว (Q6A.9) $\rightarrow$ ได้รับสินค้าแล้ว (Q6A.11) หรือยกเลิกแล้ว (Q7A.4) ลบได้ใน 10A (Q10A.4) (สไลด์ 41)
+  \item \code{Label.label\_status} ready (6S Q6S.4) $\rightarrow$ printed (9A Q9A.4) ยกเลิกจับคู่ RSL ลบใบปะที่ยังไม่พิมพ์ (Q1S.4) (สไลด์ 42)
+  \item \code{Sku.sku\_status} active $\leftrightarrow$ inactive ใน 3A (Q3A.9) ลบเมื่อไม่มีข้อมูลอ้างถึง (Q3A.11) (สไลด์ 42)
+  \item \code{Order.delivery\_status} in\_transit (8A Q8A.2) $\rightarrow$ delivered / failed / returned (Q8A.4) (สไลด์ 43)
+  \item \code{RakutenStockSyncState.sync\_status} pending เมื่อยอดสต๊อกเปลี่ยน (3S, 6A, 7S) $\rightarrow$ synced เมื่อ Rakuten รับยอด (Q7S.10) ส่งไม่สำเร็จคง pending (Q7S.11) (สไลด์ 43)
+  \item ตารางประวัติ (เช่น cost\_history, label\_print\_history) INSERT อย่างเดียวไม่มีสถานะ จึงไม่มี State Diagram
+\end{itemize}
+\evidence{รายงาน 2.19, \code{gen\_diagrams.py} ส่วน OTHER\_STATES, sql/schema.sql ช่อง CHECK}
+\end{q}
+\closetopic{cls}
+
+% ================================================================ 8 สถาปัตยกรรม
+\topic{sC}{arch}{8. สถาปัตยกรรมเว็บจริง}{สไลด์ 44--48  ในเล่ม 2.18, 2.20}{\speakerC}
+
+\begin{q}{เว็บแบ่งชั้นอย่างไร มี REST API ไหม \must}\label{q:arch}
+\ans
+\begin{itemize}
+  \item หน้าจอ (page ของ Next.js App Router) $\rightarrow$ Server Action ใน \code{src/app/(app)/actions.ts} $\rightarrow$ use-case ใน \code{src/lib/use-cases} $\rightarrow$ queries ใน \code{src/lib/queries} (SQL เป็นค่าคงที่ \code{Q<UC>\_<n>}) $\rightarrow$ \code{src/lib/db.ts}
+  \item ระบบภายนอกเรียกผ่าน \code{src/lib/adapters} ไม่มี REST API แยก เพราะหน้าจอกับ server อยู่ในโปรเจกต์เดียว Server Action เป็นทางเรียกฝั่ง server
+  \item ไม่มีคลาส Controller, Repository หรือ Scheduler
+\end{itemize}
+\evidence{สไลด์ 44, Component Diagram}
+\end{q}
+
+\begin{q}{ทำไมไม่มี Scheduler แล้ว Use Case อัตโนมัติทำงานตอนไหน \must}\label{q:auto}
+\ans
+\begin{itemize}
+  \item ทุก action ของ Admin ที่ทำให้ Order เปลี่ยนสถานะ เรียกผ่าน \code{executeWorkflow} ซึ่งรัน action แล้วรัน \code{runAutomation} ต่อ\textbf{ใน transaction เดียวกัน} เช่น 2A ยืนยัน $\rightarrow$ 2S $\rightarrow$ 3S $\rightarrow$ 6S ถ้าเป็นคลังบริษัท
+  \item \code{runAutomation} มีรอบ retry ทุกครั้ง หยิบ Order ที่ค้าง ``รอจับคู่กฎ SKU'' (2S) และ Order ที่ ``แจ้งเลขติดตามแล้ว'' แต่ตัดสต๊อกไม่ครบ (Q7S.1) มาทำต่อ แล้วซิงก์ยอดสต๊อกไป Rakuten
+  \item เปิดหน้า \code{/shipping} จะดึงสถานะขนส่ง (8A) และเปิด \code{/shipping/label} จะทำ 6S ให้ Order ที่รอ
+  \item เหตุผล: ระบบมีผู้ใช้คนเดียว Order เข้ามาเมื่อ Admin กดนำเข้า ทำทันทีให้เห็นผลเลย ไม่ต้องดูแล process แยก ถ้าส่วนอัตโนมัติพลาด ทั้ง action rollback ข้อมูลไม่ค้างครึ่งทาง
+  \item ระบบจริงที่ดึง Order ตามรอบเวลา จะเพิ่ม cron เรียก use-case เดิมได้ เป็นงานเฟสถัดไป
+\end{itemize}
+\evidence{\code{src/lib/use-cases/execute-workflow.ts}, รายงาน 2.11, สไลด์ 45}
+\end{q}
+
+\begin{q}{ถ้าส่วนอัตโนมัติพลาดกลางทางจะเกิดอะไร}\label{q:rollback}
+\ans
+\begin{itemize}
+  \item ข้อผิดพลาดของระบบภายนอกที่ description กำหนดไว้ (เช่น RSL ล่ม) ไม่ทำให้ rollback ระบบตั้ง Order ไปสถานะรอหรือ ``รอดำเนินการด้วยตนเอง'' ตามทางเลือก
+  \item ถ้าเป็นข้อผิดพลาดจริงของฐานข้อมูลในขั้นอัตโนมัติ ทั้ง transaction rollback รวมถึง action ที่กด แล้วบันทึกลง \code{auto\_error\_logs} ใน transaction ใหม่ (เช่น Q3S.5, Q7S.12) ผู้ใช้เห็นข้อความแจ้ง
+\end{itemize}
+\evidence{\code{execute-workflow.ts} ฟังก์ชัน recordRolledBackAutomationError}
+\end{q}
+
+\begin{q}{กันตัดสต๊อกซ้ำอย่างไร \must}\label{q:double}
+\ans
+\begin{itemize}
+  \item \textbf{Q7S.2} ล็อกรายการสินค้าและแถว stock (\code{FOR UPDATE OF item, stock}) ก่อนตัด และเลือกเฉพาะรายการที่ \code{stock\_deducted = FALSE}
+  \item \textbf{Q7S.4} ลดยอดตามแหล่ง fulfill\_source แล้ว \textbf{Q7S.5} ตั้ง \code{stock\_deducted = TRUE} โดยมีเงื่อนไข \code{AND stock\_deducted = FALSE} ซ้ำอีกชั้น ถ้ามีคำขอที่สองเข้ามาจะไม่เหลือรายการให้ตัด
+  \item รอบ retry \textbf{Q7S.1} ใช้ \code{FOR UPDATE SKIP LOCKED} ไม่เกิน 100 รายการ จึงไม่แย่ง Order ที่ action อื่นกำลังทำ และข้าม Order ที่ action นี้ขอไว้แล้ว
+  \item ถ้าสต๊อกไม่พอ Order ไป ``รอดำเนินการด้วยตนเอง'' (stock-deduct) ด้วย Q7S.3 จึงไม่วน retry ไม่จบ
+  \item 7A คืนสต๊อกเฉพาะรายการที่ stock\_deducted = TRUE คืนเข้าแหล่งเดิม แล้วตั้งกลับเป็น FALSE
+\end{itemize}
+\evidence{Use Case Description 7S, สไลด์ 32 และ 46}
+\end{q}
+
+\begin{q}{ใช้ transaction และ row lock ที่ไหนบ้าง}\label{q:locks}
+\ans
+\begin{itemize}
+  \item ทุก action ที่เขียนข้อมูลอยู่ใน \code{withTransaction} (BEGIN/COMMIT/ROLLBACK บน connection เดียว)
+  \item row lock ที่สำคัญ Q3S.1 ล็อก stock ก่อนเลือกแหล่ง, Q5A.1 ล็อก Order ก่อนตัดสินใจ, Q6A.10 ล็อก reorder กับ stock ก่อนรับสินค้า, Q7S.2 ล็อกรายการกับ stock ก่อนตัด, Q2A.2/Q1S.2/Q6S.1/Q7A.1 ล็อก Order ก่อนเปลี่ยนสถานะ
+  \item ข้อจำกัดที่รู้: รับสินค้าล็อก reorder ก่อน Order ส่วน 7A ล็อก Order ก่อน reorder อาจ deadlock ได้ถ้ากดพร้อมกันพอดี PostgreSQL จะยกเลิกตัวหนึ่ง action นั้นล้มแบบสะอาด ผู้ใช้กดใหม่ได้ ระบบมีผู้ใช้คนเดียวจึงโอกาสต่ำ
+\end{itemize}
+\evidence{สไลด์ 46, รายงาน 2.13 (3S, 5A, 6A, 7S)}
+\end{q}
+
+\begin{q}{adapter จำลองคืออะไร จะต่อของจริงต้องทำอะไร \must}\label{q:mock}
+\ans
+\begin{itemize}
+  \item \code{src/lib/adapters/contracts.ts} กำหนด interface 6 ตัว คือ RakutenAdapter, RslAdapter, LabelServiceAdapter, PrinterAdapter, CarrierAdapter, SupplierAdapter use-case เรียกผ่าน interface เท่านั้น
+  \item ตอนนี้ทุกตัวเป็น mock (\code{mock.ts}) โหมดที่ตั้งได้มีแค่ \code{"mock"} ผ่านตัวแปร เช่น \code{RAKUTEN\_ADAPTER} ข้อมูลจำลองอยู่ใน \code{src/mock}
+  \item ข้อผิดพลาดของระบบภายนอกจำลองที่หน้า \code{/dev} (ไม่อยู่ในเมนู) มี \num{11 สวิตช์} เช่น RMS ล่ม, RSL ล่ม, เครื่องพิมพ์ไม่พร้อม, ฐานข้อมูลบันทึกไม่ได้
+  \item ต่อของจริง: เขียน adapter ใหม่ที่ implement interface เดิม (เช่นเรียก Rakuten RMS API ด้วย API key ของร้าน) เพิ่มโหมดใน \code{adapters/index.ts} แล้วตั้งค่าตัวแปร ไม่ต้องแก้ use-case, SQL หรือหน้าจอ
+\end{itemize}
+\evidence{\code{src/lib/adapters}, สไลด์ 47}
+\end{q}
+
+\begin{q}{ระบบปลอดภัยแค่ไหน เก็บรหัสผ่านและ session อย่างไร \must}\label{q:security}
+\ans
+\begin{itemize}
+  \item \textbf{รหัสผ่าน} เก็บเป็น scrypt (N = 16384, r = 8, p = 1, key 64 ไบต์, salt สุ่ม 16 ไบต์ต่อบัญชี) ไม่เก็บตัวอักษรตรง ๆ เทียบด้วย \code{timingSafeEqual} กันการวัดเวลา
+  \item \textbf{session} token สุ่ม 32 ไบต์ ในฐานข้อมูลเก็บแค่ SHA-256 ของ token (\code{sessions.token\_hash}) ถ้าฐานข้อมูลหลุดก็เอา token ไปใช้ไม่ได้ cookie เป็น httpOnly, sameSite = lax, secure ใน production อายุ 8 ชั่วโมง ออกจากระบบตั้ง revoked\_at (Q1A.7)
+  \item \textbf{ล็อกบัญชี} ผิดครบ \num{5 ครั้ง} ล็อก \num{15 นาที} (Q1A.3) ครบเวลาปลดเอง (Q1A.2) เข้าสำเร็จล้างตัวนับ (Q1A.4) ระหว่างล็อกไม่ตรวจรหัสผ่าน
+  \item \textbf{SQL injection} ทุก query ใช้ parameter \$1, \$2 ไม่ต่อ string
+\end{itemize}
+\careful{จุดอ่อนที่รู้: ผิดครบ 5 ครั้งข้อความเปลี่ยนเป็น ``บัญชีถูกล็อก'' จึงบอกได้ว่าอีเมลนั้นมีอยู่ อีเมลที่ไม่มีในระบบไม่ถูกนับและไม่ถูกล็อก ระบบไม่มี 2FA (นอกขอบเขตเฟส 1)}
+\evidence{\code{src/lib/auth/password-core.ts}, \code{sessions.ts}, Use Case Description 1A, สไลด์ 18 และ 48}
+\end{q}
+\closetopic{arch}
+
+% ================================================================ 9 Platform
+\topic{sC}{plat}{9. Platform, Site map, UI, รายงาน}{สไลด์ 49--51  ในเล่ม 2.20--2.22}{\speakerC}
+
+\begin{q}{ใช้เครื่องมืออะไรพัฒนา ทำไมเลือก}\label{q:stack}
+\ans
+\begin{itemize}
+  \item Next.js 16 (App Router) กับ React 19 และ TypeScript 5 ทำทั้งหน้าจอและฝั่ง server ในโปรเจกต์เดียว ทีมเดียวดูแลได้
+  \item Tailwind CSS 4 กับ shadcn/ui ทำหน้าจอ TanStack Table ทำตาราง Recharts ทำกราฟ Sonner แสดงข้อความแจ้งเตือน
+  \item PostgreSQL ต่อผ่าน node-postgres (\code{pg}) รัน SQL ทดสอบด้วย PGlite
+  \item draw.io วาด BP และ Use Case, Mermaid กับ Graphviz วาด Sequence, Collaboration, ER, Class, State
+\end{itemize}
+\evidence{รูป Stack of Tools ใน 2.20, สไลด์ 49}
+\end{q}
+
+\begin{q}{Component Diagram อ่านอย่างไร}\label{q:component}
+\ans
+\begin{itemize}
+  \item Screens (หน้าจอ Next.js ชั้น View) $\rightarrow$ Controllers (Server Actions ใน actions.ts) $\rightarrow$ UseCase และ ExecuteWorkflow $\rightarrow$ Queries $\rightarrow$ DBConnector $\rightarrow$ PostgreSQL 17 ตาราง
+  \item UseCase ต่อระบบภายนอกผ่าน Adapters (mock) คือ Rakuten RMS, RSL, Label Service, เครื่องพิมพ์, ขนส่ง และ Supplier
+  \item เป็นโครงของเว็บที่ทำงานจริงตอนนี้ ไม่ใช่แบบที่วางไว้เฉย ๆ
+\end{itemize}
+\evidence{สไลด์ 49, diagrams/png/component.png}
+\end{q}
+
+\begin{q}{Site map มีโครงสร้างอย่างไร ชื่อหน้าจอมาจากไหน}\label{q:sitemap}
+\ans
+\begin{itemize}
+  \item ผู้ใช้ทุกคนเข้าผ่านหน้าเดียวกัน จึงมี tree เดียว root คือ LoginScreen ตามเกณฑ์
+  \item หลังเข้าสู่ระบบไป DashboardScreen ซึ่งมีปุ่มนำเข้า Order (4A) เมนูด้านซ้ายแบ่ง 5 กลุ่ม รวม \num{12 หน้าจอ} บวกหน้าต่างรับสินค้าของ ReorderScreen
+  \item ชื่อหน้าจอตรงกับ object Screen ใน Sequence เช่น หน้าจอ ReorderScreen = :ReorderScreen บางหน้าจอรับหลาย Use Case เช่น ReorderScreen ทำ 5A และ 6A, ShippingScreen ทำ 8A และปุ่มส่งเลขติดตามของ 5S
+  \item 2S, 6S, 7S ไม่มีหน้าจอของตัวเอง ผลขึ้นเป็นข้อความแจ้งเตือนในหน้าที่ Admin เปิดอยู่
+\end{itemize}
+\evidence{รายงาน 2.21, สไลด์ 50, หน้า /sitemap ในเว็บ}
+\end{q}
+
+\begin{q}{ระบบมีรายงานอะไรบ้าง \must}\label{q:report}
+\ans
+มี \num{2 รายงาน}
+\begin{itemize}
+  \item ใบปะสินค้า สร้างจาก 6S พิมพ์จาก 9A มี 3 template ตามแหล่งจัดส่ง RSL-STD-A6, RSL-LARGE-A5 และ INHOUSE-YAMATO-A6 (บริษัทส่งเอง ช่อง RSL เป็น ``—'' และเลขสแกนคือ Order ID กับเลขกล่อง) ตัวอย่าง ORD-24178 (RSL) และ ORD-24177 (in-house)
+  \item รายงานต้นทุนต่อหน่วยจาก 4S แสดงองค์ประกอบต้นทุนแยกบรรทัด ต้นทุนต่อหน่วยเทียบราคาขาย และประวัติจาก cost\_history ตัวอย่าง FSH-MLR-240
+\end{itemize}
+\evidence{รายงาน 2.22, สไลด์ 51}
+\end{q}
+
+\begin{q}{ต้นทุนต่อหน่วยคำนวณอย่างไร \must}\label{q:unitcost}
+\ans
+\begin{itemize}
+  \item สูตร ((purchase\_price $\times$ exchange\_rate) + intl\_freight + duty\_fee) / order\_qty + marketplace\_fee + domestic\_shipping + rsl\_charge
+  \item ส่วนแรกเป็นค่าทั้งล็อตหารจำนวนที่สั่ง ส่วนหลังเป็นค่าต่อชิ้นอยู่แล้ว
+  \item ตัวอย่าง FSH-MLR-240 คือ 9,100 $\times$ 4.92 = 44,772 บวก 8,600 บวก 3,150 ได้ 56,522 หาร 200 ได้ 282.61 บวก 72 + 46 + 18 ได้ \num{418.61 บาท} ราคาขาย 1,280 บาท
+  \item สูตรคำนวณใน use-case (ไม่ใช่ SQL) แล้วบันทึกผลด้วย Q4S.5 (costs) และประวัติด้วย Q4S.6 (cost\_history) 5A อ่านค่าล่าสุดใน Q5A.1
+\end{itemize}
+\evidence{Use Case Description 4S, รายงาน 2.22, สไลด์ 24}
+\careful{ข้อมูลตัวอย่างใช้อัตรา 4.92 กับสกุล CNY ซึ่งเป็นข้อมูลสมมติ สูตรไม่ขึ้นกับค่า อัตราจริงเจ้าของกรอกเอง}
+\end{q}
+\closetopic{plat}
+
+% ================================================================ 10 SQL
+\topic{sC}{sql}{10. SQL}{สไลด์ 36 และ 52  ในเล่ม 2.16, 2.23}{\speakerC}
+
+\begin{q}{SQL รันจริงหรือเปล่า ผลดูตรงไหน \must}\label{q:sqlrun}
+\ans
+\begin{itemize}
+  \item รันจริงสองทาง ทางแรก \code{npm run sql} ในโฟลเดอร์เครื่องมือของเล่ม \code{04-chapter2-diagrams-database} (ไม่ได้อยู่ใน repo เว็บ) สร้างฐานข้อมูล 17 ตารางจาก schema.sql กับ seed.sql ใน PGlite (PostgreSQL ตัวจริงที่รันใน Node.js) แล้วรันครบ \num{113 คำสั่ง} ผ่านทุกข้อ (0 failed)
+  \item แต่ละข้อรันแยกจากข้อมูลตั้งต้นชุดเดียวกัน คำสั่งที่แก้ข้อมูลแสดงข้อมูลหลังรันด้วย
+  \item ทางที่สอง SQL ในเล่มเป็นข้อความเดียวกับค่าคงที่ใน \code{src/lib/queries} ของเว็บ (แต่ละข้อจดชื่อค่าคงที่คู่กันไว้ใน qmap ของ usecases.json เทียบทีละข้อแล้วตรงกัน) จึงเป็นคำสั่งที่เว็บใช้งานอยู่จริง
+\end{itemize}
+\evidence{รายงาน 2.23, สไลด์ 52, sql/sql-results.json}
+\end{q}
+
+\begin{q}{SQL พวกนี้ใช้ AI เขียนหรือเปล่า ทำไมบางข้อยาว}\label{q:ai}
+\tip{เกณฑ์ข้อ 33 เขียนว่าไม่ควรใช้ AI generate ตอบตามความจริงของทีม ห้ามแต่ง สิ่งที่ช่วยได้คือพิสูจน์ว่าเราอธิบายได้ทุกข้อ ให้อาจารย์สุ่มเลข query มาแล้วอธิบายเลย}
+\ans
+\begin{itemize}
+  \item SQL เขียนตามขั้นตอนใน description ทีละขั้น ข้อหนึ่งทำงานเดียว
+  \item ข้อที่ยาว เช่น Q2A.1 เป็น query อ่านรวมของหน้าจอ และข้อที่ขึ้นต้นด้วย WITH ใช้แก้สองตารางพร้อมกันในคำสั่งเดียว เช่นปรับสต๊อกพร้อมบันทึกประวัติ
+  \item รวม 113 ข้อ เป็น SELECT 50, UPDATE 30, WITH 16, INSERT 15, DELETE 2
+\end{itemize}
+\evidence{Query Table 2.16}
+\end{q}
+
+\begin{q}{10A ลบตามลำดับไหน ทำไม}\label{q:delorder}
+\ans
+\begin{itemize}
+  \item Q10A.1 ลบ Order ก่อน เก็บ snapshot ลง deletion\_history แล้วลบ Order order\_items กับ labels ถูกลบตาม ON DELETE CASCADE
+  \item Q10A.2 ลบใบปะตามช่วงวันที่ Q10A.3 ลบประวัติต้นทุน Q10A.4 ลบคำสั่งซื้อเติมสต๊อกเฉพาะที่ไม่มี Order ที่ยังเปิดอ้างถึงผ่าน orders.reorder\_id Q10A.5 อ่านประวัติการลบ
+  \item ทุกข้อตรวจเงื่อนไขซ้ำใน SQL (เช่นสถานะต้องปิดแล้ว) และทำใน transaction เดียว ไม่เกิน 1,000 รายการต่อครั้ง
+\end{itemize}
+\evidence{Use Case Description 10A}
+\end{q}
+\closetopic{sql}
+
+% ================================================================ 11 ทดสอบ
+\topic{sC}{test}{11. การทดสอบและเดโม}{สไลด์ 53--54  ในเล่ม 2.24}{\speakerC}
+
+\begin{q}{ตอนนี้เว็บต่อฐานข้อมูลจริงหรือยัง \must}\label{q:localstorage}
+\ans
+\begin{itemize}
+  \item ต่อแล้วครับ/ค่ะ ทุกหน้าอ่านเขียน PostgreSQL ผ่าน Server Action $\rightarrow$ use-case $\rightarrow$ queries $\rightarrow$ db.ts ไม่เก็บข้อมูลใน localStorage แล้ว (เหลือแค่จำภาษาที่เลือก)
+  \item schema มาจาก migrations 001--008 ข้อมูลตั้งต้นสร้างด้วย \code{npm run db:reset} ที่ใช้ตอนทดสอบและเดโม
+  \item ส่วนที่ยังจำลองคือระบบภายนอก (Rakuten RMS, RSL, ขนส่ง, เครื่องพิมพ์, Supplier) ผ่าน adapter (Q\ref{q:mock})
+\end{itemize}
+\evidence{รายงาน 2.20, สไลด์ 44}
+\end{q}
+
+\begin{q}{ทดสอบอะไรไปแล้วบ้าง ครอบคลุมแค่ไหน \must}\label{q:testscope}
+\ans
+\begin{itemize}
+  \item \textbf{ทดสอบตาม Use Case} \num{36 กรณี} บนเว็บจริง ทุก Use Case มีกรณีปกติและผิดพลาด บวก 3S in-house (ORD-24194) และ 6A รับสินค้า (PO-0091) ผ่านทุกกรณี ทุกกรณีมีรูปหน้าจอ
+  \item \textbf{ระบบภายนอกล่ม} เปิดสวิตช์ในหน้า \code{/dev} แล้วดูว่าข้อความตรงกับ description คำต่อคำ และสถานะ Order คงเดิมตามที่ description บอก
+  \item \textbf{SQL} 113 ข้อรันด้วย \code{npm run sql} ในโฟลเดอร์เครื่องมือของเล่ม \code{04-chapter2-diagrams-database} ผ่านทุกข้อ
+  \item \textbf{โค้ด} \code{npm run lint}, \code{npx tsc --noEmit}, \code{npm run build} ผ่าน และ \code{npm run test:phase8-reset} ทดสอบ migrate/seed/reset บน schema ชั่วคราว (ตรวจครบ 17 ตาราง)
+  \item ระหว่างแก้โค้ดมีสคริปต์เดินทั้ง flow (RSL, in-house, สั่งซื้อและรับของ, ยกเลิก, ลบข้อมูล, ล็อกบัญชี) ผ่านทุกโหมด แต่ไม่ได้เก็บเข้า repo
+\end{itemize}
+\careful{ยังไม่มีชุด unit test หรือ e2e อัตโนมัติใน repo และการเดินหน้าจอด้วยมือรอบสุดท้ายหลังแก้โค้ด (T050) ยังไม่ได้ทำ ถ้าถูกถามให้ตอบตรง ขั้นต่อไปคือแปลงตาราง 2.24 เป็น e2e test}
+\evidence{รายงาน 2.24, สไลด์ 53}
+\end{q}
+
+\begin{q}{ทดสอบกรณีระบบภายนอกล่มอย่างไร}\label{q:faults}
+\ans
+\begin{itemize}
+  \item หน้า \code{/dev} มี 11 สวิตช์ตรงกับทางเลือกใน description เช่น 4A RMS ล่ม, 3S RSL ล่ม, 6S Label Service ล่ม, 9A เครื่องพิมพ์, 6A ส่งให้ Supplier ไม่ได้, 5A/10A ฐานข้อมูลบันทึกไม่ได้
+  \item ตัวอย่าง 6A ส่งให้ Supplier ไม่ได้ ต้องได้ ``ส่งคำสั่งซื้อไม่สำเร็จ กรุณาตรวจสอบและลองใหม่'' และคงสถานะ ``รอส่งคำสั่งซื้อ''
+  \item หน้า /dev ยังมีปุ่มรีเซ็ตข้อมูลตัวอย่างและปุ่มปลดล็อกบัญชีทั้งหมด (เครื่องมือทดสอบ ไม่ใช่ Use Case)
+\end{itemize}
+\evidence{รายงาน 2.24, สไลด์ 53}
+\end{q}
+
+\begin{q}{ขอดูการทำงานจริงหน่อย \must}\label{q:demo}
+\tip{เปิดเว็บไว้ก่อน (\code{docker start rsl-pg}, \code{npm run db:reset}, \code{npm run dev}) และเปิด psql ค้างไว้อีกหน้าต่าง ทุกขั้น SELECT ก่อนกดและหลังกด (Q\ref{q:select})}
+\ans
+\begin{enumerate}
+  \item 1A เข้าสู่ระบบ admin@colorado.jp $\rightarrow$ SELECT \code{sessions} ได้ 1 แถวใหม่ (เก็บ token\_hash)
+  \item 4A Dashboard กดนำเข้า Order $\rightarrow$ ``รอตรวจสอบคำสั่งซื้อ'' 7 $\rightarrow$ 8 (toast แจ้งเคสใน seed เช่น ORD-24181 ลูกค้าขอยกเลิก เป็นเรื่องปกติ)
+  \item 2A ยืนยัน ORD-24194 $\rightarrow$ ระบบทำ 2S 3S 6S ต่อเอง สถานะ ``รอพิมพ์ใบปะสินค้า'' \code{fulfill\_source = in\_house} ใบปะ ready (INHOUSE-YAMATO-A6)
+  \item 9A พิมพ์ใบปะ $\rightarrow$ label printed, \code{label\_print\_history} 1 แถว
+  \item 8A ส่งมอบ $\rightarrow$ ``อยู่ระหว่างจัดส่ง'' \code{delivery\_status = in\_transit} สต๊อกยังไม่ตัด (7S ตัดหลัง 5S)
+  \item 5A ``คุ้มค่า'' ORD-24184 $\rightarrow$ ``รอสั่งซื้อจาก Supplier'' (ตาราง reorders ยังไม่เปลี่ยน แถวใหม่เกิดตอนกดสั่งซื้อใน 6A)
+\end{enumerate}
+\evidence{สไลด์ 54, คู่มือสถาปัตยกรรมหัวข้อเดโม, รายงาน 2.24}
+\careful{ทดสอบลำดับนี้แล้วบนข้อมูล \code{db:reset} ผ่านทุกขั้น ถ้าจะเดโมซ้ำให้กด reset ที่หน้า \code{/dev} หรือ \code{npm run db:reset} ก่อน อย่าเปิดหน้า \code{/shipping} ก่อนเดโม (จะดึงสถานะขนส่งและรัน 6S) บัญชี locked@colorado.jp ล็อก 15 นาทีนับจากเวลารีเซ็ต}
+\end{q}
+
+\begin{q}{เปิดฐานข้อมูลแล้ว SELECT ให้ดูหน่อยว่าข้อมูลเปลี่ยนจริง \must}\label{q:select}
+\ans
+\begin{enumerate}
+  \item เปิด DB: \code{docker exec -it rsl-pg psql -U rsl\_app -d rsl\_fulfillment\_hub} แล้ว \code{\textbackslash dt} ดู 17 ตาราง, \code{\textbackslash d orders} ดูคอลัมน์, \code{\textbackslash x auto} ให้แถวยาวอ่านง่าย
+  \item ภาพรวม: \code{SELECT order\_status, COUNT(*) FROM orders GROUP BY 1 ORDER BY 2 DESC;}
+  \item Order ที่เดโม: \code{SELECT o.order\_id, o.order\_status, i.fulfill\_source, o.tracking\_number, o.delivery\_status, l.label\_status FROM orders o JOIN order\_items i USING (order\_id) LEFT JOIN labels l USING (order\_id) WHERE o.order\_id = 'ORD-24194';}
+  \item Login: \code{SELECT admin\_id, expires\_at, revoked\_at FROM sessions;} และ \code{SELECT user\_email, fail\_attempts, locked\_until FROM admins;}
+  \item สต๊อก: \code{SELECT k.sku, s.in\_house\_qty, s.rsl\_qty FROM stock s JOIN skus k USING (sku\_id);}
+  \item ใบสั่งซื้อ: \code{SELECT reorder\_id, sku\_id, order\_qty, reorder\_status, received\_qty FROM reorders;}
+\end{enumerate}
+\tip{ถ้าอาจารย์ให้เขียนเอง เริ่มจาก \code{SELECT * FROM <table> LIMIT 5;} แล้วค่อยเติม WHERE / JOIN ถ้าจำชื่อคอลัมน์ไม่ได้ใช้ \code{\textbackslash d <table>} ก่อน ห้ามโชว์ \code{.env.local} หรือรหัสผ่านบนจอ}
+\evidence{สไลด์ 54, คู่มือสถาปัตยกรรมหัวข้อเดโม}
+\end{q}
+\closetopic{test}
+
+% ================================================================ 12 why
+\topic{ink}{why}{12. ทำไมไม่ทำแบบอื่น ข้อจำกัด และขั้นต่อไป}{สไลด์ 56}{ทุกคน (ผู้ตอบตามหมวดที่เกี่ยวข้อง)}
+
+\begin{q}{ทำไมไม่ใช้ Excel หรือเครื่องมือที่มีใน Rakuten RMS อยู่แล้ว}\label{q:excel}
+\ans
+\begin{itemize}
+  \item RMS ดูได้แค่ฝั่ง Rakuten แต่สต๊อกอยู่สองคลังและต้นทุนอยู่ในไฟล์อื่น ปัญหาคือการรวมข้อมูลข้ามระบบ
+  \item Excel ยังต้องคัดลอกข้อมูลเองทุกวัน และสั่งงานต่อเนื่อง เช่น เลือกแหล่งสต๊อกแล้วสร้างใบปะทันที ไม่ได้
+  \item ระบบเราใช้ SKU เป็น key เชื่อมทุกระบบตาม requirement ข้อ 7.2
+\end{itemize}
+\end{q}
+
+\begin{q}{ทำไมเขียน SQL เอง ไม่ใช้ ORM}\label{q:orm}
+\ans
+\begin{itemize}
+  \item เกณฑ์ให้แสดง SQL ทุกคำสั่งพร้อมเลข query ถ้าใช้ ORM ต้องเขียน SQL ซ้ำอีกชุดเพื่อทำรายงาน และอาจไม่ตรงกับที่ระบบรันจริง
+  \item เขียนเองเป็นค่าคงที่ใน \code{src/lib/queries} ใช้ชุดเดียวกันทั้งในเล่ม ในการรันทดสอบ และในเว็บ
+  \item ข้อเสียคือต้องดูแลชนิดข้อมูลเอง
+\end{itemize}
+\evidence{01418321-final-project/src/lib/queries/README.md}
+\end{q}
+
+\begin{q}{ทำไมเลือก PostgreSQL ไม่ใช้ NoSQL}\label{q:pg}
+\ans
+\begin{itemize}
+  \item ข้อมูลเป็นความสัมพันธ์ชัดเจน สินค้า คำสั่งซื้อ Supplier ใบปะ ต้องมี FK กันข้อมูลกำพร้า
+  \item ต้องการ transaction และ row lock เพราะ action กับ Use Case อัตโนมัติต้องสำเร็จหรือล้มพร้อมกัน และกันตัดสต๊อกซ้ำ
+  \item ใช้ CHECK บังคับช่วงค่าได้ในฐานข้อมูล ตรงกับ range ใน data dictionary
+\end{itemize}
+\end{q}
+
+\begin{q}{ทำไมมีบัญชีเดียว ไม่มีพนักงานหลายคน ไม่มี 2FA}\label{q:users}
+\ans
+\begin{itemize}
+  \item เจ้าของทำงานคนเดียว requirement ข้อ 10 กำหนดให้มีบัญชี Admin ของตัวแทนบริษัท 2FA เลื่อนไปเฟสถัดไปตามข้อ 14
+  \item ข้อมูลตั้งต้นมีบัญชี admin@colorado.jp และ locked@colorado.jp (ใช้ทดสอบกรณีล็อก)
+  \item ถ้าจะมีพนักงานในอนาคต ต้องเพิ่ม role ในตาราง admins และ Use Case จัดการผู้ใช้
+\end{itemize}
+\end{q}
+
+\begin{q}{อีเมลที่มีจุด เช่น first.last@ku.ac.th เข้าสู่ระบบได้ไหม}\label{q:regex}
+\ans
+\begin{itemize}
+  \item ไม่ได้ครับ/ค่ะ รูปแบบใน 1A คือ [A-Za-z0-9]+@[A-Za-z0-9]+\textbackslash.[A-Za-z0-9]+ ไม่รับจุดหรือขีดก่อน @ และโดเมนหลายชั้น
+  \item บัญชีของระบบเรากำหนดเองจึงยังไม่กระทบ แต่เป็นจุดที่ควรแก้เป็นการตรวจรูปแบบอีเมลมาตรฐาน
+\end{itemize}
+\evidence{Use Case Description 1A, \code{src/app/login/actions.ts} EMAIL\_PATTERN}
+\end{q}
+
+\begin{q}{ถ้าจะขยายไป Amazon หรือ Yahoo! Auctions ต้องแก้อะไร}\label{q:amazon}
+\ans
+\begin{itemize}
+  \item skus และ orders มีคอลัมน์ sales\_channel อยู่แล้ว channel\_sku แยกตามช่องทาง จึงเพิ่มสินค้าของช่องทางใหม่เป็นข้อมูลได้
+  \item ที่ต้องเพิ่มคือ adapter ของช่องทางใหม่ตาม interface แบบ RakutenAdapter (ดึง Order, แจ้งเลขติดตาม, ซิงก์สต๊อก) และกฎใบปะของช่องทางนั้น
+\end{itemize}
+\evidence{sql/schema.sql, \code{src/lib/adapters/contracts.ts}}
+\end{q}
+
+\begin{q}{ข้อจำกัดของงานนี้มีอะไรบ้าง \must}\label{q:limits}
+\ans
+\begin{itemize}
+  \item ระบบภายนอกทั้ง 6 ยังเป็น mock ยังไม่ได้ต่อ API จริงของ Rakuten และ RSL
+  \item ไม่มีการดึง Order ตามรอบเวลา Admin ต้องกดนำเข้าเอง
+  \item ตัวเลขเวลาเป็นค่าประมาณ ยังไม่ได้จับเวลาจริงก่อนและหลังใช้ระบบ
+  \item หน้าจอและ 3S ยังทำงานแบบ 1 รายการสินค้าต่อ Order รับสินค้าได้ครั้งเดียวต่อคำสั่งซื้อ ยังไม่มี Use Case จัดการ Supplier
+  \item ทดสอบด้วยมือตามตาราง 2.24 ยังไม่มี test อัตโนมัติใน repo
+\end{itemize}
+\evidence{สไลด์ 56}
+\end{q}
+
+\begin{q}{ขั้นต่อไปจะทำอะไร}\label{q:next}
+\ans
+\begin{enumerate}
+  \item ต่อ Rakuten RMS API และ RSL จริงผ่าน adapter แล้วจับเวลางานก่อนและหลังเพื่อวัดตัวชี้วัดใน 1.3
+  \item เพิ่มการดึง Order ตามรอบเวลา (cron เรียก use-case เดิม)
+  \item เพิ่ม e2e test จากตาราง 2.24 และ Use Case จัดการ Supplier
+  \item ขยายไป Yahoo! Auctions และ Amazon
+\end{enumerate}
+\evidence{สไลด์ 56}
+\end{q}
+\closetopic{why}
+
+% ================================================================ 13 ตัวบุคคล
+\topic{ink}{me}{13. คำถามถึงตัวบุคคล}{อาจารย์อาจชี้ถามทีละคน สไลด์ 55}{ทุกคน}
+
+\begin{q}{ใครเป็นหัวหน้าทีม และคุณทำส่วนไหนในงานนี้}\label{q:role}
+\tip{ตอบเป็น 3 ส่วน คือชิ้นงานที่ทำ การตัดสินใจหนึ่งเรื่องที่เลือกเอง และผลที่ได้}
+\ans
+\begin{itemize}
+  \item ตัวอย่าง ``ผมทำ Sequence และ Collaboration Diagram ครับ เลือกให้ทุกเส้นที่ต่อฐานข้อมูลมีเลข query กำกับ ผลคือตามจาก description ไปถึง SQL ที่รันได้ทุกข้อ''
+\end{itemize}
+\par\vspace{4pt}{\heavy\textcolor{cur}{ข้อมูลทีม}}\quad{ตาราง 2.25 กับสไลด์ 55 เติมแล้ว: งานในเล่ม ธนภัทร 16 อชิระ 17 ปิยากร 20 ชิ้น คะแนนจากหัวหน้าทีม 5/5 ทุกคน เกณฑ์ข้อ 36 ให้หัวหน้าเป็นผู้ให้คะแนน หัวหน้าทีมคือธนภัทร
+\begin{itemize}
+  \item หัวหน้าทีม: นายธนภัทร พูลโภคา
+  \item ช่วงที่พูด ธนภัทร สไลด์ 1--14 / อชิระ 15--33 / ปิยากร 34--57
+\end{itemize}}
+\end{q}
+
+\begin{q}{ส่วนไหนยากที่สุด}\label{q:hard}
+\tip{เลือกเรื่องที่เกิดขึ้นจริง และเล่าว่าแก้อย่างไร}
+\ans
+\begin{itemize}
+  \item ตัวอย่าง ``ยากที่สุดคือทำให้เล่มกับโค้ดตรงกัน ทั้งเลข query, ตาราง และสถานะ เราจึงเก็บ description ไว้ที่ usecases.json ที่เดียว คัด SQL จากโค้ด แล้วสร้าง CRUD, Query Table และผล SQL จากไฟล์นั้น มีสคริปต์เทียบ SQL ในเล่มกับโค้ด''
+\end{itemize}
+\end{q}
+
+\begin{q}{ถ้าให้ทำใหม่ จะแก้อะไร หรือได้เรียนรู้อะไร}\label{q:learn}
+\tip{เลือกเรื่องเดียวที่ชัด และเชื่อมกับสิ่งที่เรียนในวิชา}
+\ans
+\begin{itemize}
+  \item ตัวอย่าง ``จะออกแบบฐานข้อมูลจากโค้ดจริงตั้งแต่ต้น เพราะแบบแรก 15 ตารางต้องปรับเป็น 17 ตารางตอนลงมือทำ''
+  \item หรือ ``ได้เห็นว่า CRUD Table ช่วยหา Use Case ที่ขาดได้จริง เช่น ตาราง suppliers ที่ไม่มีใคร Create''
+\end{itemize}
+\end{q}
+
+\begin{q}{งานพร้อมนำเสนอครบตามเกณฑ์ไหม}\label{q:ready}
+\tip{เป็นเรื่องที่ต้องเช็กเองก่อนวันนำเสนอ มากกว่าที่อาจารย์จะถาม}
+\ans
+\begin{itemize}
+  \item สไลด์ 57 หน้ามีเลขหน้าทุกหน้า รายงานมีทั้ง PDF (297 หน้า) และ Word เว็บเปิดพร้อมเดโม ทุกคนออนไลน์และ\textbf{เปิดกล้อง} (ไม่เปิดกล้องหัก 50\%)
+  \item เล่มมีปกพร้อมรูป รหัส ชื่อทุกคน (ไม่มีหัก 5 คะแนน) สารบัญ สารบัญรูปภาพ สารบัญตาราง บทคัดย่อไทยและอังกฤษ
+\end{itemize}
+\end{q}
+\closetopic{me}
+
+% ================================================================ คำถามรายหน้าเว็บ (agent web-tour)
+\topic{sC}{webpage}{14. คำถามรายหน้าเว็บ}{คู่มือสถาปัตยกรรม บท ``ทัวร์หน้าเว็บทีละหน้า'' (มีภาพ ปุ่ม Query และ SELECT ทุกหน้า)}{\speakerC}
+
+\begin{q}{/login และ /dashboard}\label{q:web-dash}
+\begin{itemize}
+  \item \textbf{ใส่รหัสผิดหลายครั้ง?} ครบ 5 ครั้งล็อก 15 นาที รหัสเก็บเป็น hash (1A)
+  \item \textbf{ดึง Order ตามเวลาไหม?} ไม่ กดปุ่ม ``นำเข้า Order'' เอง เลข Rakuten ซ้ำจะถูกข้าม (4A)
+\end{itemize}
+\end{q}
+
+\begin{q}{/orders/verify}\label{q:web-verify}
+\begin{itemize}
+  \item \textbf{กดครั้งเดียวทำไมสถานะกระโดดหลายขั้น?} 2S $\rightarrow$ 3S ($\rightarrow$ 6S) วิ่งต่อเองใน transaction เดียวกัน
+  \item \textbf{ลูกค้าขอยกเลิกบน Rakuten?} ระบบถาม Rakuten ซ้ำ ยกเลิกจริง $\rightarrow$ ยกเลิกแล้ว
+\end{itemize}
+\end{q}
+
+\begin{q}{/orders/rsl-match และ /orders/cancel}\label{q:web-rsl}
+\begin{itemize}
+  \item \textbf{ทำไมต้องจับคู่ RSL?} ต้องได้เลขอ้างอิง RSL ก่อนจึงสร้างใบปะได้ จับคู่แล้ว 6S สร้างใบปะต่อเอง
+  \item \textbf{ยกเลิก order ที่ส่งแล้วได้ไหม?} จัดส่งสำเร็จยกเลิกไม่ได้ ระหว่างส่ง $\rightarrow$ รอดำเนินการพิเศษ ยังไม่ส่ง $\rightarrow$ คืนสต๊อกถ้าตัดไปแล้ว
+\end{itemize}
+\end{q}
+
+\begin{q}{/products, /products/stock, /products/cost}\label{q:web-products}
+\begin{itemize}
+  \item \textbf{กฎ SKU เก็บที่ไหน?} คอลัมน์ \code{skus.channel\_sku} บันทึกแล้ว order ที่ค้างกลับเข้าคิวเอง
+  \item \textbf{สต๊อกต่ำแล้วสั่งซื้อให้เองไหม?} ไม่ แค่ขึ้นป้าย และไปโผล่ในแท็บ ``รอสั่งซื้อเติมสต๊อก''
+  \item \textbf{4S เป็น auto ทำไมต้องกด?} คนกรอกค่า ระบบคิดเลขและเก็บประวัติทุกครั้ง
+\end{itemize}
+\end{q}
+
+\begin{q}{/products/reorder}\label{q:web-reorder}
+\begin{itemize}
+  \item \textbf{กด ``คุ้มค่า'' แล้วทำไมยังไม่มีใบสั่งซื้อ?} 5A แค่ตัดสินใจ ใบสั่งซื้อเกิดตอนกดสั่งในแท็บ ``รอสั่งซื้อเติมสต๊อก'' (6A)
+  \item \textbf{รับของแล้วเกิดอะไร?} บวกคลังบริษัท order ที่รอใบนั้นกลับไปตรวจสต๊อก (3S) ทันที
+\end{itemize}
+\end{q}
+
+\begin{q}{/shipping และ /shipping/label}\label{q:web-ship}
+\begin{itemize}
+  \item \textbf{ส่งมอบแล้วทำไมสต๊อกยังไม่ลด?} ตัดตอน 7S หลังแจ้งเลขติดตาม (5S)
+  \item \textbf{ติดตามพัสดุตามเวลาไหม?} ไม่มี scheduler ระบบถามขนส่งทุกครั้งที่เปิดหน้า /shipping (เปิดครั้งแรกหลัง reset มี 4 order เปลี่ยนสถานะ)
+  \item \textbf{เครื่องพิมพ์เสีย?} หยุดที่กล่องนั้น เก็บประวัติ สถานะไม่เปลี่ยน
+\end{itemize}
+\end{q}
+
+\begin{q}{/system/cleanup, /dev, /sitemap}\label{q:web-system}
+\begin{itemize}
+  \item \textbf{ลบ order ที่ยังไม่ปิดได้ไหม?} ไม่ได้ เก็บสำเนาใน \code{deletion\_history} ก่อนลบ
+  \item \textbf{/dev คืออะไร?} เครื่องมือทดสอบทางเลือกของ UC (11 สวิตช์) ไม่ใช่ส่วนของระบบจริง สวิตช์มีผลกับทุกคนที่เปิดเว็บ
+  \item \textbf{เมนู 11 หน้า แต่ UC 17?} UC อัตโนมัติไม่มีหน้าของตัวเอง 4A อยู่ใน dashboard 5S อยู่ในหน้าจัดส่ง
+\end{itemize}
+\end{q}
+\closetopic{webpage}
+\closeall
+
+% ================================================================ ตัวเลขที่ต้องจำ
+\clearpage\colorlet{cur}{ink}
+\begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
+  \color{white}{\heavy\huge ตัวเลขที่ต้องจำ}\hfill{\Large อ่านทุกคน}
+\end{tcolorbox}
+
+\renewcommand{\arraystretch}{1.15}\small
+\begin{tabularx}{\linewidth}{>{\heavy\color{ink}}p{3.4cm} X}
+\toprule
+ตัวเลข & ความหมาย\\
+\midrule
+5--10 ชิ้น/วัน & ยอดขายโดยประมาณ จาก requirement ข้อ 13\\
+12 นาที & งานมือต่อคำสั่งซื้อ 5 งาน (2+3+2+3+2) ค่าประมาณ\\
+1--2 ชม./วัน & 60--120 นาที หรือ 30--60 ชั่วโมงต่อเดือน ค่าประมาณ\\
+20--30 นาที $\rightarrow$ 1 นาที & เวลาคำนวณต้นทุนเดิม กับเป้าหมาย\\
+600 / 200 / 60 เยน & ค่าส่งเอง / ค่าส่งคู่แข่ง / ค่าหยิบของ RSL ต่อชิ้น\\
+2009 & ปีที่เริ่มธุรกิจเป็นธุรกิจเสริม\\
+9 $\rightarrow$ 17 & Use Case ก่อนและหลังทบทวน (A 10 ตัว, S 7 ตัว, เพิ่ม 7 ตัว)\\
+17 / 159 / 22 & ตาราง / attribute ทั้งหมด / relationship (1:1 สองคู่ ไม่มี M:N)\\
+001--008 & ไฟล์ migration ของฐานข้อมูลจริง (008 เพิ่มแค่ sequence เลขใบสั่งซื้อ ตารางยังเป็น 17)\\
+113 SQL & SELECT 50, UPDATE 30, WITH 16, INSERT 15, DELETE 2 รันผ่านทุกข้อ\\
+36 กรณีทดสอบ & ปกติและผิดพลาดทุก Use Case รวม 3S in-house และ 6A รับสินค้า ผ่านทุกกรณี\\
+12 / 2 / 3 & หน้าจอ / รายงาน / template ใบปะ\\
+15 / 2 & รูป Class Diagram (12 กลุ่มงาน + 3 Entity) / รูป State Diagram\\
+22 & ค่าที่เป็นไปได้ของ order\_status\\
+6 / 11 & adapter ระบบภายนอก (mock) / สวิตช์จำลองข้อผิดพลาดในหน้า /dev\\
+418.61 บาท & ต้นทุนต่อหน่วยของ FSH-MLR-240 (ราคาขาย 1,280)\\
+227.80 บาท & กำไรต่อหน่วยที่คาดของ FSH-RDS-180 ใน 5A (2,690 $-$ 2,462.20)\\
+5 ครั้ง / 15 นาที & เข้าผิดครบแล้วล็อกบัญชี / ระยะเวลาล็อก\\
+8 ชั่วโมง & อายุ session (เก็บแค่ SHA-256 ของ token)\\
+100 & จำนวน Order สูงสุดต่อรอบ retry ของ 7S (Q7S.1)\\
+12 เดือน & ลบตามช่วงวันที่ได้เฉพาะข้อมูลที่เก่ากว่านี้ (10A)\\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+% ================================================================ เกณฑ์ 36 ข้อ
+\clearpage
+\begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
+  \color{white}{\heavy\huge เกณฑ์ให้คะแนนกับคำถาม}\hfill{\Large อ่านทุกคน}\\[2pt]
+  {\large เกณฑ์แต่ละข้อน่าจะโดนถามที่ Q ไหน (จาก ``รายละเอียดของคะแนนโครงงาน ฉบับ update'')}
+\end{tcolorbox}
+
+\renewcommand{\arraystretch}{1.12}\small
+\begin{longtable}{>{\heavy}p{0.8cm} p{5.6cm} p{4.4cm} p{4.6cm}}
+\toprule
+ข้อ & เกณฑ์ & หัวข้อในเล่ม / สไลด์ & คำถาม\\
+\midrule
+\endhead
+-- & เปิดการนำเสนอด้วยภาษาอังกฤษ & สไลด์ 1, 3 & Q\ref{q:english}\\
+-- & ตารางแบ่งความรับผิดชอบ & 2.25, สไลด์ 55 & Q\ref{q:role}\\
+0--4 & ปก สารบัญ รูป ตาราง บทคัดย่อ & ส่วนหน้าของเล่ม & Q\ref{q:ready}\\
+5 & บทนำ แนะนำหน่วยงาน & 1.1, สไลด์ 3 & Q\ref{q:english}, Q\ref{q:rakuten}\\
+6 & ปัญหาพร้อมตัวเลข & 1.2, สไลด์ 4 & Q\ref{q:time}, Q\ref{q:worth}\\
+7--8 & BP เดิมและคำอธิบาย & 2.1--2.2, สไลด์ 7 & Q\ref{q:asis}\\
+9 & ปัญหาของ BP วัดได้ ไม่ใช่ ``ไม่ใช้คอมพิวเตอร์'' & 2.3, สไลด์ 8 & Q\ref{q:notcomputer}, Q\ref{q:pain}, Q\ref{q:kpi}\\
+10--11 & BP ใหม่และคำอธิบาย & 2.4--2.5, สไลด์ 9--10 & Q\ref{q:tobe}, Q\ref{q:print}\\
+12--13 & BP ที่สัมพันธ์กับ UC และตารางจับคู่ & 2.6--2.7, สไลด์ 11 & Q\ref{q:bpuc}, Q\ref{q:1a10a}\\
+14 & UC ก่อนปรับปรุง actor ตาม swim lane & 2.8, สไลด์ 12 & Q\ref{q:ucasis}, Q\ref{q:actor}\\
+15--16 & CRUD และคำอธิบายว่าขาด UC อะไร & 2.9--2.10, สไลด์ 12 & Q\ref{q:crud}, Q\ref{q:added}\\
+17--18 & UC และ CRUD ที่ทบทวนแล้ว & 2.11--2.12, สไลด์ 13--14 & Q\ref{q:added}, Q\ref{q:sactor}, Q\ref{q:crudgap}, Q\ref{q:10a}\\
+19 & UC description สอดคล้องกับ UI และ ER & 2.13, สไลด์ 15--33 & Q\ref{q:5a}, Q\ref{q:3s}, Q\ref{q:receive}, Q\ref{q:alt}, Q\ref{q:descui}\\
+20 & ER: PK/FK, ไม่มี M:N, participation & 2.14, สไลด์ 34 & Q\ref{q:mn}, Q\ref{q:tables17}, Q\ref{q:items}, Q\ref{q:norm}\\
+21 & ER พร้อม query & 2.15, สไลด์ 35 & Q\ref{q:erq}\\
+22 & Query Table & 2.16, สไลด์ 36 & Q\ref{q:ucid}, Q\ref{q:ai}\\
+23 & Table Structure & 2.17, สไลด์ 36 & Q\ref{q:dict}\\
+24 & Sequence: MVC หน้าจอติด actor ไม่ส่งกลับ actor, DB connect ใช้จริง & 2.13, สไลด์ 17, 21, 26, 29, 32 & Q\ref{q:screen}, Q\ref{q:mvc}, Q\ref{q:noreturn}, Q\ref{q:dbconn}, Q\ref{q:layer}\\
+25 & Collaboration ตรงกับ Sequence มีเลข & 2.13, สไลด์ 22, 27, 30 & Q\ref{q:collab}\\
+26 & Class: ทุก object เป็นคลาส ความสัมพันธ์ & 2.18, สไลด์ 37 & Q\ref{q:class}, Q\ref{q:class15}\\
+27 & State: class.state, [condition]event/UC, SQL & 2.19, สไลด์ 38--43 & Q\ref{q:state}, Q\ref{q:stateonly}\\
+29 & SW development platform & 2.20, สไลด์ 44--49 & Q\ref{q:stack}, Q\ref{q:component}, Q\ref{q:arch}, Q\ref{q:auto}\\
+30 & Site map root คือ login & 2.21, สไลด์ 50 & Q\ref{q:sitemap}\\
+31 & UI ทุกหน้าจอ ตั้งชื่อตาม UC & 2.21, สไลด์ 50 & Q\ref{q:sitemap}\\
+32 & Output design (report) & 2.22, สไลด์ 51 & Q\ref{q:report}, Q\ref{q:unitcost}\\
+33 & SQL ทุกคำสั่งรันได้ ไม่ใช้ AI generate & 2.23, สไลด์ 52 & Q\ref{q:sqlrun}, Q\ref{q:ai}\\
+34 & ทดสอบตาม UC พร้อมรูปหน้าจอและรายงาน & 2.24, สไลด์ 53 & Q\ref{q:testscope}, Q\ref{q:faults}, Q\ref{q:localstorage}\\
+35 & ความพร้อม สไลด์ รายงาน โปรแกรม กล้อง & สไลด์ 54 & Q\ref{q:ready}, Q\ref{q:demo}, Q\ref{q:select}\\
+36 & คะแนนการทำงานโดยหัวหน้า & 2.25, สไลด์ 55 & Q\ref{q:role}\\
+\bottomrule
+\end{longtable}
+\normalsize
+{\small\color{muted} เกณฑ์ข้อ 28 ไม่มีในไฟล์ (เลขข้ามจาก 27 ไป 29) คำถามเชิงเทคนิคเพิ่มเติม Q\ref{q:double}, Q\ref{q:locks}, Q\ref{q:mock}, Q\ref{q:security}, Q\ref{q:rollback} อยู่ในหมวด 8}
 
 \end{document}

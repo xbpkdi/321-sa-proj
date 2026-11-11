@@ -1,4 +1,4 @@
-% บทพูดนำเสนอระบบหลังบ้าน Colorado แยกตามผู้พูด 3 คน
+% บทพูดนำเสนอระบบหลังบ้าน Colorado 40 นาที (พูดประมาณ 36 นาที + ถาม-ตอบ 4 นาที) แยกตามผู้พูด 3 คน ตามสไลด์ 57 หน้าใน report-doc/presentation/build_deck.js
 % สร้าง PDF:  ./speaker_script/build.sh
 % การแบ่งผู้พูดเป็นข้อเสนอ แก้ชื่อได้ที่ \speakerA \speakerB \speakerC ด้านล่าง
 \documentclass[12pt,a4paper]{article}
@@ -9,10 +9,12 @@
 \usepackage{enumitem}
 \usepackage{tabularx,booktabs,array}
 \usepackage{fancyhdr}
+\usepackage{amssymb}
 
 \setmainfont{Sukhumvit Set}[UprightFont={* Text}, BoldFont={* Semi Bold}]
 \newfontfamily\heavy{Sukhumvit Set}[UprightFont={* Bold}]
 \newfontfamily\enfont{Sukhumvit Set}[UprightFont={* Text}]
+\newfontfamily\mono{Menlo}[Scale=0.85]
 \XeTeXlinebreaklocale "th"
 \XeTeXlinebreakskip = 0pt plus 1pt
 \linespread{1.25}
@@ -31,228 +33,644 @@
 \newcommand{\speakerC}{นางสาวปิยากร ผลพานิช}
 
 \setlist[itemize]{leftmargin=1.3em, itemsep=2pt, topsep=2pt, label=\textcolor{cur}{\textbullet}}
+\setlist[itemize,2]{leftmargin=1.2em, itemsep=0pt, topsep=1pt, label=\textcolor{cur}{--}}
 \pagestyle{fancy}\fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
 \fancyfoot[L]{\small\color{muted} Colorado Back-Office System  บทพูดนำเสนอ}
 \fancyfoot[R]{\small\color{muted}\thepage}
 
+% ---------- หน้าเริ่มของผู้พูดแต่ละคน
 \newcommand{\speaker}[4]{% #1 สี  #2 ชื่อ  #3 สไลด์  #4 เวลา
   \clearpage\colorlet{cur}{#1}%
   \begin{tcolorbox}[enhanced,colback=#1,colframe=#1,arc=4pt,left=10pt,right=10pt,top=8pt,bottom=8pt]
     \color{white}{\heavy\Huge #2}\hfill{\Large สไลด์ #3}\\[2pt]
     {\large เวลาประมาณ #4}
   \end{tcolorbox}\vspace{2pt}}
-\newenvironment{topic}[2]{%
+
+% ---------- กล่องหนึ่งสไลด์  #1 เลขสไลด์  #2 หัวข้อบนสไลด์  #3 เวลา
+\newenvironment{topic}[3]{%
   \begin{tcolorbox}[enhanced,colback=white,colframe=cur,boxrule=1pt,arc=4pt,
     left=8pt,right=8pt,top=4pt,bottom=6pt,before skip=6pt,after skip=6pt,breakable,
-    title={\heavy สไลด์ #1\quad #2},colbacktitle=cur,coltitle=white,fonttitle=\large]}
+    title={\heavy สไลด์ #1\quad #2\hfill\normalsize ประมาณ #3},colbacktitle=cur,coltitle=white,fonttitle=\large]}
   {\end{tcolorbox}}
 \newcommand{\say}{\par{\heavy\textcolor{cur}{พูด}}\par}
 \newcommand{\extra}{\par\vspace{2pt}{\heavy\textcolor{cur}{พูดเพิ่มถ้ามีเวลา}}\par}
-\newcommand{\point}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{ชี้ตรงไหน}}\quad #1\par}
+\newcommand{\tip}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{วิธีพูด}}\quad{\color{muted}#1}\par}
+\newcommand{\point}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{ชี้จอ}}\quad #1\par}
+\newcommand{\keynum}[1]{\par\vspace{2pt}{\heavy\textcolor{cur}{ตัวเลขที่ต้องเน้น}}\quad #1\par}
+\newcommand{\nextslide}[1]{\par\vspace{4pt}{\heavy\textcolor{cur}{เชื่อมไปสไลด์ถัดไป}}\quad #1\par}
 \newcommand{\pass}[1]{\par\vspace{4pt}\begin{tcolorbox}[colback=cur!10,colframe=cur!10,arc=3pt,left=6pt,right=6pt,top=3pt,bottom=3pt]
   {\heavy\textcolor{cur}{ส่งต่อ}}\quad #1\end{tcolorbox}}
 \newcommand{\num}[1]{{\heavy\textcolor{cur}{#1}}}
+\newcommand{\q}[1]{{\mono #1}}
+\newcommand{\ra}{$\rightarrow$}
+
 
 \begin{document}
 \colorlet{cur}{ink}
 
+% ================================================================ หน้าแรก
 \begin{tcolorbox}[enhanced,colback=ink,colframe=ink,arc=4pt,left=12pt,right=12pt,top=12pt,bottom=12pt]
   \color{white}{\heavy\huge บทพูดนำเสนอ Colorado Back-Office System}\\[4pt]
-  {\large 01418321 System Analysis and Design}\\[2pt]
+  {\large 01418321 System Analysis and Design  หมู่ 200  ·  นำเสนอ 40 นาที}\\[2pt]
   {\large ระบบจัดการหลังบ้านอัตโนมัติ เฟส 1: Rakuten Ichiba, Rakuten RMS และ RSL}
 \end{tcolorbox}
 
 \vspace{6pt}
 {\heavy\Large แบ่งกันพูดอย่างไร}\par
 \renewcommand{\arraystretch}{1.5}
-\begin{tabularx}{\linewidth}{>{\bfseries}p{4.3cm} p{1.8cm} X p{1.7cm}}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{4.3cm} p{1.6cm} X p{2.0cm}}
 \toprule
 ผู้พูด & สไลด์ & เรื่องที่พูด & เวลา\\
 \midrule
-\textcolor{sA}{\speakerA} & 1 ถึง 5 & เปิดเรื่องเป็นภาษาอังกฤษ ปัญหา วัตถุประสงค์ & 4 นาที\\
-\textcolor{sB}{\speakerB} & 6 ถึง 13 & Business Process, Use Case, Use Case Description และ diagram การออกแบบ & 5 นาที\\
-\textcolor{sC}{\speakerC} & 14 ถึง 19 & Platform หน้าจอ รายงาน SQL การทดสอบ สรุป และถาม-ตอบ & 4 นาที\\
+\textcolor{sA}{\speakerA} & 1--14 & เปิดเรื่องและแนะนำธุรกิจเป็นภาษาอังกฤษ ปัญหา วัตถุประสงค์ ขอบเขต Business Process เดิมและใหม่ Use Case Diagram และ CRUD & 10:15\\
+\textcolor{sB}{\speakerB} & 15--33 & วิธีอ่าน Sequence แบบ MVC แล้ว Use Case ทั้ง 17 ตัว Description Sequence Collaboration (3S, 5A, 6A, 7S แบบละเอียด) & 11:35\\
+\textcolor{sC}{\speakerC} & 34--57 & ER ตาราง Class State 5 คลาส สถาปัตยกรรมเว็บจริง ความปลอดภัย หน้าจอ รายงาน SQL การทดสอบ สาธิต + SELECT สรุป & 14:35\\
+\midrule
+ & รวม & เฉพาะหัวข้อ \textbf{พูด} รวมสาธิต + SELECT 4:00 (ไม่รวมพูดเพิ่ม) & \textbf{36:25}\\
+ & & ถาม-ตอบ (ดู \q{qna\_prep/qna-Colorado.pdf}) & ประมาณ 4:00\\
 \bottomrule
 \end{tabularx}
 
-\vspace{8pt}
+\vspace{4pt}
 {\heavy\Large วิธีใช้บทนี้}\par
-\begin{itemize}
-  \item หัวข้อ \textbf{พูด} เป็นประโยคที่พูดตามได้ทันที ส่วน \textbf{พูดเพิ่มถ้ามีเวลา} ใช้เมื่อเวลาเหลือหรืออาจารย์สนใจ
-  \item ตัวเลขที่เป็น\num{ตัวหนาสี}ต้องพูดให้ตรง ตัวเลขเวลาเป็น\textbf{ค่าประมาณ} ต้องพูดคำว่า ``ประมาณ'' ทุกครั้ง
-  \item ตามเกณฑ์ของวิชา ช่วงแนะนำธุรกิจตอนเริ่มนำเสนอต้องพูดเป็นภาษาอังกฤษ (สไลด์ 1 และ 2)
-  \item ทุกคนเปิดกล้องตลอดการนำเสนอ ถ้าไม่เปิดกล้องจะถูกหักคะแนนครึ่งหนึ่ง
+\begin{itemize}[itemsep=0pt]
+  \item แต่ละคนเริ่มหน้าใหม่และมีสีของตัวเอง หัวกล่องบอกเลขสไลด์ ชื่อบนสไลด์ และเวลาโดยประมาณ ในไฟล์สไลด์มีบทพูดย่อในช่อง notes ทุกหน้า
+  \item \textbf{พูด} เป็นประโยคที่พูดตามได้ทันที \textbf{พูดเพิ่มถ้ามีเวลา} ใช้เมื่อเวลาเหลือหรืออาจารย์สนใจ ถ้าเวลาไม่พอให้ตัดส่วนนี้ก่อน
+  \item \textbf{วิธีพูด} เป็นคำแนะนำ ไม่ต้องพูดออกมา \textbf{ชี้จอ} บอกว่าให้ชี้หรือวนเมาส์ตรงไหน
+  \item ตัวเลขที่เป็น\num{ตัวหนาสี}ต้องพูดให้ตรง ตัวเลขเวลาของงานมือเป็น\textbf{ค่าประมาณ}จากที่เจ้าของเล่า ต้องพูดคำว่า ``ประมาณ'' ทุกครั้ง
+  \item ตามเกณฑ์ของวิชา ต้องแนะนำธุรกิจเป็นภาษาอังกฤษ บทนี้จึงให้พูดภาษาอังกฤษในสไลด์ 1 ถึง 3 แล้วเปลี่ยนเป็นภาษาไทยตั้งแต่สไลด์ 4
+  \item จบส่วนของตัวเองแล้วพูดประโยคใน\textbf{ส่งต่อ} คนถัดไปรับด้วย ``ขอบคุณครับ/ค่ะ'' แล้วพูดต่อทันที
 \end{itemize}
 
-\vspace{6pt}
+\vspace{4pt}
 {\heavy\Large ประโยคที่ทุกคนต้องพูดได้}\par
 \begin{tcolorbox}[colback=ink!6,colframe=ink!6,arc=4pt]
-\large ระบบทำงานซ้ำแทนเจ้าของ 7 Use Case แต่ทุกขั้นที่ใช้เงินจริง เช่น การสั่งซื้อจาก Supplier ยังต้องให้เจ้าของกดอนุมัติก่อนเสมอ
+\large ระบบรับงานซ้ำไป 7 Use Case แต่ทุกขั้นที่ใช้เงินจริง คือการตัดสินใจใน 5A และการสั่งซื้อกับรับของใน 6A ยังต้องให้เจ้าของกดเองเสมอ
 \end{tcolorbox}
 
+% ================================================================ หน้าเวลาและข้อควรระวัง
+\clearpage
+{\heavy\Large เวลาต่อสไลด์}\par
+\renewcommand{\arraystretch}{0.82}
+{\footnotesize
+\begin{tabularx}{\linewidth}{p{0.8cm} X p{2.0cm} p{1.6cm} p{1.8cm}}
+\toprule
+สไลด์ & ชื่อบนสไลด์ & ผู้พูด & เวลา & เวลาสะสม\\
+\midrule
+1 & Cover (EN) & \textcolor{sA}{คนที่ 1} & 0:30 & 0:30\\
+2 & Agenda (EN) & \textcolor{sA}{คนที่ 1} & 0:30 & 1:00\\
+3 & Business introduction (EN) & \textcolor{sA}{คนที่ 1} & 1:10 & 2:10\\
+4 & Problems & \textcolor{sA}{คนที่ 1} & 1:00 & 3:10\\
+5 & Objectives & \textcolor{sA}{คนที่ 1} & 0:45 & 3:55\\
+6 & Scope & \textcolor{sA}{คนที่ 1} & 0:45 & 4:40\\
+7 & Business process: As-Is & \textcolor{sA}{คนที่ 1} & 0:45 & 5:25\\
+8 & Pain points & \textcolor{sA}{คนที่ 1} & 0:45 & 6:10\\
+9 & Business process: To-Be & \textcolor{sA}{คนที่ 1} & 0:55 & 7:05\\
+10 & To-Be: who does what & \textcolor{sA}{คนที่ 1} & 0:35 & 7:40\\
+11 & Business process to use case & \textcolor{sA}{คนที่ 1} & 0:35 & 8:15\\
+12 & Use case diagram: before & \textcolor{sA}{คนที่ 1} & 0:45 & 9:00\\
+13 & Use case diagram: reviewed & \textcolor{sA}{คนที่ 1} & 0:35 & 9:35\\
+14 & CRUD table & \textcolor{sA}{คนที่ 1} & 0:40 & 10:15\\
+\midrule
+15 & 17 use cases & \textcolor{sB}{คนที่ 2} & 0:40 & 10:55\\
+16 & One order, end to end & \textcolor{sB}{คนที่ 2} & 0:45 & 11:40\\
+17 & Sequence diagram: MVC & \textcolor{sB}{คนที่ 2} & 1:00 & 12:40\\
+18 & 1A Log in & \textcolor{sB}{คนที่ 2} & 0:40 & 13:20\\
+19 & 2A · 2S · 3A & \textcolor{sB}{คนที่ 2} & 0:40 & 14:00\\
+20 & 3S Check stock & \textcolor{sB}{คนที่ 2} & 0:55 & 14:55\\
+21 & 3S Sequence diagram & \textcolor{sB}{คนที่ 2} & 0:35 & 15:30\\
+22 & 3S Collaboration diagram & \textcolor{sB}{คนที่ 2} & 0:20 & 15:50\\
+23 & 1S · 6S · 9A Labels & \textcolor{sB}{คนที่ 2} & 0:40 & 16:30\\
+24 & 4S Unit cost & \textcolor{sB}{คนที่ 2} & 0:35 & 17:05\\
+25 & 5A Decide reorder & \textcolor{sB}{คนที่ 2} & 0:40 & 17:45\\
+26 & 5A Sequence diagram & \textcolor{sB}{คนที่ 2} & 0:30 & 18:15\\
+27 & 5A Collaboration diagram & \textcolor{sB}{คนที่ 2} & 0:20 & 18:35\\
+28 & 6A Reorder and receive & \textcolor{sB}{คนที่ 2} & 0:45 & 19:20\\
+29 & 6A Sequence diagram & \textcolor{sB}{คนที่ 2} & 0:30 & 19:50\\
+30 & 6A Collaboration diagram & \textcolor{sB}{คนที่ 2} & 0:15 & 20:05\\
+31 & 8A · 5S · 7S Ship and deduct & \textcolor{sB}{คนที่ 2} & 0:45 & 20:50\\
+32 & 7S Sequence diagram & \textcolor{sB}{คนที่ 2} & 0:25 & 21:15\\
+33 & 4A · 7A · 10A & \textcolor{sB}{คนที่ 2} & 0:35 & 21:50\\
+\midrule
+34 & ER diagram & \textcolor{sC}{คนที่ 3} & 0:40 & 22:30\\
+35 & ER diagram with queries & \textcolor{sC}{คนที่ 3} & 0:20 & 22:50\\
+36 & Tables and queries & \textcolor{sC}{คนที่ 3} & 0:30 & 23:20\\
+37 & Class diagram & \textcolor{sC}{คนที่ 3} & 0:30 & 23:50\\
+38 & State diagram: Order (1/3) & \textcolor{sC}{คนที่ 3} & 0:35 & 24:25\\
+39 & State diagram: Order (2/3) & \textcolor{sC}{คนที่ 3} & 0:30 & 24:55\\
+40 & State diagram: Order (3/3) & \textcolor{sC}{คนที่ 3} & 0:20 & 25:15\\
+41 & State diagram: Reorder & \textcolor{sC}{คนที่ 3} & 0:30 & 25:45\\
+42 & State diagram: Label · SKU & \textcolor{sC}{คนที่ 3} & 0:30 & 26:15\\
+43 & State diagram: delivery · sync & \textcolor{sC}{คนที่ 3} & 0:30 & 26:45\\
+44 & Layers of the web app & \textcolor{sC}{คนที่ 3} & 0:40 & 27:25\\
+45 & executeWorkflow & \textcolor{sC}{คนที่ 3} & 0:45 & 28:10\\
+46 & Locks and double deduction & \textcolor{sC}{คนที่ 3} & 0:40 & 28:50\\
+47 & External systems & \textcolor{sC}{คนที่ 3} & 0:15 & 29:05\\
+48 & Security & \textcolor{sC}{คนที่ 3} & 0:25 & 29:30\\
+49 & Platform and components & \textcolor{sC}{คนที่ 3} & 0:10 & 29:40\\
+50 & Site map and screens & \textcolor{sC}{คนที่ 3} & 0:25 & 30:05\\
+51 & Output design & \textcolor{sC}{คนที่ 3} & 0:20 & 30:25\\
+52 & SQL results & \textcolor{sC}{คนที่ 3} & 0:20 & 30:45\\
+53 & Testing & \textcolor{sC}{คนที่ 3} & 0:35 & 31:20\\
+54 & Live demo + SELECT & \textcolor{sC}{คนที่ 3} & 4:00 & 35:20\\
+55 & Team and responsibilities & \textcolor{sC}{คนที่ 3} & 0:20 & 35:40\\
+56 & Summary & \textcolor{sC}{คนที่ 3} & 0:35 & 36:15\\
+57 & Q\&A & \textcolor{sC}{คนที่ 3} & 0:10 & 36:25\\
+\bottomrule
+\end{tabularx}}
+
+\clearpage
+{\heavy\Large ถ้าเวลาไม่พอ ตัดตามลำดับนี้}\par
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{p{0.6cm} X p{2.2cm}}
+\toprule
+ลำดับ & ตัดอะไร & ได้เวลาคืน\\
+\midrule
+1 & ตัดหัวข้อ\textbf{พูดเพิ่มถ้ามีเวลา}ทุกสไลด์ & 2--3 นาที\\
+2 & สาธิต (สไลด์ 54) เหลือข้อ 1--3: Login, นำเข้า, ยืนยัน ORD-24194 พร้อม SELECT ทุกข้อ (ห้ามข้าม SELECT) & 1:30\\
+3 & สไลด์ Collaboration 22, 27, 30 และ State 42--43 พูดประโยคเดียว (Sequence ห้ามตัด) & 1:00\\
+4 & สไลด์ 10 (16 ขั้นตอน) และ 11 (BP กับ UC) พูดแค่ประโยคแรก & 0:45\\
+5 & สไลด์ 49 (Platform), 51 (รายงาน), 47 (ระบบภายนอก) พูดประโยคเดียว & 0:45\\
+6 & สไลด์ 48 (Security) พูดแค่ scrypt กับ hash ของ session & 0:20\\
+\bottomrule
+\end{tabularx}
+{\small\color{muted} ห้ามตัด (อาจารย์เน้น Sequence, ER, Query, State, เดโม + SELECT): สไลด์ 3 (ภาษาอังกฤษ), 17 (Sequence แบบ MVC), 21, 26, 29, 32 (Sequence), 34--36 (ER และ Query), 38--41 (State), 54 (เดโม + SELECT)}
+
+\vspace{8pt}
+{\heavy\Large ข้อเท็จจริงที่ต้องพูดให้ตรง}\par
+\begin{itemize}
+  \item \num{17 Use Case} (Admin เริ่ม 10 ตัว ระบบทำ 7 ตัว) \num{17 ตาราง} ใน PostgreSQL จาก migrations 001--008, \num{22 relationship}, SQL \num{113 คำสั่ง} รันผ่านครบ ทดสอบบนเว็บจริง \num{36 กรณี} ผ่านครบ
+  \item เว็บอ่านเขียน \textbf{PostgreSQL จริงทุกหน้า} ผ่าน Server Action \ra\ use-case \ra\ queries \ra\ db.ts \textbf{ไม่ใช่ localStorage} และไม่มีคลาส Controller, Repository หรือ Scheduler ใน Sequence ชื่อ Screen = page (ชั้น View ของ MVC), Controller = Server Action (เป็นบทบาท ไม่ใช่คลาสใหม่) และ\textbf{ไม่มีลูกศรกลับหา Actor}
+  \item Rakuten RMS, RSL, ขนส่ง, เครื่องพิมพ์, Label Service และ Supplier ต่อผ่าน adapter ซึ่ง\textbf{ตอนนี้เป็นตัวจำลอง (mock)} กรณีระบบภายนอกล่มจำลองด้วยหน้า \q{/dev}
+  \item รายงานรอบแรกออกแบบ 15 ตาราง ฉบับสุดท้ายเป็น 17 ตามโค้ดจริง ถ้าถูกถามให้ตอบตาม qna
+  \item ยังไม่มี unit test หรือ e2e test อัตโนมัติ ในโค้ดมี lint, type check, build, smoke test ของการ reset ส่วน SQL ทุกข้อรันด้วย \q{npm run sql} ในโฟลเดอร์เครื่องมือของเล่ม \q{04-chapter2-diagrams-database} (ไม่ได้อยู่ใน repo เว็บ)
+  \item ผลฝั่ง ``After'' ในสไลด์ 56 เป็น\textbf{เป้าหมาย} ยังไม่ได้วัดกับร้านจริง เงินทุกจำนวนเป็นเยน
+\end{itemize}
+
+\vspace{4pt}
+{\heavy\Large เตรียมก่อนวันนำเสนอ}\par
+\begin{itemize}
+  \item คนที่ 3 รัน \q{docker start rsl-pg}, \q{npm run db:reset}, \q{npm run dev} ก่อนเริ่ม 10 นาที แล้วเข้าสู่ระบบที่ \q{http://localhost:3000} ด้วย \q{admin@colorado.jp} (รหัสผ่านจาก \q{SEED\_ADMIN\_PASSWORD} ใน \q{.env.local})
+  \item ห้ามกดอะไรบนเว็บหลัง reset จนถึงตอนสาธิต เพราะ ORD-24194 ต้องยังอยู่ที่ ``รอตรวจสอบคำสั่งซื้อ'' (อย่าเปิดหน้า \q{/shipping} ก่อนเดโม เพราะจะดึงสถานะขนส่งและรัน 6S)
+  \item เปิด terminal ที่สองค้างไว้: \q{docker exec -it rsl-pg psql -U rsl\_app -d rsl\_fulfillment\_hub} (ถ้าใช้ PostgreSQL ที่ติดตั้งเอง ใช้ \q{psql -U rsl\_app -d rsl\_fulfillment\_hub} แทน) พิมพ์ SELECT ของสไลด์ 54 ไว้ในไฟล์ text เพื่อ copy วาง ซ้อม SELECT ก่อนพรี 1 รอบ
+  \item ขยายตัวอักษร terminal ให้ใหญ่ อาจารย์ต้องอ่านผล SELECT ได้ ใช้ \q{\textbackslash x auto} ถ้าแถวยาว
+\end{itemize}
+
 % ================================================================ คนที่ 1
-\speaker{sA}{\speakerA}{1 ถึง 5}{4 นาที}
+\speaker{sA}{\speakerA}{1 ถึง 14}{10 นาที 15 วินาที}
 
-\begin{topic}{1}{Cover (English)}
+\begin{topic}{1}{Cover (English)}{30 วินาที}
 \say
-{\enfont Good morning, everyone. We are presenting a back-office system for Colorado Company Limited. My name is [name], and my teammates are [name] and [name]. Our project covers phase one of the system, which connects Rakuten Ichiba, Rakuten RMS and Rakuten Super Logistics.}
-\point{ชื่อระบบและรูปหน้า Dashboard ทางขวา}
+{\enfont Good morning, Ajarn Somchoke, and everyone. Our project is the Colorado Back-Office System, a back-office system for Colorado Company Limited. My name is \speakerA, and my teammates are \speakerB\ and \speakerC.}
+
+{\enfont Today we present phase one. It works with Rakuten Ichiba, Rakuten RMS and Rakuten Super Logistics, and it automates three things: shipping labels, reordering and unit cost.}
+\point{วนเมาส์ผ่านป้าย 3 อัน Auto label, Auto reorder, Unit cost calculator ภาพขวาคือ Dashboard ของเว็บจริง}
 \end{topic}
 
-\begin{topic}{2}{Business introduction (English)}
+\begin{topic}{2}{Agenda (English)}{30 วินาที}
 \say
-{\enfont Colorado Company Limited sells imported and OEM products on Rakuten Ichiba, one of the biggest online marketplaces in Japan. The main products are fishing gear and lures, outdoor goods, household items and Thai herbal inhalers. The business started in 2009 as a side business and is now run by one owner. Rakuten Super Logistics, or RSL, keeps the stock and ships the parcels to customers.}
-
-{\enfont The problem is that every order is handled by hand by one person. The owner checks new orders, checks stock in two warehouses, matches each order with RSL, formats and prints the shipping label, and sends the tracking number to the customer. The owner also decides when to reorder without a clear rule, and calculates the real unit cost from eight cost items. Our goal is to automate the repetitive work, while the owner still approves every decision that spends money.}
-\extra
-{\enfont In the next phases, the same system can be connected to Yahoo! Auctions and Amazon.}
+{\enfont The talk has three parts. I will introduce the business, the problems, the business process, the use case diagram and the CRUD table. Achira will walk through all seventeen use cases with their sequence and collaboration diagrams. Piyakorn will cover the database, the architecture of the real web application, testing and a short live demo.}
+\point{กล่อง 01 02 03 ทีละกล่อง แล้วแถบล่าง 17 / 17 / 113 / 36}
 \end{topic}
 
-\begin{topic}{3}{Agenda}
+\begin{topic}{3}{Business introduction (English)}{1 นาที 10 วินาที}
+\say
+{\enfont Colorado Company Limited sells imported and OEM products on Rakuten Ichiba in Japan: fishing gear and lures, outdoor goods, imported household items and Thai herbal inhalers.}
+
+{\enfont The business started in 2009 as a side business. Today one owner still runs almost everything. Rakuten Super Logistics, or RSL, keeps most of the stock and ships the parcels, and the company also has a small warehouse of its own.}
+
+{\enfont On the right is one order today. The red steps are done by hand: checking stock in two warehouses, matching the order with RSL, formatting and printing the label, and sending the tracking number. That is four of six steps.}
+
+{\enfont Our system takes over these repetitive steps, but the owner still approves every decision that spends money. Phase one covers only Rakuten. Yahoo! Auctions and Amazon come later.}
+\keynum{\num{2009}, \num{one owner}, \num{4 of 6 steps} by hand}
+\tip{หยุดสั้นๆ ก่อนประโยค ``the owner still approves every decision that spends money''}
+\nextslide{\enfont ``From here, we will continue in Thai.''\normalfont\ ``มาดูว่างานมือเหล่านี้ใช้เวลาเท่าไหร่ครับ''}
+\end{topic}
+
+\begin{topic}{4}{Problems}{1 นาที}
 \say
 \begin{itemize}
-  \item จากนี้ขอพูดเป็นภาษาไทยครับ/ค่ะ การนำเสนอมี 4 ส่วน คือ ปัญหาและวัตถุประสงค์ Business Process กับ Use Case การออกแบบระบบ และการพัฒนากับผลการทดสอบ
+  \item ร้านขายประมาณ \num{5 ถึง 10 ออเดอร์ต่อวัน} ทุกออเดอร์ผ่านงานมือ 5 อย่างตามกราฟ ตรวจคำสั่งซื้อ 2 นาที เช็กสต๊อก 2 คลัง 3 นาที จับคู่ RSL 2 นาที จัดรูปแบบและพิมพ์ใบปะ 3 นาที แจ้งเลขติดตาม 2 นาที
+  \item รวมประมาณ \num{12 นาทีต่อออเดอร์} หรือ 60 ถึง 120 นาทีต่อวัน เป็นค่าประมาณจากที่เจ้าของเล่า ยังไม่ได้จับเวลาจริง
+  \item ยังเสียเงินด้วย ส่งเองประมาณ 600 เยนต่อชิ้น คู่แข่งประมาณ 200 เยน ต่างกัน \num{400 เยน} และต้นทุนจริง 1 SKU ต้องรวม \num{8 รายการ} เอง ใช้ประมาณ 20 ถึง 30 นาที การสั่งซื้อเติมจึงใช้ความรู้สึก
+\end{itemize}
+\extra ปัญหาไม่ใช่ ``ไม่มีคอมพิวเตอร์'' เจ้าของใช้ Rakuten RMS อยู่แล้ว ปัญหาคืองานซ้ำที่ไม่มีเกณฑ์และวัดผลได้
+\end{topic}
+
+\begin{topic}{5}{Objectives}{45 วินาที}
+\say
+\begin{itemize}
+  \item วัตถุประสงค์มี 3 เรื่อง Auto label ใบปะพร้อมทันทีเมื่อรู้แหล่งส่ง Auto reorder เช็กสต๊อก 2 คลังและเตรียมใบสั่งซื้อให้เจ้าของอนุมัติ และ Unit cost คำนวณต้นทุนด้วยสูตรเดียวทุกครั้ง แต่ละเรื่องผูกกับ Use Case ที่เขียนกำกับไว้
+  \item ตัวชี้วัดใน 3 เดือน ทุก Order ได้ใบปะถูกต้องโดยไม่จัดรูปแบบเอง ทุก SKU ที่ต่ำกว่าเกณฑ์ถูกแจ้ง คำนวณต้นทุนไม่เกิน \num{1 นาที} และเวลางานหลังบ้านลดลงอย่างน้อย\num{ครึ่งหนึ่ง}
 \end{itemize}
 \end{topic}
 
-\begin{topic}{4}{Problems}
+\begin{topic}{6}{Scope}{45 วินาที}
 \say
 \begin{itemize}
-  \item ร้านขายสินค้ากลุ่มหลักประมาณ \num{5 ถึง 10 ชิ้นต่อวัน} ทุกคำสั่งซื้อต้องผ่านงานมือ 5 อย่าง คือ ตรวจคำสั่งซื้อ เช็กสต๊อก 2 คลัง จับคู่กับ RSL จัดรูปแบบและพิมพ์ใบปะ และแจ้งเลขติดตาม
-  \item รวมแล้วประมาณ \num{12 นาทีต่อคำสั่งซื้อ} หรือประมาณ \num{1 ถึง 2 ชั่วโมงต่อวัน} ตัวเลขนี้เป็นค่าประมาณจากขั้นตอนที่เจ้าของเล่า ยังไม่ได้จับเวลาจริง
-  \item นอกจากเวลา ยังมีเรื่องเงิน ค่าส่งเมื่อจัดส่งเองประมาณ 600 เยน แพงกว่าคู่แข่ง \num{400 เยนต่อชิ้น} และการคำนวณต้นทุนจริงต้องรวม \num{8 รายการ} จึงตัดสินใจสั่งซื้อด้วยความรู้สึก
+  \item เฟส 1 คือ Rakuten Ichiba, RMS และ RSL เท่านั้น คลังมี 2 แห่ง คือ RSL กับคลังบริษัท ระบบภายนอกต่อผ่าน adapter ซึ่งตอนนี้เป็นตัวจำลอง
+  \item นอกขอบเขต คือ Amazon, Yahoo, การรับเงิน การคุยกับลูกค้า และ 2FA
+  \item หลักการสำคัญคือ human-in-the-loop ระบบทำงานซ้ำ แต่ 5A ตัดสินใจ และ 6A สั่งซื้อกับรับของ เจ้าของต้องกดเอง 7A กับ 10A ต้องใส่เหตุผลหรือเก็บ snapshot ก่อนเสมอ
 \end{itemize}
-\point{ตารางเวลาด้านซ้าย และกล่องตัวเลข 4 กล่อง}
 \end{topic}
 
-\begin{topic}{5}{Objectives and scope}
+\begin{topic}{7}{Business process: As-Is}{45 วินาที}
 \say
 \begin{itemize}
-  \item ระบบมีงานอัตโนมัติ 3 เรื่อง คือ จัดรูปแบบใบปะหน้าพัสดุ แจ้งและเตรียมการสั่งซื้อเติมสต๊อก และคำนวณต้นทุนต่อหน่วย
-  \item เฟส 1 ทำเฉพาะ Rakuten Ichiba, Rakuten RMS และ RSL ผู้ใช้มีคนเดียวคือเจ้าของในฐานะ Admin
-  \item จุดออกแบบสำคัญคือ human-in-the-loop ตามที่อาจารย์แนะนำ ระบบเตรียมทุกอย่างให้ แต่การสั่งซื้อที่ใช้เงินจริงต้องให้เจ้าของกดอนุมัติก่อน
+  \item Business Process เดิมมี 15 ขั้น อ่านจากบนลงล่าง ซ้ายไปขวา Super Admin ทำเองทุกขั้น รับ Order ตรวจ เช็กสต๊อก จับคู่ RSL พิมพ์ Label ส่งมอบ แจ้งเลขติดตาม
+  \item ถ้าสต๊อกไม่พอ คำนวณต้นทุนเอง คุ้มค่าสั่ง Supplier ไม่คุ้มหรือ Supplier ไม่มีของ ยกเลิก Order เมื่อของมาก็วนกลับไปจับคู่ RSL
 \end{itemize}
-\pass{``ต่อไป [ชื่อคนที่ 2] จะเล่าว่าเราวิเคราะห์ขั้นตอนการทำงานและออกแบบระบบอย่างไรครับ/ค่ะ''}
+\point{ไล่นิ้วตามเส้นหลักในรูป แล้วชี้ทางแยกสต๊อกไม่พอ}
+\end{topic}
+
+\begin{topic}{8}{Pain points}{45 วินาที}
+\say
+\begin{itemize}
+  \item จุดสีแดงคือปัญหา 4 จุด วัดได้เป็นเวลาทั้งหมด จับคู่สต๊อกประมาณ 5 นาทีต่อออเดอร์ คำนวณความคุ้มค่า 20 ถึง 30 นาทีต่อครั้ง จัดรูปแบบใบปะ 3 นาที ติดตามพัสดุ 2 นาที
+  \item ทุกจุดวัดซ้ำได้หลังใช้ระบบ จึงใช้ตรวจว่าปัญหาลดลงจริง
+\end{itemize}
+\end{topic}
+
+\begin{topic}{9}{Business process: To-Be}{55 วินาที}
+\say
+\begin{itemize}
+  \item BP ใหม่เพิ่ม lane ระบบ ระบบรับงานซ้ำ \num{7 Use Case} 1S ถึง 7S เช่น จับคู่กฎ SKU เลือกแหล่งสต๊อก จัดรูปแบบใบปะ แจ้งเลขติดตาม ตัดสต๊อก
+  \item คนยังทำงานที่ต้องตัดสินใจหรือเป็นงานกายภาพ เช่น ตรวจ Order ตั้งกฎ SKU อนุมัติสั่งซื้อ รับของ พิมพ์ใบปะ ส่งมอบพัสดุ
+  \item จุดที่เปลี่ยนจากรอบก่อนคือทางแยกหลัง 3S ถ้า RSL พอไปจับคู่ RSL ถ้า RSL ไม่พอแต่คลังบริษัทพอ บริษัทส่งเองและไปจัดรูปแบบใบปะทันที ถ้าไม่มีแหล่งใดพอไปคำนวณต้นทุนและให้เจ้าของตัดสินใจ
+\end{itemize}
+\point{ทางแยก ``RSL พอ'' ``คลังบริษัทพอ'' ``ไม่มีแหล่งใดพอ'' ในรูป}
+\end{topic}
+
+\begin{topic}{10}{To-Be: who does what}{35 วินาที}
+\say
+\begin{itemize}
+  \item ตารางนี้คือ 2.5 ครบ 16 ขั้น คอลัมน์ผู้ทำ A คือระบบ M คือคน คอลัมน์ขวาบอกว่าขั้นนั้นแก้ปัญหาข้อไหนใน 2.3
+  \item ขั้น 13 คือ 5A เป็น manual โดยตั้งใจ (M*) เพราะผูกกับเงิน ขั้น 16 คือ 10A ลบข้อมูลเก่า ที่เพิ่มตามคำแนะนำของอาจารย์
+\end{itemize}
+\end{topic}
+
+\begin{topic}{11}{Business process to use case}{35 วินาที}
+\say
+\begin{itemize}
+  \item รูปนี้คือ BP To-Be ที่กำกับเลข Use Case ไว้บนทุกกล่อง ทั้งงานคนและงานระบบ ตารางขวาจับคู่ทีละแถว ทุก Use Case ย้อนกลับไปหาขั้นใน BP ได้
+  \item ยกเว้น 1A ซึ่งเป็น precondition และ 10A ซึ่งเป็นงานดูแลระบบ
+\end{itemize}
+\end{topic}
+
+\begin{topic}{12}{Use case diagram: before}{45 วินาที}
+\say
+\begin{itemize}
+  \item Use Case Diagram แรกได้จาก BP เดิมตรงๆ มี \num{9 Use Case} เกือบทั้งหมดผูกกับ Super Admin
+  \item พอทำ CRUD ก่อนปรับปรุง เห็นช่องว่าง 5 เรื่อง ไม่มีกฎ SKU ไม่มีการตรวจ Order การจัดรูปแบบกับพิมพ์ใบปะปนกัน งานหลังส่งมอบไม่มีใครรับ และไม่มีใครลบข้อมูลเก่า แต่ละเรื่องเพิ่ม Use Case ตามที่เห็นทางขวา
+\end{itemize}
+\end{topic}
+
+\begin{topic}{13}{Use case diagram: reviewed}{35 วินาที}
+\say
+\begin{itemize}
+  \item หลังทบทวนมี \num{17 Use Case} เพิ่มใหม่ \num{7 ตัว} คือ 2A, 3A, 9A, 10A, 2S, 5S และ 7S
+  \item A คือ Super Admin เริ่ม 10 ตัว S คือระบบทำ 7 ตัว actor ภายนอกมี Marketplace, Supplier, Delivery และ RSL ส่วน 1S, 4S, 5S มีปุ่มให้กด แต่ขั้นทั้งหมดระบบทำ จึงไม่ลากเส้นจาก Super Admin
+\end{itemize}
+\end{topic}
+
+\begin{topic}{14}{CRUD table}{40 วินาที}
+\say
+\begin{itemize}
+  \item CRUD ที่ทบทวนแล้วสร้างจาก SQL ทุกข้อใน Use Case Description INSERT SELECT UPDATE DELETE กลายเป็น C R U D จึงมี \num{17 entity} ตรงกับตารางจริงและ ER ทุกตัว
+  \item แถวสีแดงคือ Use Case ที่เพิ่ม ตัว D สีแดงเกือบทั้งหมดอยู่ที่ 10A ซึ่งเป็น Use Case หลักที่ลบข้อมูล
+\end{itemize}
+\pass{``ต่อไปขอส่งให้\speakerB\ เล่ารายละเอียดของ Use Case ทั้ง 17 ตัวครับ''}
 \end{topic}
 
 % ================================================================ คนที่ 2
-\speaker{sB}{\speakerB}{6 ถึง 13}{5 นาที}
+\speaker{sB}{\speakerB}{15 ถึง 33}{11 นาที 35 วินาที}
 
-\begin{topic}{6}{Business process: As-Is}
+\begin{topic}{15}{17 use cases}{40 วินาที}
 \say
 \begin{itemize}
-  \item ขอบคุณครับ/ค่ะ รูปนี้คือ Business Process เดิม ทุกกล่องเป็นงานของ Super Admin คนเดียว เริ่มจากลูกค้าสั่งซื้อใน Marketplace จนส่งเลขติดตามกลับไป
-  \item จุดสีแดงคือปัญหา 4 จุด จับคู่ Order กับสต๊อกเอง คำนวณความคุ้มค่าเอง จัดรูปแบบใบปะเอง และติดตามพัสดุเอง แต่ละจุดเรามีเวลาประมาณการกำกับไว้ทางขวา
+  \item ซ้ายคือ 10 Use Case ที่ Admin เริ่ม ขวาคือ 7 ตัวที่ระบบทำ คอลัมน์ ``เริ่มเมื่อ'' บอกว่าในเว็บจริงทำงานตอนไหน เช่น 2S ทำต่อจาก 2A ทันที 7S ทำต่อจาก 5S
+  \item คอลัมน์ Q คือจำนวน query รวม \num{113 query} เลข \q{Q<UC>.n} เรียงตามขั้นตอน
+  \item ในเล่มทุก Use Case มี Description แล้วตามด้วย Sequence และ Collaboration ทันที วันนี้จะลงละเอียด 3S, 5A, 6A และ 7S ที่เหลือพูดเป็นกลุ่ม
 \end{itemize}
 \end{topic}
 
-\begin{topic}{7}{Business process: To-Be}
+\begin{topic}{16}{One order, end to end}{45 วินาที}
 \say
 \begin{itemize}
-  \item ใน Business Process ใหม่ เราเพิ่ม lane ของระบบ ระบบรับงานที่ทำซ้ำไป 7 Use Case ที่ขึ้นต้นด้วย S
-  \item งานที่ยังให้คนทำมี 4 แบบ คือ ตรวจคำสั่งซื้อ อนุมัติการสั่งซื้อ กดพิมพ์ใบปะ และส่งมอบพัสดุให้ขนส่ง เพราะเป็นงานที่ต้องตัดสินใจหรือเป็นงานทางกายภาพ
+  \item ภาพรวม Order หนึ่งรายการ 4A นำเข้า 2A ตรวจ แล้วระบบทำ 2S 3S 1S 6S ต่อทันที กล่องสีฟ้าคือระบบทำ Admin พิมพ์ 9A ส่งมอบ 8A ระบบแจ้งเลขติดตาม 5S และตัดสต๊อก 7S ใต้กล่องคือสถานะหลังขั้นนั้น
+  \item ที่ 3S มีทางแยก คลังบริษัทพอข้าม 1S ไป 6S ไม่มีแหล่งใดพอไป 5A
+  \item \textbf{จัดส่งสำเร็จ} ต้องครบ 3 เงื่อนไข ขนส่งส่งถึง แจ้งเลขติดตามแล้ว และตัดสต๊อกครบทุกรายการ
 \end{itemize}
 \end{topic}
 
-\begin{topic}{8}{Use case diagram}
+\begin{topic}{17}{Sequence diagram: MVC}{1 นาที}
 \say
 \begin{itemize}
-  \item หลังวิเคราะห์ CRUD Table เราพบ Use Case ที่ขาด เช่น ตรวจคำสั่งซื้อ จับคู่กฎ SKU ตัดสต๊อก และลบข้อมูลเก่า จึงได้ \num{17 Use Case} Admin 10 และระบบ 7
-  \item เลขลงท้าย A คือ Admin เป็นคนเริ่ม และ S คือระบบเริ่มเอง
+  \item ก่อนดูทีละ Use Case ขออธิบายวิธีอ่าน Sequence ในเล่ม ทุกรูปเขียนแบบ \textbf{MVC} ตามที่อาจารย์สอน
+  \item Actor คือ Super Admin กดที่ \textbf{Screen} คือหน้าเว็บ \q{page.tsx} (ชั้น View ของ MVC) Screen ส่งคำสั่งให้ \textbf{Controller} คือ Server Action ใน \q{actions.ts} Controller เรียก \textbf{Model} คือ UseCase กับ Queries ที่เก็บ SQL แล้วเข้าฐานข้อมูลผ่าน \q{:DBConnector} ตัวเดียว
+  \item ผลย้อนกลับเป็นเส้นประจนถึง Screen แล้ว Screen แสดงผลเองเป็น self message เช่น \q{showSuccess()} \textbf{จึงไม่มีลูกศรกลับไปหา Actor} และ Screen ไม่เรียกฐานข้อมูลตรง
+  \item ชื่อ Screen และ Controller เป็นชื่อบทบาทที่จับคู่กับไฟล์จริง ในโค้ดไม่ได้สร้างคลาส Controller เพิ่ม
+\end{itemize}
+\point{ไล่กล่อง 5 กล่องด้านบนจากซ้ายไปขวา แล้วชี้บรรทัดสุดท้าย \q{Screen ->> Screen : showSuccess()}}
+\tip{object ติด Actor ลงท้ายว่า Screen ถ้าถามให้พูดว่า ``Screen ทำหน้าที่ View ของ MVC เกณฑ์ข้อ 24 ห้ามตั้งชื่อว่า view''}
+\keynum{\num{ไม่มีลูกศรกลับหา Actor}, \num{Screen \ra\ Controller \ra\ Model \ra\ DBConnector}}
+\end{topic}
+
+\begin{topic}{18}{1A Log in}{40 วินาที}
+\say
+\begin{itemize}
+  \item 1A มี 7 query \q{Q1A.1} อ่านบัญชีพร้อม \q{locked\_until} ผิดครบ \num{5 ครั้ง} \q{Q1A.3} ล็อก \num{15 นาที} ระหว่างล็อกไม่ตรวจรหัสผ่านและบอกนาทีที่เหลือ ครบเวลา \q{Q1A.2} ปลดล็อกให้เอง
+  \item สำเร็จ \q{Q1A.4} ล้างตัวนับ \q{Q1A.5} สร้าง session อายุ 8 ชั่วโมง ทางขวาคือส่วนแรกของ Sequence 1A (ในเล่มตัด 4 ส่วนให้ตัวอักษรใหญ่) Admin กดที่ LoginScreen ส่งให้ LoginController ไม่มีเส้นกลับหา Actor
 \end{itemize}
 \end{topic}
 
-\begin{topic}{9}{Use case 5A}
+\begin{topic}{19}{2A · 2S · 3A}{40 วินาที}
 \say
 \begin{itemize}
-  \item ตัวอย่าง Use Case Description ที่สำคัญที่สุดคือ 5A ตัดสินใจสั่งซื้อสินค้าเพิ่ม ระบบดึงต้นทุนต่อหน่วยล่าสุดและราคาขาย แล้วคำนวณกำไรที่คาดไว้ให้
-  \item แต่ปุ่ม ``คุ้มค่า'' หรือ ``ไม่คุ้มค่า'' ต้องให้เจ้าของกดเอง ถ้าคุ้มค่าจะไปต่อ 6A สั่งซื้อ ถ้าไม่คุ้มค่าจะไป 7A ยกเลิก
-  \item ทุก query มีเลขตาม Use Case เช่น Q5A.1 ถึง Q5A.5 เลขเดียวกันอยู่ใน Use Case Description, Sequence Diagram และโค้ด
-\end{itemize}
-\point{object ติดกับ actor คือ ReorderDecisionScreen และฐานข้อมูลเชื่อมผ่าน DBConnector}
-\end{topic}
-
-\begin{topic}{10}{Class diagram}
-\say
-\begin{itemize}
-  \item Class Diagram ได้จาก object ทุกตัวใน Sequence Diagram แบ่งเป็น 15 รูปตามกลุ่มงาน รูปนี้คือกลุ่มคำนวณต้นทุน
-  \item มีความสัมพันธ์ 4 แบบ คือ สืบทอดจาก Base class, หน้าจอใช้ Controller, Controller เรียก Repository และ Repository ทุกตัวใช้ DBConnector ร่วมกัน
+  \item 2A Admin ยืนยันหรือแก้ SKU และจำนวน \q{Q2A.1} ล็อกแถว Order ก่อน
+  \item 2S ระบบหา SKU จาก \q{channel\_sku} ในตาราง skus ไม่มีตารางกฎแยก ไม่พบหรือพบหลายตัวส่งให้คนดู อ่านกฎไม่ได้ \q{Q2S.5} หยิบมาทำใหม่รอบถัดไป
+  \item 3A ตั้งกฎ SKU บันทึกแล้ว \q{Q3A.8} ส่ง Order ที่ค้างกลับเข้าคิว และวิ่ง 2S 3S 6S ต่อใน transaction เดียวกัน
 \end{itemize}
 \end{topic}
 
-\begin{topic}{11}{State diagram}
+\begin{topic}{20}{3S Check stock}{55 วินาที}
 \say
 \begin{itemize}
-  \item State Diagram แสดงสถานะของ Order ทุกเส้นเขียนเป็นเงื่อนไข event และชื่อ Use Case ที่ทำ
-  \item ทุกครั้งที่สถานะเปลี่ยน ระบบ UPDATE ค่า order\_status ด้วย query ที่กำกับบนเส้น เช่น Q2A.4 หรือ Q7S.5
+  \item 3S เป็นหัวใจของ Auto reorder มี 9 query \q{Q3S.1} ล็อกแถว stock ของ SKU \q{Q3S.2} อ่านยอด RSL \q{Q3S.3} หักยอดที่ Order อื่นจองไว้แต่ยังไม่ตัด \q{Q3S.4} บันทึกเส้นทางและ \q{fulfill\_source}
+  \item กฎ เลือก RSL ก่อน ถ้า RSL ว่างพอทั้งจำนวนไป 1S ถ้าไม่พอแต่คลังบริษัทพอไป 6S ทันที ถ้าไม่มีแหล่งใดพอทั้งจำนวนไปรอ Admin ตัดสินใจ 5A
+  \item ไม่แบ่งส่งจากสองคลัง เพราะจะได้สองกล่องและค่าส่งสองครั้ง ถ้า RSL ล่มแสดงเฉพาะคลังบริษัทและบันทึก error
+\end{itemize}
+\point{กล่อง 3 กล่องทางขวาจากบนลงล่าง}
+\keynum{\num{RSL ก่อน}, \num{แต่ละแหล่งต้องพอทั้งจำนวน}}
+\end{topic}
+
+\begin{topic}{21}{3S Sequence diagram}{35 วินาที}
+\say
+ส่วนแรกของ Sequence 3S (ในเล่มมี 3 ส่วน) คือส่วนอัตโนมัติ เริ่มที่ ExecuteWorkflow หลัง 2S ตามโน้ตสีเหลือง เรียก CheckStockUseCase แล้ว StockQueries ลงฐานข้อมูลผ่าน DBConnector เห็นลำดับ ล็อก อ่าน RSL หักยอดจอง แล้วแยกทางในกรอบ alt หัวรูปมี Super Admin กับ StockCheckScreen เพราะส่วนที่ 2--3 คือหน้าตรวจสต๊อกที่ Admin เปิดเองผ่าน Screen และ Controller
+\end{topic}
+
+\begin{topic}{22}{3S Collaboration diagram}{20 วินาที}
+\say
+Collaboration แปลงจาก Sequence object ตรงกันทุกตัว เลขลำดับแทนแกนเวลา ทางเลือกอยู่ในวงเล็บเหลี่ยม เราตรวจด้วยสคริปต์ว่าเลข query ใน Description, Sequence และ Collaboration ตรงกันครบทั้ง 17 Use Case
+\end{topic}
+
+\begin{topic}{23}{1S · 6S · 9A Labels}{40 วินาที}
+\say
+\begin{itemize}
+  \item 1S จับคู่เลข RSL รับเฉพาะ Order ที่ 3S เลือก RSL
+  \item 6S จัดรูปแบบใบปะทันที RSL ปกติ RSL-STD-A6 ของใหญ่ RSL-LARGE-A5 บริษัทส่งเอง INHOUSE-YAMATO-A6 ไม่มีเลข RSL
+  \item 9A Admin กดพิมพ์ ทุกครั้งรวมพิมพ์ซ้ำบันทึกใน \q{label\_print\_history} การพิมพ์ยังให้คนกดเพราะเป็นงานกายภาพ
+\end{itemize}
+\point{ใบปะ RSL ด้านบน แล้วใบปะบริษัทส่งเองที่ช่อง RSL เป็น ``—''}
+\end{topic}
+
+\begin{topic}{24}{4S Unit cost}{35 วินาที}
+\say
+\begin{itemize}
+  \item สูตรเดียวทุกครั้ง ราคาซื้อคูณอัตราแลกเปลี่ยน บวกค่าขนส่งระหว่างประเทศและภาษี หารจำนวนที่สั่ง แล้วบวกค่าธรรมเนียม Marketplace ค่าส่งในประเทศ และค่า RSL รวม 8 รายการ
+  \item สูตรคำนวณในโค้ด SQL ใช้อ่านและบันทึก \q{Q4S.6} บันทึก \q{cost\_history} ทุกครั้ง ค่าล่าสุดใน \q{costs} ใช้ต่อใน 5A
 \end{itemize}
 \end{topic}
 
-\begin{topic}{12}{ER diagram}
+\begin{topic}{25}{5A Decide reorder}{40 วินาที}
 \say
 \begin{itemize}
-  \item ฐานข้อมูลมี \num{15 ตาราง} ชื่อตรงกับ CRUD Table ทุก relationship เป็น 1 ต่อ 1 หรือ 1 ต่อหลาย ไม่มีหลายต่อหลาย เส้นคู่คือ total participation
-  \item รูปขวาคือ ER พร้อม query ป้ายสีแดงบอกว่า query ไหนใช้ตารางไหน และ query ที่ UPDATE จะแสดงคอลัมน์ที่ถูกแก้
+  \item 5A คือจุด human-in-the-loop มี 3 query \q{Q5A.1} ล็อก Order และดึงราคาขายกับต้นทุนล่าสุด ระบบแสดงแต่ไม่ตัดสินใจแทน
+  \item เจ้าของกดคุ้มค่าพร้อมจำนวน หรือไม่คุ้มค่า \q{Q5A.2} บันทึก คุ้มค่าไป 6A ไม่คุ้มค่าไป 7A
+  \item จำนวนไม่ใช่จำนวนเต็มบวกแจ้ง invalid-qty ไม่มีราคาขาย \q{Q5A.3} ส่งไปรอแก้ราคาที่ 3A
 \end{itemize}
 \end{topic}
 
-\begin{topic}{13}{Data flow diagram}
+\begin{topic}{26}{5A Sequence diagram}{30 วินาที}
+\say
+Sequence ของ 5A สองส่วนวางคู่กัน ReorderScreen คือ Screen ติดกับ Actor ส่งคำสั่งให้ ReorderController คือ Server Action ใน \q{actions.ts} ต่อไปที่ ReordersUseCase กับ ReorderQueries ลงฐานข้อมูลผ่าน DBConnector เส้นที่ลง DB มีเลข query ตรงกับ Description ผลย้อนกลับถึง Screen แล้ว Screen แสดงผลเอง ไม่มีเส้นกลับไปหา Actor
+\end{topic}
+
+\begin{topic}{27}{5A Collaboration diagram}{20 วินาที}
+\say
+Collaboration ของ 5A ใช้ object ชุดเดียวกับ Sequence ไล่ตาม Screen, Controller, Model และ DBConnector เลขลำดับแทนแกนเวลา และไม่มี message กลับไปหา Actor เช่นกัน
+\end{topic}
+
+\begin{topic}{28}{6A Reorder and receive}{45 วินาที}
 \say
 \begin{itemize}
-  \item Context Diagram มีระบบเป็น process เดียว รับส่งข้อมูลกับ 5 external entity คือ Admin, Rakuten, RSL, Delivery และ Supplier
-  \item Level 0 แตกเป็น 6 process ตามกลุ่ม Use Case และมี data store 9 กลุ่ม
+  \item 6A มี 14 query สองช่วง ช่วงส่งใบสั่งซื้อ \q{Q6A.6} ขอเลขใบสั่งซื้อจาก sequence (\q{SELECT nextval('reorder\_no\_seq')} ได้ PO-0092) \q{Q6A.7} สร้าง reorders \q{Q6A.8} ผูกทุก Order ที่รอ SKU นี้ผ่าน \q{orders.reorder\_id} ใบเดียวครอบคลุมหลาย Order แล้วส่งให้ Supplier
+  \item ช่วงรับของ \q{Q6A.10} ล็อกใบสั่งซื้อกับแถว stock \q{Q6A.11} เปลี่ยนเป็นได้รับสินค้าแล้วได้ครั้งเดียว \q{Q6A.12--13} เพิ่มสต๊อกคลังบริษัทพร้อมประวัติ \q{Q6A.14} ส่ง Order ที่ผูกไว้กลับไปตรวจสต๊อก แล้ว 3S กับ 6S ทำต่อทันที
+  \item ทดสอบจริง รับ PO-0091 จำนวน 60 ชิ้น Order ที่ผูกไว้ 2 รายการกลับไปตรวจสต๊อก
 \end{itemize}
-\pass{``ต่อไป [ชื่อคนที่ 3] จะแสดงระบบที่พัฒนาและผลการทดสอบครับ/ค่ะ''}
+\end{topic}
+
+\begin{topic}{29}{6A Sequence diagram}{30 วินาที}
+\say
+Sequence ของ 6A ยาวที่สุดในเล่ม ตัดเป็น 5 ส่วน ส่วนที่ 1--3 คือส่งใบสั่งซื้อผ่าน SupplierAdapter ที่เห็นนี้คือส่วนที่ 4 รับสินค้า Admin กดรับที่ ReorderScreen ส่งให้ ReorderController แล้ว UseCase วิ่งผ่าน ExecuteWorkflow ล็อกใบสั่งซื้อ \q{Q6A.10} เปลี่ยนสถานะ \q{Q6A.11} เพิ่มสต๊อก \q{Q6A.12} แล้ว 3S และ 6S ทำต่อใน transaction เดียวกัน
+\end{topic}
+
+\begin{topic}{30}{6A Collaboration diagram}{15 วินาที}
+\say
+Collaboration ของ 6A ใช้ object ชุดเดียวกัน หน้าจอ ReorderScreen มีทั้งปุ่มสั่งซื้อและรับของ ส่งผ่าน Controller เลข Q6A.1 ถึง Q6A.14 ตรงกับ Description
+\end{topic}
+
+\begin{topic}{31}{8A · 5S · 7S Ship and deduct}{45 วินาที}
+\say
+\begin{itemize}
+  \item 8A Admin ส่งมอบและบันทึกเลขติดตาม ไม่มีเลข Order รอที่ ``รอส่งมอบ'' เปิดหน้า \q{/shipping} ระบบดึงสถานะขนส่ง
+  \item 5S เช็กประวัติก่อนส่งเพื่อไม่ส่งเลขซ้ำ ส่งผ่าน Rakuten adapter แล้ว 7S ต่อทันที
+  \item 7S ตัดสต๊อกตามแหล่งที่ 3S เลือก และเข้าคิวอัปเดตยอดใน Rakuten ถ้า Rakuten ล่มตัดในระบบไว้ก่อน แล้วลองใหม่รอบถัดไป
+\end{itemize}
+\end{topic}
+
+\begin{topic}{32}{7S Sequence diagram}{25 วินาที}
+\say
+Sequence ของ 7S ส่วนแรกจาก 3 ส่วน เริ่มที่ ExecuteWorkflow ไม่มี Actor เพราะระบบทำเอง เริ่มจากรอบ retry \q{Q7S.1} หา Order ที่แจ้งเลขติดตามแล้วแต่ตัดสต๊อกไม่ครบ ครั้งละไม่เกิน 100 รายการ ข้ามแถวที่ถูกล็อก แล้ว \q{Q7S.2} ล็อก \q{Q7S.4} ลดยอด \q{Q7S.5} ตั้ง \q{stock\_deducted} แล้วเข้าคิว sync Rakuten
+\end{topic}
+
+\begin{topic}{33}{4A · 7A · 10A}{35 วินาที}
+\say
+\begin{itemize}
+  \item 4A นำเข้า Order จาก Rakuten ข้าม Order ซ้ำ และบันทึกคำขอยกเลิกของลูกค้า
+  \item 7A ต้องใส่เหตุผล คืนสต๊อกตามคลังที่ตัดไป ส่งมอบแล้วไป ``รอดำเนินการพิเศษ'' ถ้ายกเลิกใบสั่งซื้อด้วย Order อื่นที่ผูกไว้กลับไป 5A
+  \item 10A ลบเฉพาะข้อมูลที่ปิดแล้ว เก็บ snapshot ลง \q{deletion\_history} ก่อนลบเสมอ
+\end{itemize}
+\pass{``ต่อไปขอส่งให้\speakerC\ เล่าการออกแบบฐานข้อมูล สถาปัตยกรรม และการทดสอบครับ''}
 \end{topic}
 
 % ================================================================ คนที่ 3
-\speaker{sC}{\speakerC}{14 ถึง 19}{4 นาที}
+\speaker{sC}{\speakerC}{34 ถึง 57}{14 นาที 35 วินาที}
 
-\begin{topic}{14}{Platform and components}
+\begin{topic}{34}{ER diagram}{40 วินาที}
 \say
 \begin{itemize}
-  \item ขอบคุณครับ/ค่ะ ระบบพัฒนาด้วย Next.js, React และ TypeScript ฐานข้อมูลเป็น PostgreSQL และเชื่อมกับ Rakuten RMS และ RSL
-  \item Component Diagram แสดงการรวมคลาสเป็น FrontEnd, BackEnd และ Database พร้อม library และ API ภายนอก
+  \item ER แบบ Chen มี \num{17 entity} ตรงกับตารางจริงใน migrations 001 ถึง 008 \num{22 relationship} ทุกเส้น 1:1 หรือ 1:N ไม่มี M:N เส้นคู่คือ total participation
+  \item reorders ครอบคลุม orders แบบ 1:N เก็บเป็น \q{orders.reorder\_id} Order กับสินค้าแยกผ่าน order\_items
+  \item รายงานรอบแรกออกแบบ 15 ตาราง พอสร้างเว็บจริงปรับเป็น 17 เช่น เพิ่ม sessions, auto\_error\_logs และตารางประวัติ
 \end{itemize}
 \end{topic}
 
-\begin{topic}{15}{Site map and screens}
+\begin{topic}{35}{ER diagram with queries}{20 วินาที}
 \say
-\begin{itemize}
-  \item ระบบมี \num{12 หน้าจอ} root ของ site map คือหน้า Login ชื่อหน้าจอตรงกับ Screen ใน Sequence Diagram เช่น ReorderDecisionScreen ของ 5A และ 6A
-\end{itemize}
-\point{ถ้ามีเวลา เปิดเว็บจริงให้ดู flow ตั้งแต่นำเข้า Order จนพิมพ์ใบปะ}
+ER พร้อม Query แสดงเฉพาะ PK และ FK ป้ายสีแดงคือเลข query ที่ใช้ entity นั้น ถ้าเป็น UPDATE แสดง attribute ที่ถูกแก้ด้วย รวม 113 query
 \end{topic}
 
-\begin{topic}{16}{Output design}
+\begin{topic}{36}{Tables and queries}{30 วินาที}
 \say
 \begin{itemize}
-  \item ระบบมีรายงาน 2 ฉบับ ใบปะสินค้าที่สร้างจาก 6S และพิมพ์จาก 9A กับรายงานต้นทุนต่อหน่วยจาก 4S ที่ใช้สูตร Q4S.2
-\end{itemize}
-\end{topic}
-
-\begin{topic}{17}{SQL and testing}
-\say
-\begin{itemize}
-  \item SQL ทั้งหมด \num{63 คำสั่ง} เราสร้างฐานข้อมูลตัวอย่างแล้วรันทุกคำสั่งบน PostgreSQL ผ่านครบทุกข้อ ผลการรันอยู่ในหัวข้อ 2.25 ของรายงาน
-  \item ทดสอบเว็บตาม Use Case Description \num{34 กรณี} ทั้งกรณีปกติและกรณีผิดพลาด ข้อความที่คาดหวังคัดจาก Use Case Description คำต่อคำ ผ่านทุกกรณี
+  \item 2.17 มีโครงสร้างครบ 17 ตาราง attribute คำอธิบาย PK/FK NOT NULL ชนิดข้อมูล CHECK และตัวอย่าง 5 แถวต่อตาราง (admins มี 2 แถว เพราะมี Super Admin คนเดียว)
+  \item 2.16 คือตาราง Query มีเลข query, Use Case และ SQL ทั้ง 113 ข้อ SQL คัดลอกจากค่าคงที่ในโค้ดตรงๆ
 \end{itemize}
 \end{topic}
 
-\begin{topic}{18}{Summary}
+\begin{topic}{37}{Class diagram}{30 วินาที}
 \say
 \begin{itemize}
-  \item สรุป ก่อนมีระบบ เจ้าของใช้เวลางานมือประมาณ 1 ถึง 2 ชั่วโมงต่อวัน หลังมีระบบ ระบบทำงานซ้ำ 7 Use Case แทน เจ้าของเหลือแค่ตรวจ อนุมัติ พิมพ์ และส่งมอบ
-  \item ขั้นต่อไปคือต่อฐานข้อมูลและ Rakuten RMS API จริง แล้วขยายไป Yahoo! Auctions และ Amazon
+  \item ได้จาก object ทุกตัวใน Sequence และ Collaboration แบ่ง 15 รูป 12 รูปตามกลุ่มงาน 3 รูปเป็นคลาสข้อมูล รูปนี้คือกลุ่ม 3S กับ 7S
+  \item ชั้นตรงกับ MVC Screen (ชั้น View), Controller, UseCase, Queries, DBConnector และ Adapter ความสัมพันธ์มี association, dependency, aggregation และ realization
 \end{itemize}
 \end{topic}
 
-\begin{topic}{19}{Q\&A}
+\begin{topic}{38}{State diagram: Order (1/3)}{35 วินาที}
 \say
 \begin{itemize}
-  \item ขอบคุณครับ/ค่ะ เปิดให้ถามคำถาม
+  \item อาจารย์ขอ State Diagram ของข้อมูลที่ถูก update เราทำครบ\textbf{ทุกคอลัมน์สถานะ}ในฐานข้อมูล รวม 5 คลาส
+  \item เริ่มจาก \q{Order.order\_status} 22 สถานะ แบ่งสามสไลด์ สไลด์นี้คือช่วงก่อนจัดส่ง ทุกเส้นเขียน [เงื่อนไข] event / Use Case พร้อมเลข query ที่ UPDATE สถานะ
+  \item 3S ออกได้ 3 ทาง ``สั่งซื้อแล้ว'' ออกได้ 2 ทาง รับของ 6A หรือยกเลิกใบสั่งซื้อ 7A ``รอดำเนินการด้วยตนเอง'' มี \q{manual\_reason} บอกสาเหตุ
 \end{itemize}
+\end{topic}
+
+\begin{topic}{39}{State diagram: Order (2/3)}{30 วินาที}
+\say
+ช่วงจัดส่งในเล่มเป็นรูปเดียวแนวตั้ง บนสไลด์ตัดเป็นสองแถบให้อ่านได้ แถบบน Order ที่ใช้ RSL จับคู่เลข RSL ใน 1S แล้วจัดรูปแบบใบปะเป็น ``รอพิมพ์ใบปะสินค้า'' แถบล่าง 9A พิมพ์ใบปะ 8A ส่งมอบ มีเลขติดตามเป็น ``อยู่ระหว่างจัดส่ง'' ไม่มีเลขติดตามรอที่ ``รอส่งมอบ''
+\point{ชี้แถบบนก่อนแล้วไล่ลงแถบล่าง ซ้ายไปขวา}
+\end{topic}
+
+\begin{topic}{40}{State diagram: Order (3/3)}{20 วินาที}
+\say
+5S แจ้งเลขแล้ว 7S ตัดสต๊อก ``จัดส่งสำเร็จ'' ต้องครบ 3 เงื่อนไข delivered แจ้งเลขแล้ว และตัดสต๊อกครบทุกรายการ ยกเลิกหลังส่งมอบ 7A ไป ``รอดำเนินการพิเศษ''
+\point{ชี้แถบสรุปสองกล่องใต้รูป}
+\end{topic}
+
+\begin{topic}{41}{State diagram: Reorder}{30 วินาที}
+\say
+\q{Reorder.reorder\_status} 6A สร้างใบสั่งซื้อ ``รอส่งคำสั่งซื้อ'' (\q{Q6A.7}) Supplier รับเป็น ``สั่งซื้อแล้ว'' (\q{Q6A.9}) ส่งไม่สำเร็จคงสถานะเดิม รับของ ``ได้รับสินค้าแล้ว'' (\q{Q6A.11}) ได้ครั้งเดียว ยกเลิกพร้อม Order ใน 7A (\q{Q7A.4}) และ 10A ลบเฉพาะใบที่ปิดแล้ว
+\end{topic}
+
+\begin{topic}{42}{State diagram: Label · SKU}{30 วินาที}
+\say
+\q{Label.label\_status} 6S สร้างใบปะเป็น \q{ready} (\q{Q6S.4}) 9A พิมพ์สำเร็จเป็น \q{printed} (\q{Q9A.4}) ยกเลิกจับคู่ RSL ใน 1S ลบใบปะที่ยังไม่พิมพ์ \q{Sku.sku\_status} ใน 3A สลับ \q{active}/\q{inactive} (\q{Q3A.9}) และลบได้เมื่อไม่มีข้อมูลอ้างถึง (\q{Q3A.11})
+\end{topic}
+
+\begin{topic}{43}{State diagram: delivery · sync}{30 วินาที}
+\say
+\q{Order.delivery\_status} ได้เลขติดตามใน 8A เป็น \q{in\_transit} แล้วดึงสถานะขนส่งเป็น \q{delivered}, \q{failed} หรือ \q{returned} (\q{Q8A.4}) ส่วน \q{sync\_status} ยอดสต๊อกเปลี่ยนจาก 3S 6A 7S เป็น \q{pending} แล้ว 7S ส่งยอดให้ Rakuten สำเร็จเป็น \q{synced} ไม่สำเร็จคง \q{pending} ไว้ลองใหม่
+\end{topic}
+
+\begin{topic}{44}{Layers of the web app}{40 วินาที}
+\say
+\begin{itemize}
+  \item เว็บที่สร้างจริงมี 5 ชั้นตาม MVC page ของ Next.js (ชั้น View ชื่อ Screen) \ra\ Server Action (Controller) ใน \q{actions.ts} \ra\ UseCase \ra\ Queries ที่เก็บ SQL เป็นค่าคงที่ \ra\ \q{db.ts} ระบบภายนอกผ่าน Adapter
+  \item ไม่มี REST API แยก ไม่มีคลาส Controller หรือ Repository (ชื่อ Screen/Controller ใน Sequence คือบทบาทของ page กับ Server Action) ไม่มี Scheduler ข้อมูลอยู่ใน PostgreSQL 17 ตาราง ไม่ใช่ localStorage
+\end{itemize}
+\end{topic}
+
+\begin{topic}{45}{executeWorkflow}{45 วินาที}
+\say
+\begin{itemize}
+  \item 2S 3S 6S 7S ทำงานผ่าน \q{executeWorkflow} เปิด transaction เดียว รันปุ่มที่ Admin กด แล้ว \q{runAutomation} ทำ Use Case อัตโนมัติของ Order นั้น และหยิบงานที่ค้างมาทำใหม่
+  \item ถ้าขั้นอัตโนมัติพัง ROLLBACK ทั้งหมด แล้วบันทึก \q{auto\_error\_logs} ใน transaction แยก
+  \item ไม่ใช้ Scheduler เพราะผลเห็นทันที ข้อมูลไม่ค้างครึ่งทาง และทุก action เป็นรอบ retry ถ้าใช้จริงเพิ่มตัวตั้งเวลาเรียก executeWorkflow ได้โดยไม่แก้ UseCase
+\end{itemize}
+\end{topic}
+
+\begin{topic}{46}{Locks and double deduction}{40 วินาที}
+\say
+\begin{itemize}
+  \item ทุกจุดที่แก้ข้อมูลสำคัญล็อกแถวก่อนด้วย \q{FOR UPDATE} ตามตารางซ้าย รอบ retry ใช้ \q{SKIP LOCKED} จะได้ไม่รอแถวที่ล็อกอยู่
+  \item กันตัดสต๊อกซ้ำ 3 ชั้น \q{Q7S.2} ล็อกรายการกับ stock ตัดเฉพาะรายการที่ยังไม่ตัด และ \q{Q7S.5} UPDATE มีเงื่อนไข \q{stock\_deducted = FALSE} สองรอบมาพร้อมกัน รอบที่สองเห็นว่าตัดแล้ว
+  \item \q{Q7S.4} มีเงื่อนไขยอดต้องพอ สต๊อกจึงไม่ติดลบ
+\end{itemize}
+\end{topic}
+
+\begin{topic}{47}{External systems}{15 วินาที}
+\say
+ระบบภายนอก 6 interface Rakuten, RSL, Label Service, Printer, Carrier และ Supplier ตอนนี้เป็นตัวจำลองทั้งหมด ต่อของจริงเขียน implementation ตาม interface เดิม UseCase ไม่ต้องแก้
+\extra
+หน้า \q{/dev} สั่งให้ระบบภายนอกล่มได้ ใช้ทดสอบกรณีผิดพลาด
+\end{topic}
+
+\begin{topic}{48}{Security}{25 วินาที}
+\say
+\begin{itemize}
+  \item รหัสผ่านเก็บแบบ scrypt มี salt สุ่ม เทียบแบบ timing safe
+  \item session ใช้ token สุ่ม 32 byte ใน cookie ฐานข้อมูลเก็บแค่ SHA-256 ถ้าฐานข้อมูลรั่วก็เอา token ไปใช้ไม่ได้ cookie httpOnly อายุ 8 ชั่วโมง
+  \item SQL ทุกข้อส่งค่าผ่าน parameter กัน SQL injection และล็อกบัญชี 15 นาทีเมื่อผิด 5 ครั้ง
+\end{itemize}
+\end{topic}
+
+\begin{topic}{49}{Platform and components}{10 วินาที}
+\say
+Next.js 16 กับ PostgreSQL ทางขวาคือ Component Diagram ชั้นเดียวกับสไลด์สถาปัตยกรรม
+\extra
+React 19, TypeScript, Tailwind และ shadcn ต่อฐานข้อมูลผ่าน node-postgres รัน SQL ในเล่มด้วย PGlite
+\end{topic}
+
+\begin{topic}{50}{Site map and screens}{25 วินาที}
+\say
+Site map มี root คือ Login มี tree เดียวเพราะผู้ใช้ทุกคนเข้าทางเดียวกัน เมนูแบ่ง 5 กลุ่ม แต่ละหน้าจอคือ object Screen ใน Sequence ในเล่มมี 13 หน้าจอ Use Case ที่ระบบทำเองแสดงผลเป็นข้อความแจ้งเตือนในหน้าที่เปิดอยู่
+\end{topic}
+
+\begin{topic}{51}{Output design}{20 วินาที}
+\say
+รายงาน 2 ฉบับ ใบปะสินค้าจาก 6S พิมพ์จาก 9A มี template 3 แบบ และรายงานต้นทุนต่อหน่วยจาก 4S ทั้งสองเปิดจากเว็บจริง
+\end{topic}
+
+\begin{topic}{52}{SQL results}{20 วินาที}
+\say
+SQL \num{113 คำสั่ง} รันกับ PostgreSQL ผ่าน PGlite ผ่านทั้งหมด ทุกคำสั่งเริ่มจากข้อมูลตั้งต้นชุดเดียวกัน ตัวรันอยู่ในโฟลเดอร์เครื่องมือของเล่ม \q{04-chapter2-diagrams-database} ด้วย \q{npm run sql} SQL ทุกข้อคัดลอกจากค่าคงที่ใน \q{src/lib/queries} และจดชื่อค่าคงที่คู่กันไว้ เทียบทีละข้อแล้วตรงกัน
+\end{topic}
+
+\begin{topic}{53}{Testing}{35 วินาที}
+\say
+\begin{itemize}
+  \item ทดสอบบนเว็บจริง \num{36 กรณี} ครบทุก Use Case ทั้งปกติและผิดพลาด ผ่านทั้งหมด ข้อความคาดหวังคัดจาก Description คำต่อคำ เช่น 3S บริษัทส่งเอง ORD-24194 และรับของ PO-0091
+  \item ในโค้ดมี lint, type check, build, smoke test ของการ reset ส่วน SQL รันด้วย \q{npm run sql} ในโฟลเดอร์เครื่องมือของเล่ม \q{04-chapter2-diagrams-database}
+  \item ยังไม่มี unit test หรือ e2e test อัตโนมัติ การทดสอบตามหน้าจอทำด้วยมือ
+\end{itemize}
+\tip{พูดเรื่อง ``ยังไม่มี'' ตรงๆ ไม่ต้องขอโทษ}
+\end{topic}
+
+\begin{topic}{54}{Live demo + SELECT}{4 นาที}
+\say
+\begin{itemize}
+  \item [สลับไปเบราว์เซอร์ และ terminal ที่เปิด psql ไว้แล้ว] ``ขอสาธิตเว็บจริง ทุกขั้นจะ SELECT ก่อนกดและหลังกดให้เห็นว่าข้อมูลใน DB เปลี่ยนจริงค่ะ''
+  \item 1 Login (1A) \ra\ SELECT \q{sessions} ได้แถวใหม่ เก็บแค่ \q{token\_hash}
+  \item 2 นำเข้า Order (4A) \ra\ SELECT นับตามสถานะ ``รอตรวจสอบคำสั่งซื้อ'' \num{7 \ra\ 8} (toast แจ้งเคสใน seed เช่น ORD-24181 ลูกค้าขอยกเลิก SKU ไม่ลงทะเบียน เป็นเรื่องปกติ)
+  \item 3 ยืนยัน ORD-24194 (2A) \ra\ SELECT order นี้ ระบบทำ 2S 3S 6S ต่อเอง สถานะ ``รอพิมพ์ใบปะสินค้า'' \q{fulfill\_source = in\_house} ใบปะ \q{ready}
+  \item 4 พิมพ์ใบปะ (9A) \ra\ \q{label\_status = printed} และ \q{label\_print\_history} 1 แถว
+  \item 5 ส่งมอบ (8A) \ra\ ``อยู่ระหว่างจัดส่ง'' มีเลขติดตาม \q{delivery\_status = in\_transit} \textbf{สต๊อกยังไม่ตัด} เพราะ 7S ตัดหลัง 5S แจ้งเลขติดตาม
+  \item 6 ตัดสินใจคุ้มค่า ORD-24184 (5A) \ra\ ``รอสั่งซื้อจาก Supplier'' (ตาราง \q{reorders} ยังไม่เปลี่ยน แถวใหม่เกิดตอนกดสั่งซื้อใน 6A)
+\end{itemize}
+\point{SQL อยู่บนสไลด์ 54 และในคู่มือหัวข้อเดโม พิมพ์ไว้ในไฟล์ แล้ว copy วางใน psql}
+\tip{เวลาไม่พอ ทำแค่ข้อ 1--3 ถ้าพลาดกด reset ที่หน้า \q{/dev} ถ้าอาจารย์ให้เขียน SELECT เอง เริ่ม \q{SELECT * FROM <table> LIMIT 5;} แล้วเติม WHERE / JOIN ถ้าเว็บค้างเกิน 10 วินาที กลับสไลด์ 53 ชี้รูปผลทดสอบ}
+\end{topic}
+
+\begin{topic}{55}{Team and responsibilities}{20 วินาที}
+\say
+หน้าที่และคะแนนของแต่ละคนอยู่ในหัวข้อ 2.25 ของรายงาน ธนภัทรกับอชิระทำ Business Flow, ER, CRUD, Use Case Description และ Backend กับ Database ปิยากรประสานงานกับเจ้าของกิจการ เขียนรายงานหลัก ทำ Use Case Diagram, Sequence, Collaboration และ Frontend งานในเล่ม 16, 17 และ 20 ชิ้น คะแนนจากหัวหน้าทีม 5 เต็ม 5 ทุกคน
+\end{topic}
+
+\begin{topic}{56}{Summary}{35 วินาที}
+\say
+\begin{itemize}
+  \item เดิมงานมือประมาณ 1 ถึง 2 ชั่วโมงต่อวัน ระบบใหม่ทำ 7 Use Case เอง ใบปะพร้อมทันที ต้นทุนจากสูตรเดียว แต่เจ้าของยังอนุมัติทุกการสั่งซื้อ
+  \item งานในเล่ม 17 Use Case, 17 ตาราง, SQL 113 ข้อผ่าน, ทดสอบ 36 กรณีผ่าน
+  \item ขั้นต่อไป ต่อ API จริงแทนตัวจำลอง เพิ่มตัวตั้งเวลาและ test อัตโนมัติ แล้วขยายช่องทางขาย
+\end{itemize}
+\end{topic}
+
+\begin{topic}{57}{Q\&A}{10 วินาที}
+\say
+ขอบคุณค่ะ ยินดีตอบคำถาม
+\tip{คนที่พูดสไลด์นั้นเป็นคนตอบ เปิด \q{qna\_prep/qna-Colorado.pdf} ไว้}
 \end{topic}
 
 \end{document}
