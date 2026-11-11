@@ -1,0 +1,17 @@
+%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+stateDiagram-v2
+    direction TB
+    state "RakutenStockSyncState (sync_status)" as RakutenStockSyncStateBox {
+        state "RakutenStockSyncState.pending" as s1
+        state "RakutenStockSyncState.synced" as s2
+        [*] --> s1 : [ปรับยอดสต๊อก] adjustStock / ตรวจสอบของสินค้าใน stock + RSL (Q3S.8)
+        [*] --> s1 : [รับสินค้าเข้าคลัง] receiveReorder / สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier (Q6A.12)
+        [*] --> s1 : [ตัดสต๊อก] deductStock / ตัดสต๊อกสินค้า (Q7S.6)
+        s1 --> s2 : [Rakuten รับยอดคงเหลือ] syncRakutenStock / ตัดสต๊อกสินค้า (Q7S.10)
+        s1 --> s1 : [ส่งไม่สำเร็จ] syncRakutenStock / ตัดสต๊อกสินค้า (Q7S.11)
+        s2 --> s1 : [ปรับยอดสต๊อก] adjustStock / ตรวจสอบของสินค้าใน stock + RSL (Q3S.8)
+        s2 --> s1 : [รับสินค้าเข้าคลัง] receiveReorder / สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier (Q6A.12)
+        s2 --> s1 : [ตัดสต๊อก] deductStock / ตัดสต๊อกสินค้า (Q7S.6)
+        s1 --> [*] : [ลบสินค้า] deleteProduct / ตั้งกฎ SKU (Q3A.11)
+        s2 --> [*] : [ลบสินค้า] deleteProduct / ตั้งกฎ SKU (Q3A.11)
+    }

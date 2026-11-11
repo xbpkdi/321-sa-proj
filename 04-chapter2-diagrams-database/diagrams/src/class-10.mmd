@@ -1,108 +1,96 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
     class LabelPrintScreen {
-        -controller
-        -messages: string[]
-        +clickPrintLabel()
-        +openReadyToPrintList()
-        +selectOrder()
-    }
-    class LabelFormatterController {
-        -labelRepository: LabelRepository
-        -orderRepository: OrderRepository
-        -shippingRuleRepository: ShippingRuleRepository
-        +onRslMatched()
-        +proceedToUseCase9A()
+        <<Screen>>
+        +clickPrint()
+        +openLabelPage()
+        +showError()
+        +showEvents()
+        +showPrintQueue()
+        +showReprintDialog()
+        +showSuccess()
     }
     class LabelPrintController {
-        -labelRepository: LabelRepository
-        -orderRepository: OrderRepository
-        -shippingRuleRepository: ShippingRuleRepository
-        +printLabel()
-        +validateAddressAndMethod()
+        <<Controller>>
+        +formatLabelsAction()
+        +loadAppState()
+        +printLabelsAction()
     }
-    class RslMatchController {
-        -orderRepository: OrderRepository
-        -rslRepository: RslRepository
-        +matchOrderWithRsl()
-        +proceedToUseCase6S()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +findLabelRule()
     }
-    class LabelRepository {
-        -db: DBConnector
-        -table: string = "label"
-        +createLabel()
-        +updateLabelStatus()
+    class FormatLabelsUseCase {
+        -client: PoolClient
+        +findLabelRule()
+        +formatLabelsUseCase()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class PrintLabelUseCase {
+        -client: PoolClient
+        +printLabelUseCase()
+        +printLabelsUseCase()
     }
-    class ShippingRuleRepository {
-        -db: DBConnector
-        -table: string = "shipping_rules"
-        +getLabelTemplate()
+    class AutoErrorLogQueries {
+        <<module>>
+        +Q_AUTO_ERROR_LOG: SQL
+        +insertAutoErrorLog()
+    }
+    class OrderQueries {
+        <<module>>
+        +Q2A_1_FOR_UPDATE: SQL
+        +lockOrder()
+    }
+    class ShippingQueries {
+        <<module>>
+        +Q6S_1: SQL
+        +Q6S_2_ADVANCE: SQL
+        +Q6S_2_ERROR: SQL
+        +Q6S_2_INSERT: SQL
+        +Q6S_2_MANUAL: SQL
+        +Q9A_1: SQL
+        +Q9A_1_PRINT: SQL
+        +Q9A_2_COMPLETE: SQL
+        +Q9A_2_HISTORY: SQL
+        +completeLabelPrint()
+        +listLabels()
+        +listPendingLabelOrders()
+        +listPrintableLabels()
+        +markLabelManual()
+        +recordLabelServiceError()
+        +recordPrintAttempt()
+        +saveGeneratedLabels()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- LabelPrintScreen
-    BaseController <|-- LabelFormatterController
-    BaseController <|-- LabelPrintController
-    BaseController <|-- RslMatchController
-    BaseRepository <|-- LabelRepository
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- ShippingRuleRepository
-    BaseRepository o-- DBConnector : db
-    LabelPrintScreen "1" --> "1" LabelPrintController : uses
-    LabelFormatterController ..> LabelRepository
-    LabelFormatterController ..> OrderRepository
-    LabelFormatterController ..> ShippingRuleRepository
-    LabelPrintController ..> LabelRepository
-    LabelPrintController ..> OrderRepository
-    LabelPrintController ..> ShippingRuleRepository
-    RslMatchController ..> LabelFormatterController : triggers
-    RslMatchController ..> OrderRepository
+    class LabelServiceAdapter {
+        <<interface>>
+        +generateLabels()
+    }
+    class PrinterAdapter {
+        <<interface>>
+        +printLabel()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    LabelPrintScreen "1" --> "1" LabelPrintController : calls
+    LabelPrintController ..> FormatLabelsUseCase
+    LabelPrintController ..> PrintLabelUseCase
+    LabelPrintController ..> ShippingQueries
+    ExecuteWorkflow ..> AutoErrorLogQueries
+    ExecuteWorkflow ..> LabelServiceAdapter
+    ExecuteWorkflow ..> OrderQueries
+    ExecuteWorkflow ..> ShippingQueries
+    FormatLabelsUseCase ..> LabelServiceAdapter
+    FormatLabelsUseCase ..> ShippingQueries
+    PrintLabelUseCase ..> PrinterAdapter
+    PrintLabelUseCase ..> ShippingQueries
+    AutoErrorLogQueries o-- DBConnector : pool
+    OrderQueries o-- DBConnector : pool
+    ShippingQueries o-- DBConnector : pool
+    LabelServiceAdapter <|.. MockAdapters
+    PrinterAdapter <|.. MockAdapters

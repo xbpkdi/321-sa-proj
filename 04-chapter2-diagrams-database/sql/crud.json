@@ -1,146 +1,198 @@
 {
   "tables": [
-    "users",
+    "admins",
     "suppliers",
-    "products",
-    "sku_rules",
+    "skus",
     "stock",
-    "product_cost",
-    "cost_calculation_log",
-    "purchase_orders",
-    "shipping_rules",
     "orders",
-    "label",
-    "rsl_shipments",
-    "delivery_partners",
-    "carrier_tracking",
-    "deletion_log"
+    "order_items",
+    "costs",
+    "reorders",
+    "labels",
+    "sessions",
+    "auto_error_logs",
+    "deletion_history",
+    "cost_history",
+    "tracking_notification_logs",
+    "rakuten_stock_sync_states",
+    "stock_adjustment_history",
+    "label_print_history"
   ],
   "crud": {
     "1A": {
       "name": "เข้าสู่ระบบ",
       "cells": {
-        "users": "RU"
+        "admins": "RU",
+        "sessions": "CRU"
       }
     },
     "2A": {
       "name": "ตรวจสอบคำสั่งซื้อ",
       "cells": {
-        "orders": "RU"
+        "orders": "RU",
+        "order_items": "RU",
+        "skus": "R",
+        "stock": "R",
+        "rakuten_stock_sync_states": "R",
+        "labels": "R",
+        "tracking_notification_logs": "R",
+        "reorders": "R"
       }
     },
     "3A": {
       "name": "ตั้งกฎ SKU",
       "cells": {
-        "products": "CRU",
-        "sku_rules": "C"
+        "skus": "CRUD",
+        "suppliers": "R",
+        "stock": "CD",
+        "order_items": "RU",
+        "orders": "U",
+        "reorders": "R",
+        "cost_history": "D",
+        "costs": "D"
       }
     },
     "4A": {
       "name": "ดึง Order เข้าระบบ",
       "cells": {
-        "orders": "CR"
+        "orders": "CRU",
+        "skus": "R",
+        "order_items": "C"
       }
     },
     "5A": {
       "name": "ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock",
       "cells": {
         "orders": "RU",
-        "products": "R",
-        "suppliers": "R",
-        "cost_calculation_log": "R"
+        "order_items": "R",
+        "skus": "R",
+        "costs": "R",
+        "cost_history": "R"
       }
     },
     "6A": {
       "name": "สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier",
       "cells": {
-        "products": "R",
-        "stock": "R",
+        "reorders": "CRU",
+        "skus": "R",
         "suppliers": "R",
-        "purchase_orders": "C",
-        "orders": "U"
+        "orders": "U",
+        "order_items": "R",
+        "stock": "RU",
+        "rakuten_stock_sync_states": "CU",
+        "stock_adjustment_history": "C"
       }
     },
     "7A": {
       "name": "ยกเลิก Order",
       "cells": {
-        "orders": "U",
+        "labels": "R",
+        "orders": "RU",
+        "order_items": "RU",
+        "skus": "R",
+        "reorders": "RU",
         "stock": "U"
       }
     },
     "8A": {
       "name": "จัดส่งสินค้าให้ลูกค้าผ่าน Delivery",
       "cells": {
-        "delivery_partners": "R",
-        "orders": "U",
-        "carrier_tracking": "R"
+        "labels": "R",
+        "orders": "RU",
+        "order_items": "RU",
+        "stock": "U"
       }
     },
     "9A": {
       "name": "พิมพ์ใบปะสินค้า",
       "cells": {
-        "shipping_rules": "R",
-        "label": "U",
-        "orders": "U"
+        "labels": "RU",
+        "orders": "RU",
+        "label_print_history": "C"
       }
     },
     "10A": {
       "name": "ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Order เก่าที่เสร็จสิ้น / Cost / Label / Reorder)",
       "cells": {
+        "deletion_history": "CR",
+        "cost_history": "UD",
+        "costs": "RD",
         "orders": "RD",
-        "cost_calculation_log": "RD",
-        "label": "RD",
-        "purchase_orders": "RD",
-        "deletion_log": "C"
+        "order_items": "R",
+        "labels": "RD",
+        "skus": "R",
+        "reorders": "D"
       }
     },
     "1S": {
       "name": "จับคู่ Order กับเลข RSL",
       "cells": {
-        "rsl_shipments": "R",
-        "orders": "U"
+        "orders": "RU",
+        "order_items": "R",
+        "labels": "RD",
+        "skus": "R",
+        "reorders": "R"
       }
     },
     "2S": {
       "name": "จับคู่กฎ SKU",
       "cells": {
-        "sku_rules": "R",
-        "orders": "U"
+        "labels": "R",
+        "orders": "RU",
+        "order_items": "RU",
+        "skus": "R",
+        "reorders": "R",
+        "auto_error_logs": "C"
       }
     },
     "3S": {
       "name": "ตรวจสอบของสินค้าใน stock + RSL",
       "cells": {
-        "stock": "R",
-        "orders": "U"
+        "stock": "RU",
+        "skus": "R",
+        "order_items": "RU",
+        "orders": "RU",
+        "auto_error_logs": "C",
+        "rakuten_stock_sync_states": "CU",
+        "stock_adjustment_history": "C"
       }
     },
     "4S": {
       "name": "คำนวณ Cost ในการสั่งสินค้าเติม stock เอง",
       "cells": {
-        "product_cost": "R",
-        "cost_calculation_log": "C"
+        "costs": "CRU",
+        "skus": "R",
+        "cost_history": "CR"
       }
     },
     "5S": {
       "name": "ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace",
       "cells": {
-        "orders": "RU"
+        "orders": "RU",
+        "tracking_notification_logs": "CRU",
+        "order_items": "R"
       }
     },
     "6S": {
       "name": "จัดรูปแบบใบปะสินค้า",
       "cells": {
-        "shipping_rules": "R",
-        "label": "C",
-        "orders": "U"
+        "labels": "CR",
+        "orders": "RU",
+        "order_items": "R",
+        "skus": "R",
+        "reorders": "R",
+        "auto_error_logs": "C"
       }
     },
     "7S": {
       "name": "ตัดสต๊อกสินค้า",
       "cells": {
+        "orders": "RU",
+        "order_items": "RU",
         "stock": "RU",
-        "orders": "RU"
+        "rakuten_stock_sync_states": "CRU",
+        "skus": "R",
+        "auto_error_logs": "C"
       }
     }
   }

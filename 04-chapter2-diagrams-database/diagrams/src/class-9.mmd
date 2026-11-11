@@ -1,79 +1,63 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
     class RslMatchScreen {
-        -controller
-        -messages: string[]
-        +clickMatchWithRsl()
-        +openUnmatchedOrderList()
-        +selectOrder()
+        <<Screen>>
+        +clickMatch()
+        +clickMatchAll()
+        +clickUnmatch()
+        +openRslMatchPage()
+        +showChooseDialog()
+        +showError()
+        +showSuccess()
+        +showUnmatchedOrders()
     }
     class RslMatchController {
-        -orderRepository: OrderRepository
-        -rslRepository: RslRepository
-        +matchOrderWithRsl()
-        +proceedToUseCase6S()
+        <<Controller>>
+        +matchAllRslAction()
+        +matchRslAction()
+        +unmatchRslAction()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +executeWorkflow()
+        +runAutomation()
+    }
+    class MatchOrderUseCase {
+        -client: PoolClient
+        +chooseRslMatch()
+        +matchAllRslUseCase()
+        +matchRslUseCase()
+        +unmatchRslUseCase()
+    }
+    class OrderQueries {
+        <<module>>
+        +Q1S_1: SQL
+        +Q1S_1_QUEUE: SQL
+        +Q1S_1_UNMATCH: SQL
+        +Q2A_1_FOR_UPDATE: SQL
+        +clearRslMatch()
+        +listRslQueueIds()
+        +lockOrder()
         +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
-    }
-    class RslRepository {
-        -db: DBConnector
-        -table: string = "rsl_shipments"
-        +findRslBySkuAndVariation()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- RslMatchScreen
-    BaseController <|-- RslMatchController
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- RslRepository
-    BaseRepository o-- DBConnector : db
-    RslMatchScreen "1" --> "1" RslMatchController : uses
-    RslMatchController ..> OrderRepository
-    RslMatchController ..> RslRepository
+    class RslAdapter {
+        <<interface>>
+        +matchOrder()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    RslMatchScreen "1" --> "1" RslMatchController : calls
+    RslMatchController ..> MatchOrderUseCase
+    ExecuteWorkflow ..> OrderQueries
+    MatchOrderUseCase ..> ExecuteWorkflow
+    MatchOrderUseCase ..> OrderQueries
+    MatchOrderUseCase ..> RslAdapter
+    OrderQueries o-- DBConnector : pool
+    RslAdapter <|.. MockAdapters

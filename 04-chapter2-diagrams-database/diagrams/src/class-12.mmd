@@ -1,85 +1,50 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
-    class DataCleanupScreen {
-        -controller
-        -messages: string[]
+    class CleanupScreen {
+        <<Screen>>
+        +clickBackup()
         +clickConfirmDelete()
-        +openDataCleanupPage()
-        +selectMethod()
-        +submitDateRangeForm()
+        +clickReviewClosed()
+        +downloadCsv()
+        +openCleanupPage()
+        +planClosedCleanup()
+        +planRangeCleanup()
+        +selectTypes()
+        +showError()
+        +showReview()
+        +showSuccess()
+        +showTabs()
+        +showWarning()
     }
-    class DataCleanupController {
-        -deletionLogRepository: DeletionLogRepository
-        -orderRepository: OrderRepository
-        +executeDeleteByDateRange()
-        +executeDeleteClosedOrders()
-        +previewClosedOrders()
-        +previewDeleteByDateRange()
-        +rollbackTransaction()
-        +validateCutoffAtLeast12Months()
-        +validateDataTypesSelected()
+    class CleanupController {
+        <<Controller>>
+        +cleanupOrdersAction()
+        +loadAppState()
     }
-    class DeletionLogRepository {
-        -db: DBConnector
-        -table: string = "deletion_log"
-        +insertDeletionLog()
+    class CleanupOrdersUseCase {
+        -client: PoolClient
+        +cleanupOrdersUseCase()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class CleanupQueries {
+        <<module>>
+        +Q10A_2_DELETE_COST: SQL
+        +Q10A_3_DELETE_LABEL: SQL
+        +Q10A_4_DELETE_REORDER: SQL
+        +Q10A_5_DELETE_ORDER: SQL
+        +Q10A_6: SQL
+        +deleteClosedLabels()
+        +deleteClosedOrder()
+        +deleteFinishedReorder()
+        +deleteHistoricalCost()
+        +listDeletionHistory()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- DataCleanupScreen
-    BaseController <|-- DataCleanupController
-    BaseRepository <|-- DeletionLogRepository
-    BaseRepository <|-- OrderRepository
-    BaseRepository o-- DBConnector : db
-    DataCleanupScreen "1" --> "1" DataCleanupController : uses
-    DataCleanupController ..> DeletionLogRepository
-    DataCleanupController ..> OrderRepository
+    CleanupScreen "1" --> "1" CleanupController : calls
+    CleanupController ..> CleanupOrdersUseCase
+    CleanupController ..> CleanupQueries
+    CleanupOrdersUseCase ..> CleanupQueries
+    CleanupQueries o-- DBConnector : pool

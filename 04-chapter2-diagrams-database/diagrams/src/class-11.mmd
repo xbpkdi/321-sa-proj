@@ -1,96 +1,106 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
+    class ShippingScreen {
+        <<Screen>>
+        +clickDispatch()
+        +clickNotify()
+        +confirmDispatch()
+        +openShippingPage()
+        +showCarrierEvents()
+        +showConfirmDialog()
+        +showDispatchQueue()
+        +showError()
+        +showResendDialog()
+        +showResult()
+        +showShippedOrders()
+        +showSuccess()
     }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
+    class ShippingController {
+        <<Controller>>
+        +dispatchOrdersAction()
+        +notifyTrackingAction()
+        +pollCarrierAction()
     }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
+    class DispatchOrderUseCase {
+        -client: PoolClient
+        +dispatchOrdersUseCase()
     }
-    class ShipmentScreen {
-        -controller
-        -messages: string[]
-        +clickSendTracking()
-        +confirmHandover()
-        +openReadyToShipList()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +executeWorkflow()
+        +runAutomation()
     }
-    class ShipmentController {
-        -carrierTrackingRepository: CarrierTrackingRepository
-        -deliveryPartnerRepository: DeliveryPartnerRepository
-        -orderRepository: OrderRepository
-        +checkLabelStatus()
-        +recordHandover()
+    class NotifyTrackingUseCase {
+        -client: PoolClient
+        +notify()
+        +notifyTrackingUseCase()
     }
-    class TrackingNotifyController {
-        -orderRepository: OrderRepository
-        +proceedToUseCase7S()
-        +sendTrackingNotify()
-        +validateTrackingAndCarrierPresent()
+    class PollCarrierUseCase {
+        -client: PoolClient
+        +pollCarrierUseCase()
     }
-    class CarrierTrackingRepository {
-        -db: DBConnector
-        -table: string = "carrier_tracking"
-        +getCarrierStatus()
+    class ShippingQueries {
+        <<module>>
+        +Q5S_1: SQL
+        +Q5S_1_ATTEMPT: SQL
+        +Q5S_1_RETRY: SQL
+        +Q5S_2: SQL
+        +Q8A_1: SQL
+        +Q8A_1_DELIVERED: SQL
+        +Q8A_1_POLL: SQL
+        +Q8A_1_SAVE: SQL
+        +Q8A_1_STATUS: SQL
+        +Q8A_1_WAIT: SQL
+        +completeDeliveredOrder()
+        +completeNotificationAttempt()
+        +findRetryableNotificationAttempt()
+        +listCarrierPollOrders()
+        +lockDispatchOrder()
+        +lockNotificationOrder()
+        +markAwaitingCarrier()
+        +saveCarrierStatus()
+        +saveDispatch()
+        +saveNotificationAttempt()
     }
-    class DeliveryPartnerRepository {
-        -db: DBConnector
-        -table: string = "delivery_partners"
-        +getTrackingNumber()
-    }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class StockQueries {
+        <<module>>
+        +Q7A_2: SQL
+        +restoreCancelledOrderStock()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- ShipmentScreen
-    BaseController <|-- ShipmentController
-    BaseController <|-- TrackingNotifyController
-    BaseRepository <|-- CarrierTrackingRepository
-    BaseRepository <|-- DeliveryPartnerRepository
-    BaseRepository <|-- OrderRepository
-    BaseRepository o-- DBConnector : db
-    ShipmentScreen "1" --> "1" ShipmentController : uses
-    ShipmentScreen "1" --> "1" TrackingNotifyController : uses
-    ShipmentController ..> CarrierTrackingRepository
-    ShipmentController ..> DeliveryPartnerRepository
-    ShipmentController ..> OrderRepository
-    TrackingNotifyController ..> OrderRepository
+    class CarrierAdapter {
+        <<interface>>
+        +getDeliveryStatus()
+        +getTrackingInfo()
+    }
+    class RakutenAdapter {
+        <<interface>>
+        +notifyTracking()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    ShippingScreen "1" --> "1" ShippingController : calls
+    ShippingController ..> DispatchOrderUseCase
+    ShippingController ..> NotifyTrackingUseCase
+    ShippingController ..> PollCarrierUseCase
+    DispatchOrderUseCase ..> CarrierAdapter
+    DispatchOrderUseCase ..> ShippingQueries
+    ExecuteWorkflow ..> NotifyTrackingUseCase
+    ExecuteWorkflow ..> ShippingQueries
+    ExecuteWorkflow ..> StockQueries
+    NotifyTrackingUseCase ..> ExecuteWorkflow
+    NotifyTrackingUseCase ..> RakutenAdapter
+    NotifyTrackingUseCase ..> ShippingQueries
+    PollCarrierUseCase ..> CarrierAdapter
+    PollCarrierUseCase ..> ExecuteWorkflow
+    PollCarrierUseCase ..> ShippingQueries
+    ShippingQueries o-- DBConnector : pool
+    StockQueries o-- DBConnector : pool
+    CarrierAdapter <|.. MockAdapters
+    RakutenAdapter <|.. MockAdapters

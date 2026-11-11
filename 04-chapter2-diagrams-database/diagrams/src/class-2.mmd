@@ -1,87 +1,92 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
     class DashboardScreen {
-        -controller
-        -messages: string[]
+        <<Screen>>
         +clickImportOrders()
+        +openDashboard()
+        +showDashboard()
+        +showError()
+        +showResult()
+        +showWarning()
     }
-    class OrderIntakeController {
-        -orderRepository: OrderRepository
-        +addWarning()
-        +importOrders()
-        +skipOrder()
-        +validateRequiredFields()
+    class DashboardController {
+        <<Controller>>
+        +importOrdersAction()
+        +loadAppState()
     }
-    class SkuMatchController {
-        -orderRepository: OrderRepository
-        -skuRuleRepository: SkuRuleRepository
-        +proceedToUseCase3S()
-        +processPendingSkuMatch()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +executeWorkflow()
+        +runAutomation()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class ImportOrdersUseCase {
+        -client: PoolClient
+        +chooseSkuRule()
+        +importOrdersUseCase()
+        +isImportableOrder()
+        +skip()
     }
-    class SkuRuleRepository {
-        -db: DBConnector
-        -table: string = "sku_rules"
-        +findRuleByChannelSku()
-        +insertSkuRule()
+    class MatchSkuUseCase {
+        -client: PoolClient
+        +matchSkuUseCase()
+    }
+    class VerifyOrderUseCase {
+        -client: PoolClient
+    }
+    class AutoErrorLogQueries {
+        <<module>>
+        +Q_AUTO_ERROR_LOG: SQL
+        +insertAutoErrorLog()
+    }
+    class DashboardQueries {
+        <<module>>
+        +Q2A_1_DASHBOARD_RECENT: SQL
+        +Q2A_1_DASHBOARD_TOTALS: SQL
+        +Q2A_1_DASHBOARD_VOLUME: SQL
+        +getDashboardData()
+    }
+    class OrderQueries {
+        <<module>>
+        +Q2A_1_FOR_UPDATE: SQL
+        +Q2S_1: SQL
+        +Q2S_1_RETRY: SQL
+        +Q2S_2: SQL
+        +Q4A_1: SQL
+        +Q4A_1_MARK_CANCELLATION: SQL
+        +findSkuRules()
+        +insertImportedOrder()
+        +listSkuRetryOrderIds()
+        +lockOrder()
+        +markMarketplaceCancellation()
+        +saveSkuMatch()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- DashboardScreen
-    BaseController <|-- OrderIntakeController
-    BaseController <|-- SkuMatchController
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- SkuRuleRepository
-    BaseRepository o-- DBConnector : db
-    DashboardScreen "1" --> "1" OrderIntakeController : uses
-    OrderIntakeController ..> OrderRepository
-    SkuMatchController ..> OrderRepository
-    SkuMatchController ..> SkuRuleRepository
+    class RakutenAdapter {
+        <<interface>>
+        +fetchOrders()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    DashboardScreen "1" --> "1" DashboardController : calls
+    DashboardController ..> DashboardQueries
+    DashboardController ..> ImportOrdersUseCase
+    ExecuteWorkflow ..> AutoErrorLogQueries
+    ExecuteWorkflow ..> MatchSkuUseCase
+    ExecuteWorkflow ..> OrderQueries
+    ImportOrdersUseCase ..> OrderQueries
+    ImportOrdersUseCase ..> RakutenAdapter
+    MatchSkuUseCase ..> AutoErrorLogQueries
+    MatchSkuUseCase ..> OrderQueries
+    VerifyOrderUseCase ..> ExecuteWorkflow
+    VerifyOrderUseCase ..> OrderQueries
+    VerifyOrderUseCase ..> RakutenAdapter
+    AutoErrorLogQueries o-- DBConnector : pool
+    DashboardQueries o-- DBConnector : pool
+    OrderQueries o-- DBConnector : pool
+    RakutenAdapter <|.. MockAdapters

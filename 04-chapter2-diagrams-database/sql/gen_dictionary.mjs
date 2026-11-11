@@ -14,6 +14,7 @@ const DESC = JSON.parse(readFileSync(at(CONTENT + "tables.json"), "utf8"));
 const db = new PGlite();
 await db.exec(readFileSync(at("schema.sql"), "utf8"));
 await db.exec(readFileSync(at("seed.sql"), "utf8"));
+await db.exec(readFileSync(at("sample_extra.sql"), "utf8"));
 
 const TYPE = (t) => t.replace("character varying", "VARCHAR").replace("timestamp with time zone", "TIMESTAMPTZ")
   .replace("character", "CHAR").replace("numeric", "NUMERIC").replace("integer", "INTEGER").replace("smallint", "SMALLINT")
@@ -53,29 +54,48 @@ for (const t of tables) {
 }
 
 // query: แยกประเภท ตารางที่ใช้ และคอลัมน์ที่ UPDATE
+// SQL จริงมี CTE (WITH ... AS (...)) จึงหาคำสั่งหลักจากคำสั่งแรกที่อยู่นอกวงเล็บ และแยก C/R/U/D ต่อตารางจากทุกคำสั่งย่อย
+const mainKind = (sql) => {
+  let depth = 0;
+  for (const t of sql.matchAll(/[()]|\b(SELECT|INSERT|UPDATE|DELETE)\b/g)) {
+    if (t[0] === "(") depth++;
+    else if (t[0] === ")") depth--;
+    else if (depth === 0) return t[1];
+  }
+  return "FORMULA";
+};
+const tableOps = (sql) => {
+  const ops = {};
+  const add = (t, l) => { if (tables.includes(t)) (ops[t] ??= new Set()).add(l); };
+  for (const x of sql.matchAll(/\bINSERT INTO (\w+)/g)) { add(x[1], "C"); if (/ON CONFLICT[^;]*DO UPDATE/.test(sql)) add(x[1], "U"); }
+  for (const x of sql.matchAll(/\bUPDATE (\w+)(?:\s+\w+)?\s+SET\b/g)) add(x[1], "U");
+  for (const x of sql.matchAll(/\bDELETE FROM (\w+)/g)) add(x[1], "D");
+  for (const x of sql.matchAll(/(\bDELETE\s+)?\b(?:FROM|JOIN|USING)\s+(\w+)/g)) if (!x[1]) add(x[2], "R");
+  return ops;
+};
 const queries = [];
 for (const uc of UCS) {
   for (const m of uc.steps.flat().join("\n").matchAll(/\*\*(Q\w+\.\d+):\*\*\s*`([^`]+)`/g)) {
     const sql = m[2];
-    const kind = (sql.match(/^(SELECT|INSERT|UPDATE|DELETE)\b/) ?? [null, "FORMULA"])[1];
-    const used = [...sql.matchAll(/\b(?:FROM|JOIN|INTO|UPDATE)\s+(\w+)/g)].map((x) => x[1]).filter((x) => tables.includes(x));
-    const set = kind === "UPDATE" ? [...sql.replace(/ WHERE .*/, "").matchAll(/(\w+)\s*=/g)].map((x) => x[1]) : [];
-    queries.push({ id: m[1], uc: uc.id, uc_name: uc.name, sql, kind, tables: [...new Set(used)], set });
+    const kind = mainKind(sql);
+    const ops = tableOps(sql);
+    const sets = {};
+    for (const x of sql.matchAll(/\bUPDATE (\w+)(?:\s+\w+)?\s+SET\s+([\s\S]*?)(?=\bWHERE\b|\bFROM\b|\bRETURNING\b|$)/g))
+      if (tables.includes(x[1])) sets[x[1]] = [...new Set([...(sets[x[1]] ?? []), ...[...(" ," + x[2]).matchAll(/,\s*(\w+)\s*=/g)].map((y) => y[1])])];
+    const set = [...new Set(Object.values(sets).flat())];
+    queries.push({ id: m[1], uc: uc.id, uc_name: uc.name, code: uc.qmap?.[m[1]] ?? null, sql, kind, tables: Object.keys(ops),
+                   ops: Object.fromEntries(Object.entries(ops).map(([t, v]) => [t, [...v].join("")])), sets, set });
   }
 }
 
 // CRUD: Use Case x ตาราง จาก query
-const LETTER = { INSERT: "C", SELECT: "R", UPDATE: "U", DELETE: "D" };
 const crud = {};
 for (const q of queries) {
-  if (!LETTER[q.kind]) continue;
   crud[q.uc] ??= { name: q.uc_name, cells: {} };
-  q.tables.forEach((t, i) => {
-    const l = q.kind === "SELECT" || i === 0 ? LETTER[q.kind] : "R";
-    const cell = new Set(crud[q.uc].cells[t] ?? "");
-    cell.add(l);
+  for (const [t, letters] of Object.entries(q.ops)) {
+    const cell = new Set([...(crud[q.uc].cells[t] ?? ""), ...letters]);
     crud[q.uc].cells[t] = "CRUD".split("").filter((x) => cell.has(x)).join("");
-  });
+  }
 }
 
 writeFileSync(at("dictionary.json"), JSON.stringify(dictionary, null, 2));

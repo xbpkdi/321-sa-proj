@@ -1,0 +1,11 @@
+%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+stateDiagram-v2
+    direction TB
+    state "Label (label_status)" as LabelBox {
+        state "Label.ready" as s1
+        state "Label.printed" as s2
+        [*] --> s1 : [สร้างใบปะสำเร็จ] formatLabels / จัดรูปแบบใบปะสินค้า (Q6S.4)
+        s1 --> s2 : [พิมพ์สำเร็จ] printLabel / พิมพ์ใบปะสินค้า (Q9A.4)
+        s1 --> [*] : [ยกเลิกการจับคู่ RSL] unmatchRsl / จับคู่ Order กับเลข RSL (Q1S.4)
+        s2 --> [*] : [Order จัดส่งสำเร็จหรือยกเลิกแล้ว] deleteOldData / ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Q10A.2)
+    }

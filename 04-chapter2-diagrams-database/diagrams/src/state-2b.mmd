@@ -1,0 +1,17 @@
+%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+stateDiagram-v2
+    direction LR
+    state "Order (order_status) พิมพ์ใบปะและส่งมอบ" as Order {
+        direction LR
+        state "Order.ยังไม่ได้จับคู่" as s6
+        state "Order.รอพิมพ์ใบปะสินค้า" as s13
+        state "Order.พิมพ์ใบปะสินค้าแล้ว" as s14
+        state "Order.อยู่ระหว่างจัดส่ง" as s15
+        state "Order.รอส่งมอบ" as s16
+        [*] --> s13 : ต่อจากรูปก่อนหน้า
+        s13 --> s6 : [จับคู่ RSL ผิด] unmatchRsl / จับคู่ Order กับเลข RSL (Q1S.4)
+        s13 --> s14 : [พิมพ์สำเร็จ] printLabel / พิมพ์ใบปะสินค้า (Q9A.4)
+        s14 --> s15 : [ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.2)
+        s14 --> s16 : [ยังไม่ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.6)
+        s16 --> s15 : [ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.2)
+    }

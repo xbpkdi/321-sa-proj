@@ -1,51 +1,70 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
+    class AppShellScreen {
+        <<Screen>>
+        +clickLogout()
+        +confirmLogout()
+        +openProtectedPage()
+        +redirect()
+        +showConfirm()
+        +showLoginPage()
+        +showMessage()
+        +showPage()
     }
     class LoginScreen {
-        -controller
-        -messages: string[]
-        +clickLogout()
+        <<Screen>>
+        +openLoginPage()
+        +redirect()
+        +showDashboard()
+        +showError()
+        +showLoginForm()
         +submitLogin()
     }
-    class AuthController {
-        -userRepository: UserRepository
-        +authenticate()
-        +createSession()
-        +destroySession()
-        +logout()
-        +validateEmailFormat()
-        +validateNotEmpty()
+    class LoginController {
+        <<Controller>>
+        +loginAction()
+        +logoutAction()
+        +requireSession()
+        +validateInput()
         +verifyPassword()
     }
-    class UserRepository {
-        -db: DBConnector
-        -table: string = "users"
-        +getUserByEmail()
-        +incrementFailAttempts()
-        +resetFailAttemptsAndSetLastLogin()
+    class SessionAuth {
+        -client: PoolClient
+        +createSessionRecord()
+        +deleteCookie()
+        +getSession()
+        +revokeCurrentSession()
+        +setSessionCookie()
+    }
+    class AdminQueries {
+        <<module>>
+        +Q1A_1: SQL
+        +Q1A_2: SQL
+        +Q1A_2_UNLOCK: SQL
+        +Q1A_3: SQL
+        +findAdminByEmail()
+        +recordFailedLogin()
+        +recordSuccessfulLogin()
+        +unlockAdmin()
+    }
+    class SessionQueries {
+        <<module>>
+        +Q1A_4: SQL
+        +Q1A_5: SQL
+        +Q1A_6: SQL
+        +findActiveSession()
+        +insertSession()
+        +revokeSession()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- LoginScreen
-    BaseController <|-- AuthController
-    BaseRepository <|-- UserRepository
-    BaseRepository o-- DBConnector : db
-    LoginScreen "1" --> "1" AuthController : uses
-    AuthController ..> UserRepository
+    AppShellScreen "1" --> "1" LoginController : calls
+    LoginScreen "1" --> "1" LoginController : calls
+    LoginController ..> AdminQueries
+    LoginController ..> SessionAuth
+    SessionAuth ..> SessionQueries
+    AdminQueries o-- DBConnector : pool
+    SessionQueries o-- DBConnector : pool

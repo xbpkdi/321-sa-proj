@@ -1,104 +1,94 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
+    class ReorderScreen {
+        <<Screen>>
+        +confirmReceive()
+        +openPurchaseTab()
+        +purchase()
+        +purchaseQueue()
+        +receive()
+        +showDuplicateConfirm()
+        +showError()
+        +showPurchaseQueue()
+        +showReceiveDialog()
+        +showSuccess()
     }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
+    class ReorderController {
+        <<Controller>>
+        +loadAppState()
+        +purchaseReorderAction()
+        +receiveReorderAction()
     }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +executeWorkflow()
+        +runAutomation()
     }
-    class ReorderDecisionScreen {
-        -controller
-        -messages: string[]
-        +clickApprove()
-        +clickPurchase()
-        +clickReject()
-        +openPendingDecisionList()
-        +openReorderList()
-        +selectOrder()
+    class ReordersUseCase {
+        -client: PoolClient
+        +purchaseReorderUseCase()
+        +receiveReorderUseCase()
     }
-    class PurchaseOrderController {
-        -orderRepository: OrderRepository
-        -purchaseOrderRepository: PurchaseOrderRepository
-        -stockRepository: StockRepository
-        -supplierRepository: SupplierRepository
-        +calculateEta()
-        +checkReorderThreshold()
-        +confirmPurchase()
+    class ReorderQueries {
+        <<module>>
+        +Q5A_1: SQL
+        +Q6A_10_FOR_UPDATE: SQL
+        +Q6A_11_RECEIVE: SQL
+        +Q6A_12_RELEASE_ORDERS: SQL
+        +Q6A_1_COMPLETE: SQL
+        +Q6A_1_INSERT: SQL
+        +Q6A_1_MARK_ORDERS: SQL
+        +Q6A_1_NEXT_NUMBER: SQL
+        +Q6A_1_PENDING: SQL
+        +Q6A_1_RETRY: SQL
+        +Q6A_2_FOR_UPDATE: SQL
+        +completeReorderAttempt()
+        +findPendingReorder()
+        +findRetryReorder()
+        +insertReorderAttempt()
+        +listReorders()
+        +lockPurchaseContext()
+        +lockReceiveContext()
+        +markLinkedReorderOrders()
+        +markReorderReceived()
+        +nextReorderNumber()
+        +releaseReceivedOrders()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class SkuQueries {
+        <<module>>
+        +Q6A_2: SQL
+        +listSuppliers()
     }
-    class PurchaseOrderRepository {
-        -db: DBConnector
-        -table: string = "purchase_orders"
-        +createPurchaseOrder()
-    }
-    class StockRepository {
-        -db: DBConnector
-        -table: string = "stock"
-        +deductInHouseStock()
-        +deductRslStock()
-        +getLowStockSkus()
-        +getStockAndOrderInfo()
-        +getStockBySku()
-        +restockInventory()
-    }
-    class SupplierRepository {
-        -db: DBConnector
-        -table: string = "suppliers"
-        +getSupplierInfo()
+    class StockQueries {
+        <<module>>
+        +Q3S_1_ADJUST: SQL
+        +Q3S_1_INSERT_HISTORY: SQL
+        +adjustStock()
+        +insertStockAdjustmentHistory()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- ReorderDecisionScreen
-    BaseController <|-- PurchaseOrderController
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- PurchaseOrderRepository
-    BaseRepository <|-- StockRepository
-    BaseRepository <|-- SupplierRepository
-    BaseRepository o-- DBConnector : db
-    ReorderDecisionScreen "1" --> "1" PurchaseOrderController : uses
-    PurchaseOrderController ..> OrderRepository
-    PurchaseOrderController ..> PurchaseOrderRepository
-    PurchaseOrderController ..> StockRepository
-    PurchaseOrderController ..> SupplierRepository
+    class SupplierAdapter {
+        <<interface>>
+        +sendPurchaseOrder()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    ReorderScreen "1" --> "1" ReorderController : calls
+    ReorderController ..> ReorderQueries
+    ReorderController ..> ReordersUseCase
+    ReorderController ..> SkuQueries
+    ExecuteWorkflow ..> ReorderQueries
+    ExecuteWorkflow ..> StockQueries
+    ReordersUseCase ..> ExecuteWorkflow
+    ReordersUseCase ..> ReorderQueries
+    ReordersUseCase ..> SupplierAdapter
+    ReorderQueries o-- DBConnector : pool
+    SkuQueries o-- DBConnector : pool
+    StockQueries o-- DBConnector : pool
+    SupplierAdapter <|.. MockAdapters

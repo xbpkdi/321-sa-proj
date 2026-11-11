@@ -1,58 +1,74 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
     class ProductScreen {
-        -controller
-        -messages: string[]
+        <<Screen>>
         +clickAddOrEditProduct()
+        +clickDelete()
         +openProductList()
+        +showError()
+        +showImportResult()
+        +showProductForm()
+        +showProductList()
+        +showSuccess()
         +submitProductForm()
+        +toggleActive()
+        +uploadCsv()
     }
     class ProductController {
-        -productRepository: ProductRepository
-        -skuRuleRepository: SkuRuleRepository
-        +retryUseCase2S()
-        +saveProduct()
-        +validateNotEmpty()
-        +validatePositiveInteger()
+        <<Controller>>
+        +deleteProductAction()
+        +importProductsAction()
+        +loadAppState()
+        +saveProductAction()
+        +setProductActiveAction()
     }
-    class ProductRepository {
-        -db: DBConnector
-        -table: string = "products"
-        +checkSkuExists()
-        +insertProduct()
-        +updateProduct()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +runAutomation()
     }
-    class SkuRuleRepository {
-        -db: DBConnector
-        -table: string = "sku_rules"
-        +findRuleByChannelSku()
-        +insertSkuRule()
+    class ProductsUseCase {
+        -client: PoolClient
+        +deleteProductUseCase()
+        +importProductsUseCase()
+        +saveCostDraft()
+        +saveProductInTransaction()
+        +saveProductUseCase()
+        +setProductActiveUseCase()
+        +validateProduct()
+    }
+    class SkuQueries {
+        <<module>>
+        +Q3A_1: SQL
+        +Q3A_1_DELETE: SQL
+        +Q3A_1_FIND_CONFLICT: SQL
+        +Q3A_1_FOR_UPDATE: SQL
+        +Q3A_1_HAS_RELATED: SQL
+        +Q3A_1_INSERT: SQL
+        +Q3A_1_REQUEUE: SQL
+        +Q3A_1_SET_STATUS: SQL
+        +Q3A_1_UPDATE: SQL
+        +Q6A_2: SQL
+        +Q6A_2_SUPPLIER_EXISTS: SQL
+        +deleteSku()
+        +findSkuConflict()
+        +insertSku()
+        +listSkus()
+        +listSuppliers()
+        +lockSku()
+        +requeueOrdersForSku()
+        +setSkuStatus()
+        +skuHasRelatedRecords()
+        +supplierExists()
+        +updateSku()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- ProductScreen
-    BaseController <|-- ProductController
-    BaseRepository <|-- ProductRepository
-    BaseRepository <|-- SkuRuleRepository
-    BaseRepository o-- DBConnector : db
-    ProductScreen "1" --> "1" ProductController : uses
-    ProductController ..> ProductRepository
-    ProductController ..> SkuRuleRepository
+    ProductScreen "1" --> "1" ProductController : calls
+    ProductController ..> ProductsUseCase
+    ProductController ..> SkuQueries
+    ProductsUseCase ..> ExecuteWorkflow
+    ProductsUseCase ..> SkuQueries
+    SkuQueries o-- DBConnector : pool

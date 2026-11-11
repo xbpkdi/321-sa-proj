@@ -1,0 +1,14 @@
+%%{init: {'themeVariables': {'fontSize': '15px'}}}%%
+stateDiagram-v2
+    direction TB
+    state "Order (delivery_status)" as OrderBox {
+        state "Order.in_transit" as s1
+        state "Order.delivered" as s2
+        state "Order.failed" as s3
+        state "Order.returned" as s4
+        [*] --> s1 : [ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.2)
+        s1 --> s2 : [ขนส่งแจ้ง delivered] pollCarrier / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.4)
+        s1 --> s3 : [ขนส่งแจ้ง failed] pollCarrier / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.4)
+        s1 --> s4 : [ขนส่งแจ้ง returned] pollCarrier / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.4)
+        s2 --> [*] : [Order จัดส่งสำเร็จ] deleteOldData / ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Q10A.1)
+    }

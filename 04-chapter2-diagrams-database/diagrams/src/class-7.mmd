@@ -1,87 +1,39 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
+    class ReorderScreen {
+        <<Screen>>
+        +chooseDecision()
+        +confirmDecision()
+        +openDecideTab()
+        +showConfirmDialog()
+        +showDecisionList()
+        +showError()
+        +showSuccess()
     }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
+    class ReorderController {
+        <<Controller>>
+        +decideReorderAction()
     }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
+    class ReordersUseCase {
+        -client: PoolClient
+        +decideReorderUseCase()
     }
-    class ReorderDecisionScreen {
-        -controller
-        -messages: string[]
-        +clickApprove()
-        +clickPurchase()
-        +clickReject()
-        +openPendingDecisionList()
-        +openReorderList()
-        +selectOrder()
-    }
-    class ReorderDecisionController {
-        -costLogRepository: CostLogRepository
-        -orderRepository: OrderRepository
-        +calculateExpectedMargin()
-        +loadDecisionData()
-        +loadPendingOrders()
-        +proceedToUseCase6A()
-        +proceedToUseCase7A()
-        +submitDecision()
-    }
-    class CostLogRepository {
-        -db: DBConnector
-        -table: string = "cost_calculation_log"
-        +getLatestUnitCost()
-        +saveCostLog()
-    }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class ReorderQueries {
+        <<module>>
+        +Q5A_1_FOR_UPDATE: SQL
+        +Q5A_4: SQL
+        +Q5A_4_MANUAL_PRICE: SQL
+        +lockDecisionContext()
+        +markDecisionMissingPrice()
+        +saveReorderDecision()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- ReorderDecisionScreen
-    BaseController <|-- ReorderDecisionController
-    BaseRepository <|-- CostLogRepository
-    BaseRepository <|-- OrderRepository
-    BaseRepository o-- DBConnector : db
-    ReorderDecisionScreen "1" --> "1" ReorderDecisionController : uses
-    ReorderDecisionController ..> CostLogRepository
-    ReorderDecisionController ..> OrderRepository
+    ReorderScreen "1" --> "1" ReorderController : calls
+    ReorderController ..> ReorderQueries
+    ReorderController ..> ReordersUseCase
+    ReordersUseCase ..> ReorderQueries
+    ReorderQueries o-- DBConnector : pool

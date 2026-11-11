@@ -1,106 +1,92 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
     class CancelOrderScreen {
-        -controller
-        -messages: string[]
-        +clickCancelOrder()
-        +openOrderList()
-        +selectOrder()
-        +submitCancelReason()
+        <<Screen>>
+        +checkCancel()
+        +clickCancel()
+        +confirmCancel()
+        +openCancelList()
+        +showCancelDialog()
+        +showError()
+        +showOrders()
+        +showSuccess()
     }
     class OrderVerifyScreen {
-        -controller
-        -messages: string[]
-        +clickConfirmOrder()
-        +openPendingVerificationList()
+        <<Screen>>
+        +clickConfirm()
+        +openVerifyPage()
         +selectOrder()
+        +showError()
+        +showOrderDetail()
+        +showOrdersWaitingVerify()
+        +showSuccess()
     }
     class CancelOrderController {
-        -orderRepository: OrderRepository
-        -stockRepository: StockRepository
-        +cancelOrder()
-        +checkOrderStatus()
-        +validateReasonProvided()
-        +validateStatus()
+        <<Controller>>
+        +cancelOrderAction()
     }
     class OrderVerifyController {
-        -orderRepository: OrderRepository
-        +getOrderDetail()
-        +loadPendingOrders()
-        +proceedToUseCase2S()
-        +validateRequiredFields()
-        +verifyOrder()
+        <<Controller>>
+        +loadAppState()
+        +verifyOrderAction()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class CancelOrderUseCase {
+        -client: PoolClient
+        +cancelOrderUseCase()
     }
-    class StockRepository {
-        -db: DBConnector
-        -table: string = "stock"
-        +deductInHouseStock()
-        +deductRslStock()
-        +getLowStockSkus()
-        +getStockAndOrderInfo()
-        +getStockBySku()
-        +restockInventory()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +executeWorkflow()
+        +runAutomation()
+    }
+    class VerifyOrderUseCase {
+        -client: PoolClient
+        +verifyOrderUseCase()
+    }
+    class OrderQueries {
+        <<module>>
+        +Q2A_1: SQL
+        +Q2A_1_FOR_UPDATE: SQL
+        +Q2A_2: SQL
+        +Q7A_1: SQL
+        +Q7A_1_CANCEL_REORDER: SQL
+        +Q7A_1_RELEASE_ORDERS: SQL
+        +cancelLinkedReorder()
+        +listOrders()
+        +lockOrder()
+        +saveCancellation()
+        +saveVerifiedOrder()
+    }
+    class StockQueries {
+        <<module>>
+        +Q7A_2: SQL
+        +restoreCancelledOrderStock()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- CancelOrderScreen
-    BaseScreen <|-- OrderVerifyScreen
-    BaseController <|-- CancelOrderController
-    BaseController <|-- OrderVerifyController
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- StockRepository
-    BaseRepository o-- DBConnector : db
-    CancelOrderScreen "1" --> "1" CancelOrderController : uses
-    OrderVerifyScreen "1" --> "1" OrderVerifyController : uses
-    CancelOrderController ..> OrderRepository
-    CancelOrderController ..> StockRepository
-    OrderVerifyController ..> OrderRepository
+    class RakutenAdapter {
+        <<interface>>
+        +fetchOrderState()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    CancelOrderScreen "1" --> "1" CancelOrderController : calls
+    OrderVerifyScreen "1" --> "1" OrderVerifyController : calls
+    CancelOrderController ..> CancelOrderUseCase
+    OrderVerifyController ..> OrderQueries
+    OrderVerifyController ..> VerifyOrderUseCase
+    CancelOrderUseCase ..> OrderQueries
+    CancelOrderUseCase ..> StockQueries
+    ExecuteWorkflow ..> OrderQueries
+    ExecuteWorkflow ..> StockQueries
+    VerifyOrderUseCase ..> ExecuteWorkflow
+    VerifyOrderUseCase ..> OrderQueries
+    VerifyOrderUseCase ..> RakutenAdapter
+    OrderQueries o-- DBConnector : pool
+    StockQueries o-- DBConnector : pool
+    RakutenAdapter <|.. MockAdapters

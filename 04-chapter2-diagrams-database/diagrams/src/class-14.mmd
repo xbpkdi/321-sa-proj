@@ -1,53 +1,68 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction TB
-    class Users {
-        -user_id: VARCHAR❨10❩
-        -user_email: VARCHAR❨100❩
-        -user_password: VARCHAR❨100❩
-        -fail_attempts: SMALLINT
+    class Admins {
+        -admin_id: text
+        -user_email: text
+        -user_password: text
+        -fail_attempts: INTEGER
         -last_login: TIMESTAMPTZ
-    }
-    class ShippingRules {
-        -rule_id: INTEGER
-        -shipping_method: VARCHAR❨30❩
-        -sales_channel: VARCHAR❨30❩
-        -label_template: VARCHAR❨30❩
-    }
-    class Label {
-        -label_id: INTEGER
-        -order_id: VARCHAR❨12❩
-        -label_template: VARCHAR❨30❩
-        -rsl_reference_id: VARCHAR❨20❩
-        -parcel_seq: SMALLINT
-        -parcel_total: SMALLINT
-        -label_status: VARCHAR❨10❩
         -created_at: TIMESTAMPTZ
-        -printed_at: TIMESTAMPTZ
+        -locked_until: TIMESTAMPTZ
+        +find()
+        +update()
     }
-    class DeliveryPartners {
-        -tracking_number: VARCHAR❨20❩
-        -order_id: VARCHAR❨12❩
-        -carrier_name: VARCHAR❨50❩
-        -pickup_date: DATE
+    class Sessions {
+        -session_id: text
+        -admin_id: text
+        -token_hash: text
+        -created_at: TIMESTAMPTZ
+        -expires_at: TIMESTAMPTZ
+        -revoked_at: TIMESTAMPTZ
+        +create()
+        +find()
+        +update()
     }
-    class CarrierTracking {
-        -tracking_number: VARCHAR❨20❩
-        -delivery_status: VARCHAR❨12❩
-        -last_location: VARCHAR❨100❩
-        -updated_at: TIMESTAMPTZ
+    class AutoErrorLogs {
+        -auto_error_log_id: text
+        -use_case_id: text
+        -context_key: text
+        -error_code: text
+        -safe_message: text
+        -occurred_at: TIMESTAMPTZ
+        +create()
     }
-    class DeletionLog {
-        -log_id: INTEGER
-        -data_type: VARCHAR❨10❩
-        -record_id: VARCHAR❨20❩
-        -deleted_at: TIMESTAMPTZ
-        -deleted_by: VARCHAR❨10❩
+    class CostHistory {
+        -cost_history_id: text
+        -sku_id: text
+        -cost_id: text
+        -previous_value: jsonb
+        -new_value: jsonb
+        -admin_id: text
+        -changed_at: TIMESTAMPTZ
+        +create()
+        +find()
+        +update()
+        +delete()
     }
-    Users "1" -- "0..*" CostCalculationLog
-    ShippingRules "1" -- "0..*" Orders
-    Users "1" -- "0..*" Orders
-    Orders "1" -- "0..*" Label
-    Orders "1" -- "1" DeliveryPartners
-    DeliveryPartners "1" -- "1" CarrierTracking
-    Users "1" -- "0..*" DeletionLog
+    class StockAdjustmentHistory {
+        -stock_adjustment_history_id: text
+        -stock_id: text
+        -previous_in_house_qty: INTEGER
+        -new_in_house_qty: INTEGER
+        -previous_rsl_qty: INTEGER
+        -new_rsl_qty: INTEGER
+        -reason: text
+        -admin_id: text
+        -adjusted_at: TIMESTAMPTZ
+        +create()
+    }
+    Admins "1" -- "0..*" Sessions
+    Admins "1" -- "0..*" DeletionHistory
+    Skus "1" -- "0..*" CostHistory
+    Costs "1" -- "0..*" CostHistory
+    Admins "1" -- "0..*" CostHistory
+    Admins "1" -- "0..*" TrackingNotificationLogs
+    Stock "1" -- "0..*" StockAdjustmentHistory
+    Admins "1" -- "0..*" StockAdjustmentHistory
+    Admins "1" -- "0..*" LabelPrintHistory

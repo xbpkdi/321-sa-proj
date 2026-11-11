@@ -1,13 +1,13 @@
 [
   {
-    "table": "users",
-    "title": "ตารางผู้ใช้ระบบ (USERS)",
+    "table": "admins",
+    "title": "ตารางผู้ดูแลระบบ (ADMINS)",
     "columns": [
       {
         "no": 1,
-        "name": "user_id",
-        "desc": "รหัสผู้ใช้ระบบ",
-        "type": "VARCHAR(10)",
+        "name": "admin_id",
+        "desc": "รหัสผู้ดูแลระบบ",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
         "range": ""
@@ -16,7 +16,7 @@
         "no": 2,
         "name": "user_email",
         "desc": "อีเมลที่ใช้เข้าสู่ระบบ",
-        "type": "VARCHAR(100)",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": "ห้ามซ้ำ (UNIQUE)"
@@ -24,8 +24,8 @@
       {
         "no": 3,
         "name": "user_password",
-        "desc": "รหัสผ่านที่เข้ารหัสแบบ hash แล้ว",
-        "type": "VARCHAR(100)",
+        "desc": "รหัสผ่านที่เข้ารหัสแบบ hash (scrypt) แล้ว",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
@@ -33,11 +33,11 @@
       {
         "no": 4,
         "name": "fail_attempts",
-        "desc": "จำนวนครั้งที่เข้าสู่ระบบผิดติดกัน ครบ 5 ครั้งจะถูกพักการเข้าสู่ระบบ",
-        "type": "SMALLINT",
+        "desc": "จำนวนครั้งที่เข้าสู่ระบบผิดติดกัน ครบ 5 ครั้งบัญชีถูกล็อก 15 นาที",
+        "type": "INTEGER",
         "key": "",
         "notnull": "Not Null",
-        "range": "(fail_attempts >= 0) AND (fail_attempts <= 10); ค่าเริ่มต้น 0"
+        "range": "fail_attempts >= 0; ค่าเริ่มต้น 0"
       },
       {
         "no": 5,
@@ -47,51 +47,54 @@
         "key": "",
         "notnull": "",
         "range": ""
+      },
+      {
+        "no": 6,
+        "name": "created_at",
+        "desc": "วันเวลาที่สร้างบัญชี",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 7,
+        "name": "locked_until",
+        "desc": "เวลาสิ้นสุดการล็อกบัญชีหลังเข้าสู่ระบบผิด 5 ครั้ง (NULL = ไม่ถูกล็อก) ครบเวลาแล้วปลดล็อกเอง",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
       }
     ],
     "sample": {
       "fields": [
-        "user_id",
+        "admin_id",
         "user_email",
         "user_password",
         "fail_attempts",
-        "last_login"
+        "last_login",
+        "created_at",
+        "locked_until"
       ],
       "rows": [
         [
           "U001",
           "admin@colorado.jp",
-          "$2b$10$Qe3kV1tqB8nN0yH6xP2uUe4m9Lr7sD1aZc5wT8fG3hJ6kM0nB2vXy",
+          "scrypt$16384$8$1$yFu3Dhgi6N9Az8G5pC-K5g$2vNbQ3dPbBotWW7GtOH7okBthgVVwKV9synZ7JfHMjp8fRmqUFR_Ncu6EQrmmoJ1-vaToeuO2VoeUplGpM7inw",
           "0",
-          "2026-10-04 23:30"
+          "NULL",
+          "2026-11-06 03:07",
+          "NULL"
         ],
         [
           "U002",
           "locked@colorado.jp",
-          "$2b$10$Qe3kV1tqB8nN0yH6xP2uUe4m9Lr7sD1aZc5wT8fG3hJ6kM0nB2vXy",
+          "scrypt$16384$8$1$yFu3Dhgi6N9Az8G5pC-K5g$2vNbQ3dPbBotWW7GtOH7okBthgVVwKV9synZ7JfHMjp8fRmqUFR_Ncu6EQrmmoJ1-vaToeuO2VoeUplGpM7inw",
           "5",
-          "2026-09-28 08:02"
-        ],
-        [
-          "U003",
-          "owner@colorado.jp",
-          "$2b$10$7aR2pW9cE4kL1mN8vB3xZuQ6tY0iO5sD2fG7hJ1kL4zX9cV6bN3mQ",
-          "0",
-          "2026-10-04 12:15"
-        ],
-        [
-          "U004",
-          "staff01@colorado.jp",
-          "$2b$10$1bC4dE7fG0hI3jK6lM9nOuP2qR5sT8uV1wX4yZ7aB0cD3eF6gH9iJ",
-          "2",
-          "2026-10-01 01:40"
-        ],
-        [
-          "U005",
-          "audit@colorado.jp",
-          "$2b$10$9zY6xW3vU0tS7rQ4pO1nMuL8kJ5iH2gF9eD6cB3aZ0yX7wV4uT1sR",
-          "0",
-          "NULL"
+          "NULL",
+          "2026-11-06 03:07",
+          "2026-11-06 03:22"
         ]
       ]
     }
@@ -104,7 +107,7 @@
         "no": 1,
         "name": "supplier_id",
         "desc": "รหัสซัพพลายเออร์",
-        "type": "VARCHAR(10)",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
         "range": ""
@@ -113,7 +116,7 @@
         "no": 2,
         "name": "supplier_name",
         "desc": "ชื่อซัพพลายเออร์",
-        "type": "VARCHAR(100)",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
@@ -122,19 +125,28 @@
         "no": 3,
         "name": "contact_info",
         "desc": "ช่องทางติดต่อสำหรับส่งคำสั่งซื้อ",
-        "type": "VARCHAR(150)",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 4,
-        "name": "lead_time",
+        "name": "lead_time_days",
         "desc": "จำนวนวันตั้งแต่สั่งซื้อจนได้รับสินค้า",
-        "type": "SMALLINT",
+        "type": "INTEGER",
         "key": "",
         "notnull": "Not Null",
-        "range": "(lead_time >= 1) AND (lead_time <= 180)"
+        "range": "lead_time_days >= 0"
+      },
+      {
+        "no": 5,
+        "name": "created_at",
+        "desc": "วันเวลาที่เพิ่มซัพพลายเออร์",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
       }
     ],
     "sample": {
@@ -142,102 +154,126 @@
         "supplier_id",
         "supplier_name",
         "contact_info",
-        "lead_time"
+        "lead_time_days",
+        "created_at"
       ],
       "rows": [
         [
           "SUP-01",
           "Ningbo Tackle Works",
           "order@ningbo-tackle.example.cn",
-          "21"
+          "21",
+          "2026-11-06 03:07"
         ],
         [
           "SUP-02",
           "หจก. สมุนไพรไทยเจริญ",
           "sales@thaiherb.example.co.th",
-          "10"
+          "10",
+          "2026-11-06 03:07"
         ],
         [
           "SUP-03",
           "Qingdao Outdoor Gear",
           "po@qingdao-outdoor.example.cn",
-          "28"
+          "28",
+          "2026-11-06 03:07"
         ],
         [
           "SUP-04",
           "Foshan Homeware Ltd.",
           "trade@foshan-home.example.cn",
-          "18"
+          "18",
+          "2026-11-06 03:07"
         ],
         [
           "SUP-05",
-          "Osaka Frame Studio",
-          "info@osaka-frame.example.jp",
-          "14"
+          "Yiwu Fishing Supply Co.",
+          "sales@yiwu-fishing.example.cn",
+          "25",
+          "2026-11-06 03:07"
         ]
       ]
     }
   },
   {
-    "table": "products",
-    "title": "ตารางสินค้า (PRODUCTS)",
+    "table": "skus",
+    "title": "ตารางสินค้าและกฎ SKU (SKUS)",
     "columns": [
       {
         "no": 1,
-        "name": "sku",
-        "desc": "รหัสสินค้าภายในร้าน ใช้เชื่อมข้อมูลทุกระบบ",
-        "type": "VARCHAR(20)",
+        "name": "sku_id",
+        "desc": "รหัสรายการสินค้าในระบบ",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 2,
-        "name": "product_name",
-        "desc": "ชื่อสินค้า",
-        "type": "VARCHAR(150)",
+        "name": "sku",
+        "desc": "รหัสสินค้าภายในร้าน ใช้เชื่อมข้อมูลทุกระบบ",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
-        "range": ""
+        "range": "ห้ามซ้ำ (UNIQUE)"
       },
       {
         "no": 3,
-        "name": "variation",
-        "desc": "ตัวเลือกของสินค้า เช่น สี ขนาด",
-        "type": "VARCHAR(50)",
+        "name": "product_name",
+        "desc": "ชื่อสินค้า",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 4,
-        "name": "sales_channel",
-        "desc": "ช่องทางขาย",
-        "type": "VARCHAR(30)",
+        "name": "variation",
+        "desc": "ตัวเลือกของสินค้า เช่น สี ขนาด",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น 'Rakuten Ichiba'"
+        "range": ""
       },
       {
         "no": 5,
-        "name": "supplier_id",
-        "desc": "ซัพพลายเออร์ที่สั่งซื้อสินค้านี้",
-        "type": "VARCHAR(10)",
-        "key": "FK → suppliers",
+        "name": "sales_channel",
+        "desc": "ช่องทางขาย (เฟส 1 มีเฉพาะ Rakuten Ichiba)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "sales_channel = 'Rakuten Ichiba'"
+      },
+      {
+        "no": 6,
+        "name": "channel_sku",
+        "desc": "รหัสสินค้าในช่องทางขาย ใช้เป็นกฎจับคู่ SKU (2S) หนึ่งสินค้ามีหนึ่งกฎ",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ห้ามซ้ำ (UNIQUE)"
+      },
+      {
+        "no": 7,
+        "name": "selling_price",
+        "desc": "ราคาขายปัจจุบัน",
+        "type": "NUMERIC(14,2)",
+        "key": "",
         "notnull": "",
         "range": ""
       },
       {
-        "no": 6,
+        "no": 8,
         "name": "reorder_threshold",
-        "desc": "จุดสั่งซื้อ ถ้าสต๊อกรวมไม่เกินค่านี้ต้องสั่งเพิ่ม",
+        "desc": "จุดสั่งซื้อ ถ้าสต๊อกไม่เกินค่านี้ต้องสั่งเพิ่ม",
         "type": "INTEGER",
         "key": "",
         "notnull": "Not Null",
         "range": "reorder_threshold >= 0"
       },
       {
-        "no": 7,
+        "no": 9,
         "name": "reorder_qty",
         "desc": "จำนวนที่สั่งซื้อต่อครั้ง",
         "type": "INTEGER",
@@ -246,203 +282,118 @@
         "range": "reorder_qty >= 0"
       },
       {
-        "no": 8,
-        "name": "selling_price",
-        "desc": "ราคาขายปัจจุบัน",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "",
-        "range": "selling_price > (0)"
-      },
-      {
-        "no": 9,
-        "name": "active",
-        "desc": "สถานะการขาย (false = ปิดการขาย)",
-        "type": "BOOLEAN",
+        "no": 10,
+        "name": "sku_status",
+        "desc": "สถานะการขาย (active, inactive)",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น true"
+        "range": ""
+      },
+      {
+        "no": 11,
+        "name": "created_at",
+        "desc": "วันเวลาที่เพิ่มสินค้า",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 12,
+        "name": "supplier_id",
+        "desc": "ซัพพลายเออร์ที่สั่งซื้อสินค้านี้",
+        "type": "text",
+        "key": "FK → suppliers",
+        "notnull": "",
+        "range": ""
       }
     ],
     "sample": {
       "fields": [
+        "sku_id",
         "sku",
         "product_name",
         "variation",
         "sales_channel",
-        "supplier_id",
+        "channel_sku",
+        "selling_price",
         "reorder_threshold",
         "reorder_qty",
-        "selling_price",
-        "active"
+        "sku_status",
+        "created_at",
+        "supplier_id"
       ],
       "rows": [
         [
+          "SKU-FSH-MLR-240",
           "FSH-MLR-240",
           "เหยื่อปลอมมินโนว์ จมช้า 24 กรัม",
           "สีเงินลายปลาซิว",
           "Rakuten Ichiba",
-          "SUP-01",
+          "rk-mlr240-sv",
+          "1280.00",
           "40",
           "200",
-          "1280.00",
-          "true"
+          "active",
+          "2026-11-06 03:07",
+          "SUP-01"
         ],
         [
+          "SKU-YDM-HRB-012",
           "YDM-HRB-012",
           "ยาดมสมุนไพร สูตรเข้มข้น",
           "แพ็ค 3 หลอด",
           "Rakuten Ichiba",
-          "SUP-02",
+          "rk-ydm012-3",
+          "540.00",
           "60",
           "300",
-          "540.00",
-          "true"
+          "active",
+          "2026-11-06 03:07",
+          "SUP-02"
         ],
         [
+          "SKU-OUT-CHR-003",
           "OUT-CHR-003",
           "เก้าอี้พับแคมป์ปิ้ง โครงอะลูมิเนียม",
           "สีเขียวมะกอก",
           "Rakuten Ichiba",
-          "SUP-03",
+          "rk-chr003-ol",
+          "3450.00",
           "15",
           "60",
-          "3450.00",
-          "true"
+          "active",
+          "2026-11-06 03:07",
+          "SUP-03"
         ],
         [
+          "SKU-HOM-STG-045",
           "HOM-STG-045",
           "กล่องเก็บของพับได้ ฝาใส",
           "ขนาด 28 ลิตร",
           "Rakuten Ichiba",
-          "SUP-04",
+          "rk-stg045-28",
+          "NULL",
           "25",
           "120",
-          "NULL",
-          "true"
+          "active",
+          "2026-11-06 03:07",
+          "SUP-04"
         ],
         [
+          "SKU-FSH-RDS-180",
           "FSH-RDS-180",
           "คันเบ็ดสปินนิ่ง 1.8 เมตร",
           "แอ็คชันกลาง",
           "Rakuten Ichiba",
-          "SUP-01",
+          "rk-rds180-m",
+          "2690.00",
           "10",
           "40",
-          "2690.00",
-          "true"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "sku_rules",
-    "title": "ตารางกฎจับคู่ SKU (SKU_RULES)",
-    "columns": [
-      {
-        "no": 1,
-        "name": "sku_rule_id",
-        "desc": "รหัสกฎ SKU",
-        "type": "INTEGER",
-        "key": "PK",
-        "notnull": "Not Null",
-        "range": "รันเลขอัตโนมัติ"
-      },
-      {
-        "no": 2,
-        "name": "channel_sku",
-        "desc": "รหัสสินค้าที่ใช้ในช่องทางขาย",
-        "type": "VARCHAR(40)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 3,
-        "name": "sales_channel",
-        "desc": "ช่องทางขาย",
-        "type": "VARCHAR(30)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น 'Rakuten Ichiba'"
-      },
-      {
-        "no": 4,
-        "name": "sku",
-        "desc": "SKU ภายในที่จับคู่ด้วย",
-        "type": "VARCHAR(20)",
-        "key": "FK → products",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 5,
-        "name": "variation",
-        "desc": "ตัวเลือกสินค้าที่จับคู่ด้วย",
-        "type": "VARCHAR(50)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 6,
-        "name": "product_name",
-        "desc": "ชื่อสินค้าที่จับคู่ด้วย",
-        "type": "VARCHAR(150)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      }
-    ],
-    "sample": {
-      "fields": [
-        "sku_rule_id",
-        "channel_sku",
-        "sales_channel",
-        "sku",
-        "variation",
-        "product_name"
-      ],
-      "rows": [
-        [
-          "1",
-          "rk-mlr240-sv",
-          "Rakuten Ichiba",
-          "FSH-MLR-240",
-          "สีเงินลายปลาซิว",
-          "เหยื่อปลอมมินโนว์ จมช้า 24 กรัม"
-        ],
-        [
-          "2",
-          "rk-ydm012-3",
-          "Rakuten Ichiba",
-          "YDM-HRB-012",
-          "แพ็ค 3 หลอด",
-          "ยาดมสมุนไพร สูตรเข้มข้น"
-        ],
-        [
-          "3",
-          "rk-chr003-ol",
-          "Rakuten Ichiba",
-          "OUT-CHR-003",
-          "สีเขียวมะกอก",
-          "เก้าอี้พับแคมป์ปิ้ง โครงอะลูมิเนียม"
-        ],
-        [
-          "4",
-          "rk-stg045-28",
-          "Rakuten Ichiba",
-          "HOM-STG-045",
-          "ขนาด 28 ลิตร",
-          "กล่องเก็บของพับได้ ฝาใส"
-        ],
-        [
-          "5",
-          "rk-rds180-m",
-          "Rakuten Ichiba",
-          "FSH-RDS-180",
-          "แอ็คชันกลาง",
-          "คันเบ็ดสปินนิ่ง 1.8 เมตร"
+          "active",
+          "2026-11-06 03:07",
+          "SUP-01"
         ]
       ]
     }
@@ -453,571 +404,93 @@
     "columns": [
       {
         "no": 1,
-        "name": "sku",
-        "desc": "รหัสสินค้า",
-        "type": "VARCHAR(20)",
-        "key": "PK, FK → products",
+        "name": "stock_id",
+        "desc": "รหัสรายการสต๊อก",
+        "type": "text",
+        "key": "PK",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 2,
-        "name": "variation",
-        "desc": "ตัวเลือกสินค้า",
-        "type": "VARCHAR(50)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 3,
         "name": "in_house_qty",
         "desc": "จำนวนคงเหลือในคลังบริษัท",
         "type": "INTEGER",
         "key": "",
         "notnull": "Not Null",
-        "range": "in_house_qty >= 0; ค่าเริ่มต้น 0"
+        "range": "in_house_qty >= 0"
       },
       {
-        "no": 4,
+        "no": 3,
         "name": "rsl_qty",
-        "desc": "จำนวนคงเหลือในคลัง RSL (ว่างได้เมื่อดึงข้อมูลจาก RSL ไม่ได้)",
+        "desc": "จำนวนคงเหลือในคลัง RSL (ว่างได้เมื่ออ่านข้อมูลจาก RSL ไม่ได้)",
         "type": "INTEGER",
         "key": "",
         "notnull": "",
-        "range": "rsl_qty >= 0"
+        "range": "(rsl_qty IS NULL) OR (rsl_qty >= 0)"
       },
       {
-        "no": 5,
+        "no": 4,
         "name": "updated_at",
         "desc": "วันเวลาที่ปรับปรุงยอดล่าสุด",
         "type": "TIMESTAMPTZ",
         "key": "",
         "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น now()"
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "sku_id",
+        "desc": "สินค้าของสต๊อกนี้ (หนึ่งสินค้ามีหนึ่งรายการ)",
+        "type": "text",
+        "key": "FK → skus",
+        "notnull": "Not Null",
+        "range": "ห้ามซ้ำ (UNIQUE)"
       }
     ],
     "sample": {
       "fields": [
-        "sku",
-        "variation",
+        "stock_id",
         "in_house_qty",
         "rsl_qty",
-        "updated_at"
+        "updated_at",
+        "sku_id"
       ],
       "rows": [
         [
-          "FSH-MLR-240",
-          "สีเงินลายปลาซิว",
+          "STK-FSH-MLR-240",
           "52",
           "96",
-          "2026-10-04 22:00"
+          "2026-10-04 21:00",
+          "SKU-FSH-MLR-240"
         ],
         [
-          "YDM-HRB-012",
-          "แพ็ค 3 หลอด",
+          "STK-YDM-HRB-012",
           "118",
           "NULL",
-          "2026-10-04 22:00"
+          "2026-10-04 21:00",
+          "SKU-YDM-HRB-012"
         ],
         [
-          "OUT-CHR-003",
-          "สีเขียวมะกอก",
+          "STK-OUT-CHR-003",
           "6",
           "8",
-          "2026-10-04 22:00"
+          "2026-10-04 21:00",
+          "SKU-OUT-CHR-003"
         ],
         [
-          "HOM-STG-045",
-          "ขนาด 28 ลิตร",
+          "STK-HOM-STG-045",
           "1",
           "0",
-          "2026-10-04 22:00"
+          "2026-10-04 21:00",
+          "SKU-HOM-STG-045"
         ],
         [
-          "FSH-RDS-180",
-          "แอ็คชันกลาง",
+          "STK-FSH-RDS-180",
           "0",
           "1",
-          "2026-10-04 22:00"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "product_cost",
-    "title": "ตารางองค์ประกอบต้นทุน (PRODUCT_COST)",
-    "columns": [
-      {
-        "no": 1,
-        "name": "sku",
-        "desc": "รหัสสินค้า",
-        "type": "VARCHAR(20)",
-        "key": "PK, FK → products",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 2,
-        "name": "purchase_price",
-        "desc": "ราคาซื้อทั้งล็อตในสกุลเงินของซัพพลายเออร์",
-        "type": "NUMERIC(12,2)",
-        "key": "",
-        "notnull": "",
-        "range": "purchase_price >= (0)"
-      },
-      {
-        "no": 3,
-        "name": "currency",
-        "desc": "สกุลเงินที่ซื้อ",
-        "type": "CHAR(3)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "currency IN 'CNY'::bpchar, 'THB'::bpchar, 'JPY'::bpchar, 'USD'::bpchar"
-      },
-      {
-        "no": 4,
-        "name": "exchange_rate",
-        "desc": "อัตราแลกเปลี่ยนที่ใช้แปลงราคาซื้อ",
-        "type": "NUMERIC(8,4)",
-        "key": "",
-        "notnull": "",
-        "range": "exchange_rate > (0)"
-      },
-      {
-        "no": 5,
-        "name": "intl_freight",
-        "desc": "ค่าขนส่งระหว่างประเทศทั้งล็อต",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "",
-        "range": "intl_freight >= (0)"
-      },
-      {
-        "no": 6,
-        "name": "duty_fee",
-        "desc": "ภาษีนำเข้าทั้งล็อต",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "",
-        "range": "duty_fee >= (0)"
-      },
-      {
-        "no": 7,
-        "name": "marketplace_fee",
-        "desc": "ค่าธรรมเนียม Marketplace ต่อชิ้น",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "",
-        "range": "marketplace_fee >= (0)"
-      },
-      {
-        "no": 8,
-        "name": "domestic_shipping",
-        "desc": "ค่าส่งในประเทศต่อชิ้น",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "",
-        "range": "domestic_shipping >= (0)"
-      },
-      {
-        "no": 9,
-        "name": "rsl_charge",
-        "desc": "ค่าธรรมเนียม RSL ต่อชิ้น",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "",
-        "range": "rsl_charge >= (0)"
-      },
-      {
-        "no": 10,
-        "name": "order_qty",
-        "desc": "จำนวนชิ้นในล็อตที่ใช้หารต้นทุน",
-        "type": "INTEGER",
-        "key": "",
-        "notnull": "",
-        "range": "order_qty > 0"
-      }
-    ],
-    "sample": {
-      "fields": [
-        "sku",
-        "purchase_price",
-        "currency",
-        "exchange_rate",
-        "intl_freight",
-        "duty_fee",
-        "marketplace_fee",
-        "domestic_shipping",
-        "rsl_charge",
-        "order_qty"
-      ],
-      "rows": [
-        [
-          "FSH-MLR-240",
-          "9100.00",
-          "CNY",
-          "4.9200",
-          "8600.00",
-          "3150.00",
-          "72.00",
-          "46.00",
-          "18.00",
-          "200"
-        ],
-        [
-          "FSH-RDS-180",
-          "16400.00",
-          "CNY",
-          "4.9200",
-          "5400.00",
-          "2080.00",
-          "148.00",
-          "92.00",
-          "18.00",
-          "40"
-        ],
-        [
-          "OUT-CHR-003",
-          "32280.00",
-          "CNY",
-          "4.9200",
-          "11200.00",
-          "4360.00",
-          "190.00",
-          "135.00",
-          "24.00",
-          "60"
-        ],
-        [
-          "HOM-STG-045",
-          "8400.00",
-          "CNY",
-          "4.9200",
-          "6800.00",
-          "2100.00",
-          "64.00",
-          "58.00",
-          "18.00",
-          "120"
-        ],
-        [
-          "HOM-KIT-108",
-          "3000.00",
-          "CNY",
-          "4.9200",
-          "3000.00",
-          "900.00",
-          "60.00",
-          "45.00",
-          "18.00",
-          "20"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "cost_calculation_log",
-    "title": "ตารางประวัติการคำนวณต้นทุน (COST_CALCULATION_LOG)",
-    "columns": [
-      {
-        "no": 1,
-        "name": "cost_id",
-        "desc": "รหัสผลการคำนวณ",
-        "type": "INTEGER",
-        "key": "PK",
-        "notnull": "Not Null",
-        "range": "รันเลขอัตโนมัติ"
-      },
-      {
-        "no": 2,
-        "name": "sku",
-        "desc": "รหัสสินค้าที่คำนวณ",
-        "type": "VARCHAR(20)",
-        "key": "FK → products",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 3,
-        "name": "unit_cost",
-        "desc": "ต้นทุนต่อหน่วยที่คำนวณได้",
-        "type": "NUMERIC(10,2)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "unit_cost >= (0)"
-      },
-      {
-        "no": 4,
-        "name": "calculated_at",
-        "desc": "วันเวลาที่คำนวณ",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น now()"
-      },
-      {
-        "no": 5,
-        "name": "calculated_by",
-        "desc": "ผู้ใช้ที่สั่งคำนวณ",
-        "type": "VARCHAR(10)",
-        "key": "FK → users",
-        "notnull": "Not Null",
-        "range": ""
-      }
-    ],
-    "sample": {
-      "fields": [
-        "cost_id",
-        "sku",
-        "unit_cost",
-        "calculated_at",
-        "calculated_by"
-      ],
-      "rows": [
-        [
-          "1",
-          "FSH-MLR-240",
-          "433.11",
-          "2025-08-14 01:05",
-          "U001"
-        ],
-        [
-          "2",
-          "FSH-RDS-180",
-          "2522.70",
-          "2025-09-02 06:30",
-          "U001"
-        ],
-        [
-          "3",
-          "FSH-MLR-240",
-          "418.61",
-          "2026-09-30 02:20",
-          "U001"
-        ],
-        [
-          "4",
-          "OUT-CHR-003",
-          "3255.29",
-          "2026-10-01 00:45",
-          "U003"
-        ],
-        [
-          "5",
-          "FSH-RDS-180",
-          "2462.20",
-          "2026-10-03 07:10",
-          "U001"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "purchase_orders",
-    "title": "ตารางคำสั่งซื้อเติมสต๊อก (PURCHASE_ORDERS)",
-    "columns": [
-      {
-        "no": 1,
-        "name": "po_id",
-        "desc": "เลขที่คำสั่งซื้อ",
-        "type": "VARCHAR(12)",
-        "key": "PK",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น ('PO-'|| lpad((nextval('purchase_orders_seq')), 4, '0'))"
-      },
-      {
-        "no": 2,
-        "name": "sku",
-        "desc": "รหัสสินค้าที่สั่งซื้อ",
-        "type": "VARCHAR(20)",
-        "key": "FK → products",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 3,
-        "name": "supplier_id",
-        "desc": "ซัพพลายเออร์ที่สั่งซื้อ",
-        "type": "VARCHAR(10)",
-        "key": "FK → suppliers",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 4,
-        "name": "order_qty",
-        "desc": "จำนวนที่สั่งซื้อ",
-        "type": "INTEGER",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "order_qty > 0"
-      },
-      {
-        "no": 5,
-        "name": "order_date",
-        "desc": "วันเวลาที่สั่งซื้อ",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น now()"
-      },
-      {
-        "no": 6,
-        "name": "eta",
-        "desc": "วันที่คาดว่าจะได้รับสินค้า",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 7,
-        "name": "status",
-        "desc": "สถานะคำสั่งซื้อ",
-        "type": "VARCHAR(20)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "(status) IN ('รอส่งคำสั่งซื้อ', 'สั่งซื้อแล้ว', 'ได้รับสินค้าแล้ว', 'ยกเลิกแล้ว'["
-      }
-    ],
-    "sample": {
-      "fields": [
-        "po_id",
-        "sku",
-        "supplier_id",
-        "order_qty",
-        "order_date",
-        "eta",
-        "status"
-      ],
-      "rows": [
-        [
-          "PO-0007",
-          "YDM-HRB-012",
-          "SUP-02",
-          "300",
-          "2025-06-10 00:00",
-          "2025-06-20 00:00",
-          "ได้รับสินค้าแล้ว"
-        ],
-        [
-          "PO-0008",
-          "FSH-MLR-240",
-          "SUP-01",
-          "200",
-          "2025-07-01 00:00",
-          "2025-07-22 00:00",
-          "ได้รับสินค้าแล้ว"
-        ],
-        [
-          "PO-0009",
-          "OUT-LMP-021",
-          "SUP-03",
-          "80",
-          "2025-08-18 00:00",
-          "2025-09-15 00:00",
-          "ยกเลิกแล้ว"
-        ],
-        [
-          "PO-0010",
-          "HOM-STG-045",
-          "SUP-04",
-          "120",
-          "2026-09-10 00:00",
-          "2026-09-28 00:00",
-          "ได้รับสินค้าแล้ว"
-        ],
-        [
-          "PO-0011",
-          "FSH-RDS-180",
-          "SUP-01",
-          "40",
-          "2026-10-02 00:00",
-          "2026-10-23 00:00",
-          "รอส่งคำสั่งซื้อ"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "shipping_rules",
-    "title": "ตารางรูปแบบใบปะสินค้า (SHIPPING_RULES)",
-    "columns": [
-      {
-        "no": 1,
-        "name": "rule_id",
-        "desc": "รหัสกฎการจัดส่ง",
-        "type": "INTEGER",
-        "key": "PK",
-        "notnull": "Not Null",
-        "range": "รันเลขอัตโนมัติ"
-      },
-      {
-        "no": 2,
-        "name": "shipping_method",
-        "desc": "วิธีจัดส่ง",
-        "type": "VARCHAR(30)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 3,
-        "name": "sales_channel",
-        "desc": "ช่องทางขาย",
-        "type": "VARCHAR(30)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น 'Rakuten Ichiba'"
-      },
-      {
-        "no": 4,
-        "name": "label_template",
-        "desc": "รูปแบบใบปะสินค้าที่ใช้กับวิธีจัดส่งนี้",
-        "type": "VARCHAR(30)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      }
-    ],
-    "sample": {
-      "fields": [
-        "rule_id",
-        "shipping_method",
-        "sales_channel",
-        "label_template"
-      ],
-      "rows": [
-        [
-          "1",
-          "RSL ปกติ",
-          "Rakuten Ichiba",
-          "RSL-STD-A6"
-        ],
-        [
-          "2",
-          "RSL ขนาดใหญ่",
-          "Rakuten Ichiba",
-          "RSL-LRG-A5"
-        ],
-        [
-          "3",
-          "ส่งจากร้าน",
-          "Rakuten Ichiba",
-          "SHOP-STD-A6"
-        ],
-        [
-          "4",
-          "RSL ส่งด่วน",
-          "Rakuten Ichiba",
-          "RSL-EXP-A6"
-        ],
-        [
-          "5",
-          "RSL เก็บปลายทาง",
-          "Rakuten Ichiba",
-          "RSL-COD-A6"
+          "2026-10-04 21:00",
+          "SKU-FSH-RDS-180"
         ]
       ]
     }
@@ -1030,28 +503,28 @@
         "no": 1,
         "name": "order_id",
         "desc": "รหัส Order ในระบบ",
-        "type": "VARCHAR(12)",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น ('ORD-'|| nextval('orders_seq'))"
+        "range": ""
       },
       {
         "no": 2,
         "name": "marketplace_order_id",
         "desc": "เลขคำสั่งซื้อใน Rakuten Ichiba",
-        "type": "VARCHAR(30)",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
-        "range": ""
+        "range": "ห้ามซ้ำ (UNIQUE)"
       },
       {
         "no": 3,
         "name": "sales_channel",
         "desc": "ช่องทางขาย",
-        "type": "VARCHAR(30)",
-        "key": "FK → shipping_rules",
+        "type": "text",
+        "key": "",
         "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น 'Rakuten Ichiba'"
+        "range": "sales_channel = 'Rakuten Ichiba'"
       },
       {
         "no": 4,
@@ -1064,160 +537,43 @@
       },
       {
         "no": 5,
-        "name": "channel_sku",
-        "desc": "รหัสสินค้าตามช่องทางขาย",
-        "type": "VARCHAR(40)",
+        "name": "shipping_address",
+        "desc": "ที่อยู่จัดส่ง",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 6,
-        "name": "sku",
-        "desc": "SKU ภายในหลังจับคู่กฎ",
-        "type": "VARCHAR(20)",
-        "key": "FK → products",
-        "notnull": "",
+        "name": "shipping_method",
+        "desc": "วิธีจัดส่ง",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 7,
-        "name": "variation",
-        "desc": "ตัวเลือกสินค้า",
-        "type": "VARCHAR(50)",
+        "name": "order_status",
+        "desc": "สถานะของ Order (ดู State Diagram)",
+        "type": "text",
         "key": "",
-        "notnull": "",
-        "range": ""
+        "notnull": "Not Null",
+        "range": "order_status IN 'รอตรวจสอบคำสั่งซื้อ', 'รอจับคู่กฎ SKU', 'รอตรวจสอบสต๊อก', 'รอ Admin ตัดสินใจสั่งซื้อ', 'รอสั่งซื้อจาก Supplier', 'สั่งซื้อแล้ว', 'ยังไม่ได้จับคู่', 'รอจัดรูปแบบใบปะสินค้า', 'รอพิมพ์ใบปะสินค้า', 'พิมพ์ใบปะสินค้าแล้ว', 'รอส่งคำสั่งซื้อ', 'รอส่งมอบ', 'อยู่ระหว่างจัดส่ง', 'รอแจ้งเลขติดตาม', 'แจ้งเลขติดตามแล้ว', 'จัดส่งสำเร็จ', 'จัดส่งไม่สำเร็จ', 'ตีกลับ/คืนสินค้า', 'รอยกเลิก Order', 'ยกเลิกแล้ว', 'รอดำเนินการด้วยตนเอง', 'รอดำเนินการพิเศษ'"
       },
       {
         "no": 8,
-        "name": "qty",
-        "desc": "จำนวนที่สั่ง",
-        "type": "INTEGER",
+        "name": "rsl_no",
+        "desc": "เลขอ้างอิง RSL หลังจับคู่ (1S)",
+        "type": "text",
         "key": "",
-        "notnull": "Not Null",
-        "range": "qty >= 0"
+        "notnull": "",
+        "range": ""
       },
       {
         "no": 9,
-        "name": "shipping_address",
-        "desc": "ที่อยู่จัดส่ง",
-        "type": "VARCHAR(255)",
-        "key": "",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 10,
-        "name": "shipping_method",
-        "desc": "วิธีจัดส่ง",
-        "type": "VARCHAR(30)",
-        "key": "FK → shipping_rules",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 11,
-        "name": "order_status",
-        "desc": "สถานะของ Order (ดู State Diagram 2.16)",
-        "type": "VARCHAR(30)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "(order_status) IN ('รอตรวจสอบคำสั่งซื้อ', 'รอจับคู่กฎ SKU', 'รอตรวจสอบสต๊อก', 'รอ Admin ตัดสินใจสั่งซื้อ', 'รอสั่งซื้อจาก Supplier', 'สั่งซื้อแล้ว', 'ยังไม่ได้จับคู่', 'รอจัดรูปแบบใบปะสินค้า', 'รอพิมพ์ใบปะสินค้า', 'พิมพ์ใบปะสินค้าแล้ว', 'รอส่งคำสั่งซื้อ', 'รอส่งมอบ', 'อยู่ระหว่างจัดส่ง', 'รอแจ้งเลขติดตาม', 'แจ้งเลขติดตามแล้ว', 'จัดส่งสำเร็จ', 'จัดส่งไม่สำเร็จ', 'ตีกลับ/คืนสินค้า', 'รอยกเลิก Order', 'ยกเลิกแล้ว', 'รอดำเนินการด้วยตนเอง', 'รอดำเนินการพิเศษ'["
-      },
-      {
-        "no": 12,
-        "name": "verified_at",
-        "desc": "วันเวลาที่ Admin ยืนยันคำสั่งซื้อ (2A)",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 13,
-        "name": "verified_by",
-        "desc": "ผู้ยืนยันคำสั่งซื้อ",
-        "type": "VARCHAR(10)",
-        "key": "FK → users",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 14,
-        "name": "sku_rule_id",
-        "desc": "กฎ SKU ที่ใช้จับคู่ (2S)",
-        "type": "INTEGER",
-        "key": "FK → sku_rules",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 15,
-        "name": "sku_matched_at",
-        "desc": "วันเวลาที่จับคู่กฎ SKU",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 16,
-        "name": "decision",
-        "desc": "ผลการตัดสินใจสั่งซื้อเพิ่ม (5A)",
-        "type": "VARCHAR(10)",
-        "key": "",
-        "notnull": "",
-        "range": "(decision) IN ('คุ้มค่า', 'ไม่คุ้มค่า'["
-      },
-      {
-        "no": 17,
-        "name": "decided_at",
-        "desc": "วันเวลาที่ตัดสินใจ",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 18,
-        "name": "decided_by",
-        "desc": "ผู้ตัดสินใจ",
-        "type": "VARCHAR(10)",
-        "key": "FK → users",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 19,
-        "name": "po_id",
-        "desc": "คำสั่งซื้อเติมสต๊อกที่ผูกกับ Order (6A)",
-        "type": "VARCHAR(12)",
-        "key": "FK → purchase_orders",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 20,
-        "name": "rsl_matched",
-        "desc": "จับคู่กับ RSL แล้วหรือยัง (1S)",
-        "type": "BOOLEAN",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น false"
-      },
-      {
-        "no": 21,
-        "name": "rsl_reference_id",
-        "desc": "เลขอ้างอิง RSL",
-        "type": "VARCHAR(20)",
-        "key": "",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 22,
-        "name": "matched_at",
+        "name": "rsl_matched_at",
         "desc": "วันเวลาที่จับคู่ RSL",
         "type": "TIMESTAMPTZ",
         "key": "",
@@ -1225,34 +581,25 @@
         "range": ""
       },
       {
-        "no": 23,
-        "name": "fulfill_source",
-        "desc": "คลังที่ส่งสินค้า (in_house หรือ rsl)",
-        "type": "VARCHAR(10)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "(fulfill_source) IN ('in_house', 'rsl'[; ค่าเริ่มต้น 'rsl'"
-      },
-      {
-        "no": 24,
+        "no": 10,
         "name": "tracking_number",
-        "desc": "หมายเลขติดตามพัสดุ (8A)",
-        "type": "VARCHAR(20)",
+        "desc": "หมายเลขติดตามพัสดุจากขนส่ง (8A)",
+        "type": "text",
         "key": "",
         "notnull": "",
         "range": ""
       },
       {
-        "no": 25,
+        "no": 11,
         "name": "carrier_name",
         "desc": "ชื่อบริษัทขนส่ง",
-        "type": "VARCHAR(50)",
+        "type": "text",
         "key": "",
         "notnull": "",
         "range": ""
       },
       {
-        "no": 26,
+        "no": 12,
         "name": "dispatched_at",
         "desc": "วันเวลาที่ส่งมอบให้ขนส่ง",
         "type": "TIMESTAMPTZ",
@@ -1261,61 +608,34 @@
         "range": ""
       },
       {
-        "no": 27,
+        "no": 13,
         "name": "tracking_notified",
-        "desc": "แจ้งเลขติดตามให้ลูกค้าแล้วหรือยัง (5S)",
+        "desc": "แจ้งเลขติดตามไป Rakuten แล้วหรือยัง (5S)",
         "type": "BOOLEAN",
         "key": "",
         "notnull": "Not Null",
         "range": "ค่าเริ่มต้น false"
       },
       {
-        "no": 28,
+        "no": 14,
         "name": "tracking_notified_at",
-        "desc": "วันเวลาที่แจ้งเลขติดตาม",
+        "desc": "วันเวลาที่แจ้งเลขติดตามสำเร็จ",
         "type": "TIMESTAMPTZ",
         "key": "",
         "notnull": "",
         "range": ""
       },
       {
-        "no": 29,
-        "name": "stock_deducted",
-        "desc": "ตัดสต๊อกแล้วหรือยัง (7S)",
-        "type": "BOOLEAN",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น false"
-      },
-      {
-        "no": 30,
-        "name": "mp_stock_synced",
-        "desc": "อัปเดตจำนวนใน Marketplace แล้วหรือยัง",
-        "type": "BOOLEAN",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น false"
-      },
-      {
-        "no": 31,
-        "name": "deducted_at",
-        "desc": "วันเวลาที่ตัดสต๊อก",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "",
-        "range": ""
-      },
-      {
-        "no": 32,
+        "no": 15,
         "name": "cancel_reason",
         "desc": "เหตุผลที่ยกเลิก (7A)",
-        "type": "VARCHAR(255)",
+        "type": "text",
         "key": "",
         "notnull": "",
         "range": ""
       },
       {
-        "no": 33,
+        "no": 16,
         "name": "cancelled_at",
         "desc": "วันเวลาที่ยกเลิก",
         "type": "TIMESTAMPTZ",
@@ -1324,11 +644,92 @@
         "range": ""
       },
       {
-        "no": 34,
-        "name": "cancelled_by",
-        "desc": "ผู้ยกเลิก",
-        "type": "VARCHAR(10)",
-        "key": "FK → users",
+        "no": 17,
+        "name": "verified_at",
+        "desc": "วันเวลาที่ Admin ยืนยันคำสั่งซื้อ (2A)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 18,
+        "name": "created_at",
+        "desc": "วันเวลาที่นำเข้า Order",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 19,
+        "name": "updated_at",
+        "desc": "วันเวลาที่แก้ไขล่าสุด",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 20,
+        "name": "manual_reason",
+        "desc": "สาเหตุที่ต้องดำเนินการด้วยตนเอง เช่น ข้อมูลไม่ครบ ไม่พบ SKU ไม่พบ template",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": "manual_reason IN 'incomplete', 'sku-unregistered', 'sku-rule', 'rsl', 'template', 'address', 'price', 'supplier', 'stock-deduct'"
+      },
+      {
+        "no": 21,
+        "name": "customer_cancel_requested",
+        "desc": "ลูกค้าขอยกเลิกผ่าน Rakuten หรือไม่",
+        "type": "BOOLEAN",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น false"
+      },
+      {
+        "no": 22,
+        "name": "edit_log",
+        "desc": "ประวัติการแก้ไขข้อมูล Order (JSON)",
+        "type": "jsonb",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น '[]'"
+      },
+      {
+        "no": 23,
+        "name": "reorder_decision",
+        "desc": "ผลการตัดสินใจสั่งซื้อเพิ่ม (5A) คุ้มค่า หรือ ไม่คุ้มค่า",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": "(reorder_decision IS NULL) OR (reorder_decision IN 'คุ้มค่า', 'ไม่คุ้มค่า')"
+      },
+      {
+        "no": 24,
+        "name": "decided_qty",
+        "desc": "จำนวนที่ตัดสินใจสั่งซื้อ",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "",
+        "range": "(decided_qty IS NULL) OR (decided_qty > 0)"
+      },
+      {
+        "no": 25,
+        "name": "delivery_status",
+        "desc": "สถานะพัสดุล่าสุดจากขนส่ง (in_transit, delivered, failed, returned)",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": "(delivery_status IS NULL) OR (delivery_status IN 'in_transit', 'delivered', 'failed', 'returned')"
+      },
+      {
+        "no": 26,
+        "name": "reorder_id",
+        "desc": "คำสั่งซื้อเติมสต๊อกที่ Order นี้รออยู่ (6A ผูก, ว่างได้) คำสั่งซื้อหนึ่งรายการครอบคลุมได้หลาย Order",
+        "type": "text",
+        "key": "FK → reorders",
         "notnull": "",
         "range": ""
       }
@@ -1339,36 +740,28 @@
         "marketplace_order_id",
         "sales_channel",
         "order_date",
-        "channel_sku",
-        "sku",
-        "variation",
-        "qty",
         "shipping_address",
         "shipping_method",
         "order_status",
-        "verified_at",
-        "verified_by",
-        "sku_rule_id",
-        "sku_matched_at",
-        "decision",
-        "decided_at",
-        "decided_by",
-        "po_id",
-        "rsl_matched",
-        "rsl_reference_id",
-        "matched_at",
-        "fulfill_source",
+        "rsl_no",
+        "rsl_matched_at",
         "tracking_number",
         "carrier_name",
         "dispatched_at",
         "tracking_notified",
         "tracking_notified_at",
-        "stock_deducted",
-        "mp_stock_synced",
-        "deducted_at",
         "cancel_reason",
         "cancelled_at",
-        "cancelled_by"
+        "verified_at",
+        "created_at",
+        "updated_at",
+        "manual_reason",
+        "customer_cancel_requested",
+        "edit_log",
+        "reorder_decision",
+        "decided_qty",
+        "delivery_status",
+        "reorder_id"
       ],
       "rows": [
         [
@@ -1376,11 +769,7 @@
           "377841-20261005-0000190",
           "Rakuten Ichiba",
           "2026-10-05 00:12",
-          "rk-mlr240-sv",
-          "FSH-MLR-240",
-          "สีเงินลายปลาซิว",
-          "2",
-          "150-0001 東京都渋谷区神宮前 1-2-3",
+          "東京都杉並区高円寺南 3-14-7 サンハイツ 402",
           "RSL ปกติ",
           "รอตรวจสอบคำสั่งซื้อ",
           "NULL",
@@ -1388,35 +777,55 @@
           "NULL",
           "NULL",
           "NULL",
-          "NULL",
-          "NULL",
-          "NULL",
           "false",
           "NULL",
           "NULL",
-          "rsl",
           "NULL",
           "NULL",
+          "2026-10-05 00:12",
+          "2026-11-06 03:07",
           "NULL",
           "false",
-          "NULL",
-          "false",
-          "false",
+          "",
           "NULL",
           "NULL",
           "NULL",
           "NULL"
         ],
         [
-          "ORD-24185",
-          "377841-20261004-0000185",
+          "ORD-24194",
+          "377841-20261005-0000194",
           "Rakuten Ichiba",
-          "2026-10-04 10:40",
-          "rk-mlr240-sv",
-          "FSH-MLR-240",
-          "สีเงินลายปลาซิว",
-          "0",
-          "530-0001 大阪府大阪市北区梅田 2-4-9",
+          "2026-10-04 23:47",
+          "長野県松本市中央 2-5-11",
+          "จัดส่งเอง",
+          "รอตรวจสอบคำสั่งซื้อ",
+          "NULL",
+          "NULL",
+          "NULL",
+          "NULL",
+          "NULL",
+          "false",
+          "NULL",
+          "NULL",
+          "NULL",
+          "NULL",
+          "2026-10-04 23:47",
+          "2026-11-06 03:07",
+          "NULL",
+          "false",
+          "",
+          "NULL",
+          "NULL",
+          "NULL",
+          "NULL"
+        ],
+        [
+          "ORD-24189",
+          "377841-20261005-0000189",
+          "Rakuten Ichiba",
+          "2026-10-04 23:47",
+          "大阪府吹田市江坂町 1-23-5",
           "RSL ปกติ",
           "รอตรวจสอบคำสั่งซื้อ",
           "NULL",
@@ -1424,40 +833,29 @@
           "NULL",
           "NULL",
           "NULL",
-          "NULL",
-          "NULL",
-          "NULL",
           "false",
           "NULL",
           "NULL",
-          "rsl",
           "NULL",
           "NULL",
+          "2026-10-04 23:47",
+          "2026-11-06 03:07",
           "NULL",
           "false",
-          "NULL",
-          "false",
-          "false",
+          "",
           "NULL",
           "NULL",
           "NULL",
           "NULL"
         ],
         [
-          "ORD-24184",
-          "377841-20261004-0000184",
+          "ORD-24188",
+          "377841-20261005-0000188",
           "Rakuten Ichiba",
-          "2026-10-04 09:55",
-          "rk-rds180-m",
-          "FSH-RDS-180",
-          "แอ็คชันกลาง",
-          "2",
-          "460-0008 愛知県名古屋市中区栄 3-5-1",
+          "2026-10-04 23:02",
+          "",
           "RSL ปกติ",
-          "รอ Admin ตัดสินใจสั่งซื้อ",
-          "2026-10-04 10:10",
-          "U001",
-          "5",
+          "รอตรวจสอบคำสั่งซื้อ",
           "NULL",
           "NULL",
           "NULL",
@@ -1466,34 +864,26 @@
           "false",
           "NULL",
           "NULL",
-          "rsl",
           "NULL",
           "NULL",
+          "2026-10-04 23:02",
+          "2026-11-06 03:07",
           "NULL",
           "false",
-          "NULL",
-          "false",
-          "false",
+          "",
           "NULL",
           "NULL",
           "NULL",
           "NULL"
         ],
         [
-          "ORD-24183",
-          "377841-20261004-0000183",
+          "ORD-24187",
+          "377841-20261005-0000187",
           "Rakuten Ichiba",
-          "2026-10-04 07:20",
-          "rk-mlr240-sv",
-          "FSH-MLR-240",
-          "สีเงินลายปลาซิว",
-          "4",
-          "812-0011 福岡県福岡市博多区博多駅前 2-1-1",
+          "2026-10-04 22:31",
+          "北海道札幌市中央区南九条西 4-2-18",
           "RSL ปกติ",
-          "ยังไม่ได้จับคู่",
-          "2026-10-04 07:40",
-          "U001",
-          "1",
+          "รอตรวจสอบคำสั่งซื้อ",
           "NULL",
           "NULL",
           "NULL",
@@ -1502,50 +892,13 @@
           "false",
           "NULL",
           "NULL",
-          "rsl",
           "NULL",
           "NULL",
-          "NULL",
-          "false",
-          "NULL",
-          "false",
-          "false",
-          "NULL",
-          "NULL",
-          "NULL",
-          "NULL"
-        ],
-        [
-          "ORD-24181",
-          "377841-20261004-0000181",
-          "Rakuten Ichiba",
-          "2026-10-04 02:05",
-          "rk-lmp021-w",
-          "OUT-LMP-021",
-          "แสงวอร์ม",
-          "1",
-          "060-0001 北海道札幌市中央区北1条西 4-2",
-          "RSL ปกติ",
-          "รอพิมพ์ใบปะสินค้า",
-          "2026-10-04 02:20",
-          "U001",
-          "6",
-          "NULL",
-          "NULL",
-          "NULL",
-          "NULL",
+          "2026-10-04 22:31",
+          "2026-11-06 03:07",
           "NULL",
           "true",
-          "RSL-9f2231",
-          "2026-10-04 02:25",
-          "rsl",
-          "NULL",
-          "NULL",
-          "NULL",
-          "false",
-          "NULL",
-          "false",
-          "false",
+          "",
           "NULL",
           "NULL",
           "NULL",
@@ -1555,85 +908,296 @@
     }
   },
   {
-    "table": "label",
-    "title": "ตารางใบปะสินค้า (LABEL)",
+    "table": "order_items",
+    "title": "ตารางรายการสินค้าในคำสั่งซื้อ (ORDER_ITEMS)",
     "columns": [
       {
         "no": 1,
-        "name": "label_id",
-        "desc": "รหัสใบปะสินค้า",
-        "type": "INTEGER",
+        "name": "order_item_id",
+        "desc": "รหัสรายการสินค้าใน Order",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
-        "range": "รันเลขอัตโนมัติ"
+        "range": ""
       },
       {
         "no": 2,
-        "name": "order_id",
-        "desc": "Order ที่ใบปะนี้ใช้",
-        "type": "VARCHAR(12)",
-        "key": "FK → orders",
+        "name": "channel_sku",
+        "desc": "รหัสสินค้าตามช่องทางขายที่มากับ Order",
+        "type": "text",
+        "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 3,
-        "name": "label_template",
-        "desc": "รูปแบบใบปะสินค้า",
-        "type": "VARCHAR(30)",
+        "name": "variation",
+        "desc": "ตัวเลือกสินค้า",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 4,
-        "name": "rsl_reference_id",
-        "desc": "เลขอ้างอิง RSL ที่พิมพ์บนใบปะ",
-        "type": "VARCHAR(20)",
+        "name": "qty",
+        "desc": "จำนวนที่สั่ง",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "qty >= 0"
+      },
+      {
+        "no": 5,
+        "name": "fulfill_source",
+        "desc": "คลังที่ใช้ส่งสินค้า (rsl, in_house) กำหนดตอนตรวจสต๊อก (3S)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "fulfill_source IN 'in_house', 'rsl'"
+      },
+      {
+        "no": 6,
+        "name": "stock_deducted",
+        "desc": "ตัดสต๊อกแล้วหรือยัง (7S)",
+        "type": "BOOLEAN",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น false"
+      },
+      {
+        "no": 7,
+        "name": "deducted_at",
+        "desc": "วันเวลาที่ตัดสต๊อก",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 8,
+        "name": "order_id",
+        "desc": "Order ที่รายการนี้อยู่",
+        "type": "text",
+        "key": "FK → orders",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 9,
+        "name": "sku_id",
+        "desc": "สินค้าในระบบหลังจับคู่กฎ SKU (2S) ว่างได้ถ้ายังไม่จับคู่",
+        "type": "text",
+        "key": "FK → skus",
+        "notnull": "",
+        "range": ""
+      }
+    ],
+    "sample": {
+      "fields": [
+        "order_item_id",
+        "channel_sku",
+        "variation",
+        "qty",
+        "fulfill_source",
+        "stock_deducted",
+        "deducted_at",
+        "order_id",
+        "sku_id"
+      ],
+      "rows": [
+        [
+          "ORD-24190-ITEM-1",
+          "rk-mlr240-sv",
+          "สีเงินลายปลาซิว",
+          "2",
+          "rsl",
+          "false",
+          "NULL",
+          "ORD-24190",
+          "SKU-FSH-MLR-240"
+        ],
+        [
+          "ORD-24194-ITEM-1",
+          "rk-stg045-28",
+          "ขนาด 28 ลิตร",
+          "1",
+          "rsl",
+          "false",
+          "NULL",
+          "ORD-24194",
+          "SKU-HOM-STG-045"
+        ],
+        [
+          "ORD-24189-ITEM-1",
+          "rk-ydm012-3-new",
+          "แพ็ค 3 หลอด",
+          "1",
+          "rsl",
+          "false",
+          "NULL",
+          "ORD-24189",
+          "SKU-YDM-HRB-012"
+        ],
+        [
+          "ORD-24188-ITEM-1",
+          "rk-stg045-28",
+          "ขนาด 28 ลิตร",
+          "1",
+          "rsl",
+          "false",
+          "NULL",
+          "ORD-24188",
+          "SKU-HOM-STG-045"
+        ],
+        [
+          "ORD-24187-ITEM-1",
+          "rk-lmp021-w",
+          "แสงวอร์ม",
+          "1",
+          "rsl",
+          "false",
+          "NULL",
+          "ORD-24187",
+          "SKU-OUT-LMP-021"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "costs",
+    "title": "ตารางต้นทุนสินค้า (COSTS)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "cost_id",
+        "desc": "รหัสรายการต้นทุน",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "purchase_price",
+        "desc": "ราคาซื้อทั้งล็อตในสกุลเงินของซัพพลายเออร์",
+        "type": "NUMERIC(14,4)",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "currency",
+        "desc": "สกุลเงินที่ซื้อ",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
-        "no": 5,
-        "name": "parcel_seq",
-        "desc": "ลำดับกล่อง",
-        "type": "SMALLINT",
+        "no": 4,
+        "name": "exchange_rate",
+        "desc": "อัตราแลกเปลี่ยนที่ใช้แปลงราคาซื้อ",
+        "type": "NUMERIC(14,6)",
         "key": "",
-        "notnull": "Not Null",
-        "range": "parcel_total >= parcel_seq; parcel_seq >= 1"
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "intl_freight",
+        "desc": "ค่าขนส่งระหว่างประเทศทั้งล็อต",
+        "type": "NUMERIC(14,4)",
+        "key": "",
+        "notnull": "",
+        "range": ""
       },
       {
         "no": 6,
-        "name": "parcel_total",
-        "desc": "จำนวนกล่องทั้งหมดของ Order",
-        "type": "SMALLINT",
+        "name": "duty_fee",
+        "desc": "ภาษีนำเข้าทั้งล็อต",
+        "type": "NUMERIC(14,4)",
         "key": "",
-        "notnull": "Not Null",
-        "range": "parcel_total >= parcel_seq"
+        "notnull": "",
+        "range": ""
       },
       {
         "no": 7,
-        "name": "label_status",
-        "desc": "สถานะการพิมพ์",
-        "type": "VARCHAR(10)",
+        "name": "marketplace_fee",
+        "desc": "ค่าธรรมเนียม Marketplace ต่อชิ้น",
+        "type": "NUMERIC(14,4)",
         "key": "",
-        "notnull": "Not Null",
-        "range": "(label_status) IN ('รอพิมพ์', 'พิมพ์แล้ว'["
+        "notnull": "",
+        "range": ""
       },
       {
         "no": 8,
-        "name": "created_at",
-        "desc": "วันเวลาที่สร้างใบปะ (6S)",
-        "type": "TIMESTAMPTZ",
+        "name": "domestic_shipping",
+        "desc": "ค่าส่งในประเทศต่อชิ้น",
+        "type": "NUMERIC(14,4)",
         "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น now()"
+        "notnull": "",
+        "range": ""
       },
       {
         "no": 9,
-        "name": "printed_at",
-        "desc": "วันเวลาที่พิมพ์ (9A)",
+        "name": "rsl_charge",
+        "desc": "ค่าธรรมเนียม RSL ต่อชิ้น",
+        "type": "NUMERIC(14,4)",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 10,
+        "name": "order_qty",
+        "desc": "จำนวนชิ้นในล็อตที่ใช้หารต้นทุน",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "",
+        "range": "(order_qty IS NULL) OR (order_qty > 0)"
+      },
+      {
+        "no": 11,
+        "name": "unit_cost",
+        "desc": "ต้นทุนต่อหน่วยที่คำนวณได้ (4S)",
+        "type": "NUMERIC(14,4)",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 12,
+        "name": "calculated_at",
+        "desc": "วันเวลาที่คำนวณล่าสุด",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 13,
+        "name": "sku_id",
+        "desc": "สินค้าของต้นทุนนี้",
+        "type": "text",
+        "key": "FK → skus",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 14,
+        "name": "order_id",
+        "desc": "Order ที่อ้างอิงต้นทุนนี้ (ว่างได้)",
+        "type": "text",
+        "key": "FK → orders",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 15,
+        "name": "exchange_rate_updated_at",
+        "desc": "วันเวลาที่อัปเดตอัตราแลกเปลี่ยน ใช้ตรวจว่าอัตราเก่าเกินไปหรือไม่",
         "type": "TIMESTAMPTZ",
         "key": "",
         "notnull": "",
@@ -1642,166 +1206,987 @@
     ],
     "sample": {
       "fields": [
-        "label_id",
+        "cost_id",
+        "purchase_price",
+        "currency",
+        "exchange_rate",
+        "intl_freight",
+        "duty_fee",
+        "marketplace_fee",
+        "domestic_shipping",
+        "rsl_charge",
+        "order_qty",
+        "unit_cost",
+        "calculated_at",
+        "sku_id",
         "order_id",
-        "label_template",
-        "rsl_reference_id",
-        "parcel_seq",
-        "parcel_total",
-        "label_status",
-        "created_at",
-        "printed_at"
+        "exchange_rate_updated_at"
       ],
       "rows": [
         [
-          "1",
-          "ORD-24160",
-          "RSL-STD-A6",
-          "RSL-8a1102",
-          "1",
-          "1",
-          "พิมพ์แล้ว",
-          "2025-08-15 01:30",
-          "2025-08-15 01:40"
+          "COST-FSH-MLR-240",
+          "9100.0000",
+          "CNY",
+          "4.920000",
+          "8600.0000",
+          "3150.0000",
+          "72.0000",
+          "46.0000",
+          "18.0000",
+          "200",
+          "418.6100",
+          "2026-11-06 03:07",
+          "SKU-FSH-MLR-240",
+          "NULL",
+          "2026-11-06 01:07"
         ],
         [
-          "2",
-          "ORD-24170",
-          "RSL-STD-A6",
-          "RSL-9f2101",
-          "1",
-          "1",
-          "พิมพ์แล้ว",
-          "2026-10-01 03:30",
-          "2026-10-01 03:40"
+          "COST-FSH-RDS-180",
+          "16400.0000",
+          "CNY",
+          "4.920000",
+          "5400.0000",
+          "2080.0000",
+          "148.0000",
+          "92.0000",
+          "18.0000",
+          "40",
+          "2462.2000",
+          "2026-11-06 03:07",
+          "SKU-FSH-RDS-180",
+          "NULL",
+          "2026-11-06 01:07"
         ],
         [
-          "3",
-          "ORD-24172",
-          "RSL-STD-A6",
-          "RSL-9f2150",
-          "1",
-          "1",
-          "พิมพ์แล้ว",
-          "2026-10-02 01:55",
-          "2026-10-02 02:00"
+          "COST-OUT-CHR-003",
+          "32280.0000",
+          "CNY",
+          "4.920000",
+          "11200.0000",
+          "4360.0000",
+          "190.0000",
+          "135.0000",
+          "24.0000",
+          "60",
+          "3255.2933",
+          "2026-11-06 03:07",
+          "SKU-OUT-CHR-003",
+          "NULL",
+          "2026-11-03 03:07"
         ],
         [
-          "4",
-          "ORD-24174",
-          "RSL-STD-A6",
-          "RSL-9f2207",
-          "1",
-          "1",
-          "พิมพ์แล้ว",
-          "2026-10-03 00:40",
-          "2026-10-03 00:50"
+          "COST-HOM-STG-045",
+          "8400.0000",
+          "CNY",
+          "4.920000",
+          "6800.0000",
+          "2100.0000",
+          "64.0000",
+          "58.0000",
+          "18.0000",
+          "120",
+          "558.5667",
+          "2026-11-06 03:07",
+          "SKU-HOM-STG-045",
+          "NULL",
+          "2026-11-06 01:07"
         ],
         [
-          "5",
-          "ORD-24178",
-          "RSL-STD-A6",
-          "RSL-9f2219",
-          "1",
-          "1",
-          "พิมพ์แล้ว",
-          "2026-10-03 07:10",
-          "2026-10-03 07:20"
+          "COST-HOM-KIT-108",
+          "3000.0000",
+          "CNY",
+          "4.920000",
+          "3000.0000",
+          "900.0000",
+          "60.0000",
+          "45.0000",
+          "18.0000",
+          "20",
+          "1056.0000",
+          "2026-11-06 03:07",
+          "SKU-HOM-KIT-108",
+          "NULL",
+          "2026-11-06 01:07"
         ]
       ]
     }
   },
   {
-    "table": "rsl_shipments",
-    "title": "ตารางสินค้าในคลัง RSL (RSL_SHIPMENTS)",
+    "table": "reorders",
+    "title": "ตารางคำสั่งซื้อเติมสต๊อก (REORDERS)",
     "columns": [
       {
         "no": 1,
-        "name": "rsl_order_id",
-        "desc": "รหัสรายการสินค้าในระบบ RSL",
-        "type": "VARCHAR(20)",
+        "name": "reorder_id",
+        "desc": "เลขที่คำสั่งซื้อเติมสต๊อก",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 2,
-        "name": "rsl_sku",
-        "desc": "SKU ของสินค้าใน RSL",
-        "type": "VARCHAR(20)",
-        "key": "FK → products",
+        "name": "order_qty",
+        "desc": "จำนวนที่สั่งซื้อ",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "order_qty > 0"
+      },
+      {
+        "no": 3,
+        "name": "decision",
+        "desc": "ผลการตัดสินใจที่มาของคำสั่งซื้อ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 4,
+        "name": "decided_at",
+        "desc": "วันเวลาที่ตัดสินใจ",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "reorder_status",
+        "desc": "สถานะคำสั่งซื้อ (รอส่งคำสั่งซื้อ, สั่งซื้อแล้ว, ได้รับสินค้าแล้ว, ยกเลิกแล้ว)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 6,
+        "name": "ordered_at",
+        "desc": "วันเวลาที่ส่งคำสั่งซื้อให้ซัพพลายเออร์ (6A)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 7,
+        "name": "expected_date",
+        "desc": "วันที่คาดว่าจะได้รับสินค้า",
+        "type": "DATE",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 8,
+        "name": "supplier_tracking_no",
+        "desc": "เลขติดตามพัสดุจากซัพพลายเออร์",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 9,
+        "name": "received_at",
+        "desc": "วันเวลาที่ Admin บันทึกการรับสินค้า (6A)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 10,
+        "name": "created_at",
+        "desc": "วันเวลาที่สร้างคำสั่งซื้อ",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 11,
+        "name": "sku_id",
+        "desc": "สินค้าที่สั่งซื้อ",
+        "type": "text",
+        "key": "FK → skus",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 12,
+        "name": "supplier_id",
+        "desc": "ซัพพลายเออร์ที่สั่งซื้อ",
+        "type": "text",
+        "key": "FK → suppliers",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 13,
+        "name": "supplier_request_id",
+        "desc": "รหัสคำขอที่ส่งให้ซัพพลายเออร์ ใช้ซ้ำเมื่อส่งใหม่เพื่อไม่ให้สั่งซ้ำ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": "ห้ามซ้ำ (UNIQUE)"
+      },
+      {
+        "no": 14,
+        "name": "supplier_reference",
+        "desc": "เลขอ้างอิงที่ซัพพลายเออร์ตอบกลับ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 15,
+        "name": "last_error_code",
+        "desc": "รหัสข้อผิดพลาดล่าสุดตอนส่งคำสั่งซื้อ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 16,
+        "name": "received_qty",
+        "desc": "จำนวนที่ได้รับจริงจากซัพพลายเออร์ (6A รับสินค้า) ว่างได้จนกว่าจะรับสินค้า",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "",
+        "range": "(received_qty IS NULL) OR (received_qty > 0)"
+      }
+    ],
+    "sample": {
+      "fields": [
+        "reorder_id",
+        "order_qty",
+        "decision",
+        "decided_at",
+        "reorder_status",
+        "ordered_at",
+        "expected_date",
+        "supplier_tracking_no",
+        "received_at",
+        "created_at",
+        "sku_id",
+        "supplier_id",
+        "supplier_request_id",
+        "supplier_reference",
+        "last_error_code",
+        "received_qty"
+      ],
+      "rows": [
+        [
+          "PO-0091",
+          "60",
+          "NULL",
+          "NULL",
+          "สั่งซื้อแล้ว",
+          "2026-09-24 01:00",
+          "2026-10-22 00:00",
+          "NULL",
+          "NULL",
+          "2026-09-24 01:00",
+          "SKU-OUT-CHR-003",
+          "SUP-03",
+          "NULL",
+          "NULL",
+          "NULL",
+          "NULL"
+        ],
+        [
+          "PO-0087",
+          "40",
+          "คุ้มค่า",
+          "2026-08-28 02:00",
+          "ได้รับสินค้าแล้ว",
+          "2026-08-28 02:05",
+          "2026-09-18 00:00",
+          "SF1029384756",
+          "2026-09-17 04:00",
+          "2026-08-28 02:00",
+          "SKU-FSH-MLR-240",
+          "SUP-01",
+          "REQ-PO-0087",
+          "NB-77120",
+          "NULL",
+          "40"
+        ],
+        [
+          "PO-0088",
+          "30",
+          "คุ้มค่า",
+          "2026-09-02 03:00",
+          "ได้รับสินค้าแล้ว",
+          "2026-09-02 03:05",
+          "2026-09-12 00:00",
+          "NULL",
+          "2026-09-11 05:00",
+          "2026-09-02 03:00",
+          "SKU-YDM-HRB-012",
+          "SUP-02",
+          "REQ-PO-0088",
+          "TH-5521",
+          "NULL",
+          "30"
+        ],
+        [
+          "PO-0089",
+          "25",
+          "คุ้มค่า",
+          "2026-09-10 02:00",
+          "ยกเลิกแล้ว",
+          "2026-09-10 02:05",
+          "2026-09-28 00:00",
+          "NULL",
+          "NULL",
+          "2026-09-10 02:00",
+          "SKU-HOM-STG-045",
+          "SUP-04",
+          "REQ-PO-0089",
+          "FS-3310",
+          "NULL",
+          "NULL"
+        ],
+        [
+          "PO-0090",
+          "50",
+          "คุ้มค่า",
+          "2026-10-05 01:30",
+          "รอส่งคำสั่งซื้อ",
+          "NULL",
+          "NULL",
+          "NULL",
+          "NULL",
+          "2026-10-05 01:30",
+          "SKU-FSH-RDS-180",
+          "SUP-01",
+          "REQ-PO-0090",
+          "NULL",
+          "external_unavailable",
+          "NULL"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "labels",
+    "title": "ตารางใบปะสินค้า (LABELS)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "label_id",
+        "desc": "รหัสใบปะสินค้า",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "label_template",
+        "desc": "รูปแบบใบปะสินค้าตามวิธีจัดส่ง",
+        "type": "text",
+        "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 3,
-        "name": "rsl_variation",
-        "desc": "ตัวเลือกสินค้าใน RSL",
-        "type": "VARCHAR(50)",
+        "name": "rsl_no",
+        "desc": "เลขอ้างอิง RSL ที่พิมพ์บนใบปะ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 4,
+        "name": "parcel_seq",
+        "desc": "ลำดับกล่อง",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "parcel_seq > 0"
+      },
+      {
+        "no": 5,
+        "name": "parcel_total",
+        "desc": "จำนวนกล่องทั้งหมดของ Order",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "parcel_total > 0"
+      },
+      {
+        "no": 6,
+        "name": "label_status",
+        "desc": "สถานะใบปะ (ready, printed)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 7,
+        "name": "created_at",
+        "desc": "วันเวลาที่สร้างใบปะ (6S)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 8,
+        "name": "printed_at",
+        "desc": "วันเวลาที่พิมพ์สำเร็จ (9A)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 9,
+        "name": "order_id",
+        "desc": "Order ที่ใบปะนี้ใช้",
+        "type": "text",
+        "key": "FK → orders",
+        "notnull": "Not Null",
+        "range": ""
+      }
+    ],
+    "sample": {
+      "fields": [
+        "label_id",
+        "label_template",
+        "rsl_no",
+        "parcel_seq",
+        "parcel_total",
+        "label_status",
+        "created_at",
+        "printed_at",
+        "order_id"
+      ],
+      "rows": [
+        [
+          "ORD-24181-LABEL-1",
+          "RSL-STD-A6",
+          "RSL-9f21a7",
+          "1",
+          "1",
+          "ready",
+          "2026-10-03 10:44",
+          "NULL",
+          "ORD-24181"
+        ],
+        [
+          "ORD-24180-LABEL-1",
+          "RSL-LARGE-A5",
+          "RSL-9f21c8",
+          "1",
+          "2",
+          "ready",
+          "2026-10-03 02:02",
+          "NULL",
+          "ORD-24180"
+        ],
+        [
+          "ORD-24180-LABEL-2",
+          "RSL-LARGE-A5",
+          "RSL-9f21c8",
+          "2",
+          "2",
+          "ready",
+          "2026-10-03 02:02",
+          "NULL",
+          "ORD-24180"
+        ],
+        [
+          "ORD-24178-LABEL-1",
+          "RSL-STD-A6",
+          "RSL-9f21a7",
+          "1",
+          "1",
+          "printed",
+          "2026-10-02 01:19",
+          "2026-10-04 01:30",
+          "ORD-24178"
+        ],
+        [
+          "ORD-24177-LABEL-1",
+          "INHOUSE-YAMATO-A6",
+          "NULL",
+          "1",
+          "1",
+          "printed",
+          "2026-10-02 00:03",
+          "2026-10-04 01:31",
+          "ORD-24177"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "sessions",
+    "title": "ตารางเซสชันเข้าสู่ระบบ (SESSIONS)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "session_id",
+        "desc": "รหัสเซสชัน",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "admin_id",
+        "desc": "ผู้ดูแลระบบเจ้าของเซสชัน",
+        "type": "text",
+        "key": "FK → admins",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "token_hash",
+        "desc": "ค่า hash ของ token ใน cookie (ไม่เก็บ token จริง)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ห้ามซ้ำ (UNIQUE)"
+      },
+      {
+        "no": 4,
+        "name": "created_at",
+        "desc": "วันเวลาที่เข้าสู่ระบบ (1A)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "expires_at > created_at; ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 5,
+        "name": "expires_at",
+        "desc": "วันเวลาที่เซสชันหมดอายุ",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "expires_at > created_at"
+      },
+      {
+        "no": 6,
+        "name": "revoked_at",
+        "desc": "วันเวลาที่ออกจากระบบ (ว่างถ้ายังใช้งาน)",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      }
+    ],
+    "sample": {
+      "fields": [
+        "session_id",
+        "admin_id",
+        "token_hash",
+        "created_at",
+        "expires_at",
+        "revoked_at"
+      ],
+      "rows": [
+        [
+          "SES-0001",
+          "U001",
+          "sha256:7f3c9a1e5b2d4c8f0a6e9b3d1c7f5a2e",
+          "2026-10-04 23:30",
+          "2026-10-05 11:30",
+          "NULL"
+        ],
+        [
+          "SES-0002",
+          "U001",
+          "sha256:2b8e4f6a1c9d3e7b5f0a8c2d6e4b1f9a",
+          "2026-10-03 01:10",
+          "2026-10-03 13:10",
+          "2026-10-03 09:00"
+        ],
+        [
+          "SES-0003",
+          "U001",
+          "sha256:9c1d7e3f5a2b8c4d6e0f1a3b5c7d9e2f",
+          "2026-10-04 00:05",
+          "2026-10-04 12:05",
+          "NULL"
+        ],
+        [
+          "SES-0004",
+          "U001",
+          "sha256:4e6a8c0b2d4f6a8c1e3b5d7f9a1c3e5b",
+          "2026-10-04 08:15",
+          "2026-10-04 20:15",
+          "2026-10-04 10:00"
+        ],
+        [
+          "SES-0005",
+          "U001",
+          "sha256:1a3c5e7b9d2f4a6c8e0b1d3f5a7c9e2d",
+          "2026-10-03 01:00",
+          "2026-10-03 13:00",
+          "NULL"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "auto_error_logs",
+    "title": "ตารางบันทึกข้อผิดพลาดของงานอัตโนมัติ (AUTO_ERROR_LOGS)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "auto_error_log_id",
+        "desc": "รหัสบันทึก",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "use_case_id",
+        "desc": "Use Case อัตโนมัติที่เกิดข้อผิดพลาด เช่น 2S, 3S, 6S, 7S",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "context_key",
+        "desc": "รายการที่เกี่ยวข้อง เช่น รหัส Order",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 4,
-        "name": "rsl_stock_qty",
-        "desc": "จำนวนคงเหลือใน RSL",
-        "type": "INTEGER",
+        "name": "error_code",
+        "desc": "รหัสข้อผิดพลาด เช่น external_unavailable",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
-        "range": "rsl_stock_qty >= 0"
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "safe_message",
+        "desc": "ข้อความที่แสดงได้โดยไม่เปิดเผยรายละเอียดภายใน",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 6,
+        "name": "occurred_at",
+        "desc": "วันเวลาที่เกิดข้อผิดพลาด",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
       }
     ],
     "sample": {
       "fields": [
-        "rsl_order_id",
-        "rsl_sku",
-        "rsl_variation",
-        "rsl_stock_qty"
+        "auto_error_log_id",
+        "use_case_id",
+        "context_key",
+        "error_code",
+        "safe_message",
+        "occurred_at"
       ],
       "rows": [
         [
-          "RSL-9f21a7",
-          "FSH-MLR-240",
-          "สีเงินลายปลาซิว",
-          "96"
+          "AEL-0001",
+          "2S",
+          "ORD-24185",
+          "external_unavailable",
+          "externalUnavailable",
+          "2026-10-05 01:05"
         ],
         [
-          "RSL-9f21b4",
-          "YDM-HRB-012",
-          "แพ็ค 3 หลอด",
-          "0"
+          "AEL-0002",
+          "6S",
+          "ORD-24179",
+          "external_unavailable",
+          "Label service could not generate labels",
+          "2026-10-03 03:12"
         ],
         [
-          "RSL-9f21c8",
-          "OUT-CHR-003",
-          "สีเขียวมะกอก",
-          "5"
+          "AEL-0003",
+          "3S",
+          "ORD-24176",
+          "stock_missing",
+          "Stock record is unavailable",
+          "2026-10-02 08:40"
         ],
         [
-          "RSL-9f21c9",
-          "OUT-CHR-003",
-          "สีเขียวมะกอก",
-          "3"
+          "AEL-0004",
+          "7S",
+          "ORD-24172",
+          "external_unavailable",
+          "Rakuten stock sync failed, will retry",
+          "2026-10-01 06:05"
         ],
         [
-          "RSL-9f21d3",
-          "OUT-LMP-021",
-          "แสงวอร์ม",
-          "12"
+          "AEL-0005",
+          "1S",
+          "ORD-24174",
+          "external_unavailable",
+          "RSL could not be reached",
+          "2026-10-02 02:30"
         ]
       ]
     }
   },
   {
-    "table": "delivery_partners",
-    "title": "ตารางการส่งมอบให้ขนส่ง (DELIVERY_PARTNERS)",
+    "table": "deletion_history",
+    "title": "ตารางประวัติการลบข้อมูล (DELETION_HISTORY)",
     "columns": [
       {
         "no": 1,
-        "name": "tracking_number",
-        "desc": "หมายเลขติดตามพัสดุ",
-        "type": "VARCHAR(20)",
+        "name": "deletion_history_id",
+        "desc": "รหัสบันทึกการลบ",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "order_reference",
+        "desc": "รหัส Order ที่ถูกลบ",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "order_snapshot",
+        "desc": "สำเนาข้อมูล Order ก่อนลบ (JSON)",
+        "type": "jsonb",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 4,
+        "name": "admin_id",
+        "desc": "ผู้ดูแลระบบที่สั่งลบ (10A)",
+        "type": "text",
+        "key": "FK → admins",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "deleted_at",
+        "desc": "วันเวลาที่ลบ",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      }
+    ],
+    "sample": {
+      "fields": [
+        "deletion_history_id",
+        "order_reference",
+        "order_snapshot",
+        "admin_id",
+        "deleted_at"
+      ],
+      "rows": [
+        [
+          "DEL-0001",
+          "ORD-22950",
+          "[object Object]",
+          "U001",
+          "2026-10-01 02:00"
+        ],
+        [
+          "DEL-0002",
+          "ORD-22951",
+          "[object Object]",
+          "U001",
+          "2026-10-01 02:00"
+        ],
+        [
+          "DEL-0003",
+          "ORD-22952",
+          "[object Object]",
+          "U001",
+          "2026-10-01 02:00"
+        ],
+        [
+          "DEL-0004",
+          "ORD-22953",
+          "[object Object]",
+          "U001",
+          "2026-10-01 02:00"
+        ],
+        [
+          "DEL-0005",
+          "PO-0071",
+          "[object Object]",
+          "U001",
+          "2026-10-01 02:01"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "cost_history",
+    "title": "ตารางประวัติการแก้ไขต้นทุน (COST_HISTORY)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "cost_history_id",
+        "desc": "รหัสบันทึก",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "sku_id",
+        "desc": "สินค้าที่แก้ต้นทุน",
+        "type": "text",
+        "key": "FK → skus",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "cost_id",
+        "desc": "รายการต้นทุนที่ถูกแก้",
+        "type": "text",
+        "key": "FK → costs",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 4,
+        "name": "previous_value",
+        "desc": "ค่าก่อนแก้ (JSON) ว่างถ้าเป็นการสร้างครั้งแรก",
+        "type": "jsonb",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "new_value",
+        "desc": "ค่าหลังแก้ (JSON)",
+        "type": "jsonb",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 6,
+        "name": "admin_id",
+        "desc": "ผู้ดูแลระบบที่แก้ (4S)",
+        "type": "text",
+        "key": "FK → admins",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 7,
+        "name": "changed_at",
+        "desc": "วันเวลาที่แก้",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      }
+    ],
+    "sample": {
+      "fields": [
+        "cost_history_id",
+        "sku_id",
+        "cost_id",
+        "previous_value",
+        "new_value",
+        "admin_id",
+        "changed_at"
+      ],
+      "rows": [
+        [
+          "CH-0001",
+          "SKU-FSH-MLR-240",
+          "COST-FSH-MLR-240",
+          "[object Object]",
+          "[object Object]",
+          "U001",
+          "2026-10-02 04:20"
+        ],
+        [
+          "CH-0002",
+          "SKU-OUT-LMP-021",
+          "COST-OUT-LMP-021",
+          "NULL",
+          "[object Object]",
+          "U001",
+          "2026-10-03 05:00"
+        ],
+        [
+          "CH-0003",
+          "SKU-OUT-CHR-003",
+          "COST-OUT-CHR-003",
+          "[object Object]",
+          "[object Object]",
+          "U001",
+          "2026-10-03 06:00"
+        ],
+        [
+          "CH-0004",
+          "SKU-HOM-KIT-108",
+          "COST-HOM-KIT-108",
+          "[object Object]",
+          "[object Object]",
+          "U001",
+          "2026-10-04 02:10"
+        ],
+        [
+          "CH-0005",
+          "SKU-YDM-HRB-012",
+          "COST-YDM-HRB-012",
+          "[object Object]",
+          "[object Object]",
+          "U001",
+          "2026-10-04 03:40"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "tracking_notification_logs",
+    "title": "ตารางบันทึกการแจ้งเลขติดตาม (TRACKING_NOTIFICATION_LOGS)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "tracking_notification_log_id",
+        "desc": "รหัสบันทึก",
+        "type": "text",
         "key": "PK",
         "notnull": "Not Null",
         "range": ""
@@ -1809,247 +2194,539 @@
       {
         "no": 2,
         "name": "order_id",
-        "desc": "Order ที่ส่งมอบ",
-        "type": "VARCHAR(12)",
+        "desc": "Order ที่แจ้งเลขติดตาม",
+        "type": "text",
         "key": "FK → orders",
         "notnull": "Not Null",
-        "range": "ห้ามซ้ำ (UNIQUE)"
+        "range": ""
       },
       {
         "no": 3,
-        "name": "carrier_name",
-        "desc": "ชื่อบริษัทขนส่ง",
-        "type": "VARCHAR(50)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 4,
-        "name": "pickup_date",
-        "desc": "วันที่ขนส่งรับพัสดุ",
-        "type": "DATE",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      }
-    ],
-    "sample": {
-      "fields": [
-        "tracking_number",
-        "order_id",
-        "carrier_name",
-        "pickup_date"
-      ],
-      "rows": [
-        [
-          "4418-2291-4160",
-          "ORD-24160",
-          "Yamato Transport",
-          "2025-08-15 00:00"
-        ],
-        [
-          "4418-2291-4170",
-          "ORD-24170",
-          "Yamato Transport",
-          "2026-10-01 00:00"
-        ],
-        [
-          "4418-2291-4172",
-          "ORD-24172",
-          "Yamato Transport",
-          "2026-10-02 00:00"
-        ],
-        [
-          "4418-2291-4174",
-          "ORD-24174",
-          "Yamato Transport",
-          "2026-10-03 00:00"
-        ],
-        [
-          "4418-2291-4178",
-          "ORD-24178",
-          "Yamato Transport",
-          "2026-10-05 00:00"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "carrier_tracking",
-    "title": "ตารางสถานะพัสดุ (CARRIER_TRACKING)",
-    "columns": [
-      {
-        "no": 1,
         "name": "tracking_number",
-        "desc": "หมายเลขติดตามพัสดุ",
-        "type": "VARCHAR(20)",
-        "key": "PK, FK → delivery_partners",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 2,
-        "name": "delivery_status",
-        "desc": "สถานะพัสดุจากบริษัทขนส่ง",
-        "type": "VARCHAR(12)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "(delivery_status) IN ('in_transit', 'delivered', 'failed', 'returned'["
-      },
-      {
-        "no": 3,
-        "name": "last_location",
-        "desc": "จุดที่พัสดุอยู่ล่าสุด",
-        "type": "VARCHAR(100)",
+        "desc": "หมายเลขติดตามที่แจ้ง",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
       },
       {
         "no": 4,
-        "name": "updated_at",
-        "desc": "วันเวลาที่ขนส่งอัปเดตสถานะ",
-        "type": "TIMESTAMPTZ",
+        "name": "outcome",
+        "desc": "ผลการแจ้ง (pending, sent, failed)",
+        "type": "text",
         "key": "",
         "notnull": "Not Null",
         "range": ""
-      }
-    ],
-    "sample": {
-      "fields": [
-        "tracking_number",
-        "delivery_status",
-        "last_location",
-        "updated_at"
-      ],
-      "rows": [
-        [
-          "4418-2291-4160",
-          "delivered",
-          "Yokohama Nishi Center",
-          "2025-08-16 05:00"
-        ],
-        [
-          "4418-2291-4170",
-          "delivered",
-          "Chiba Chuo Center",
-          "2026-10-02 02:30"
-        ],
-        [
-          "4418-2291-4172",
-          "in_transit",
-          "Kyoto Minami Hub",
-          "2026-10-02 21:10"
-        ],
-        [
-          "4418-2291-4174",
-          "in_transit",
-          "Kobe Port Hub",
-          "2026-10-03 23:20"
-        ],
-        [
-          "4418-2291-4178",
-          "in_transit",
-          "Sendai Aoba Center",
-          "2026-10-05 09:00"
-        ]
-      ]
-    }
-  },
-  {
-    "table": "deletion_log",
-    "title": "ตารางบันทึกการลบข้อมูล (DELETION_LOG)",
-    "columns": [
-      {
-        "no": 1,
-        "name": "log_id",
-        "desc": "รหัสบันทึก",
-        "type": "INTEGER",
-        "key": "PK",
-        "notnull": "Not Null",
-        "range": "รันเลขอัตโนมัติ"
-      },
-      {
-        "no": 2,
-        "name": "data_type",
-        "desc": "ประเภทข้อมูลที่ลบ",
-        "type": "VARCHAR(10)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "(data_type) IN ('order', 'cost', 'label', 'reorder'["
-      },
-      {
-        "no": 3,
-        "name": "record_id",
-        "desc": "รหัสของรายการที่ลบ",
-        "type": "VARCHAR(20)",
-        "key": "",
-        "notnull": "Not Null",
-        "range": ""
-      },
-      {
-        "no": 4,
-        "name": "deleted_at",
-        "desc": "วันเวลาที่ลบ",
-        "type": "TIMESTAMPTZ",
-        "key": "",
-        "notnull": "Not Null",
-        "range": "ค่าเริ่มต้น now()"
       },
       {
         "no": 5,
-        "name": "deleted_by",
-        "desc": "ผู้ลบ",
-        "type": "VARCHAR(10)",
-        "key": "FK → users",
+        "name": "sent_at",
+        "desc": "วันเวลาที่ส่งแจ้งล่าสุด",
+        "type": "TIMESTAMPTZ",
+        "key": "",
         "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      },
+      {
+        "no": 6,
+        "name": "admin_id",
+        "desc": "ผู้ดูแลระบบที่สั่งแจ้งซ้ำ (ว่างถ้าระบบแจ้งเองใน 5S)",
+        "type": "text",
+        "key": "FK → admins",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 7,
+        "name": "attempt_id",
+        "desc": "รหัสความพยายามส่ง ใช้ซ้ำตอน retry เพื่อไม่ให้แจ้งซ้ำ",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 8,
+        "name": "error_code",
+        "desc": "รหัสข้อผิดพลาดเมื่อแจ้งไม่สำเร็จ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
         "range": ""
       }
     ],
     "sample": {
       "fields": [
-        "log_id",
-        "data_type",
-        "record_id",
-        "deleted_at",
-        "deleted_by"
+        "tracking_notification_log_id",
+        "order_id",
+        "tracking_number",
+        "outcome",
+        "sent_at",
+        "admin_id",
+        "attempt_id",
+        "error_code"
       ],
       "rows": [
         [
+          "ORD-24172-NOTIFY-1",
+          "ORD-24172",
+          "4418-2290-1104",
+          "sent",
+          "2026-10-01 06:00",
+          "U001",
+          "ORD-24172-NOTIFY-1",
+          "NULL"
+        ],
+        [
+          "ORD-24166-NOTIFY-1",
+          "ORD-24166",
+          "4418-2290-1105",
+          "sent",
+          "2026-10-01 06:00",
+          "U001",
+          "ORD-24166-NOTIFY-1",
+          "NULL"
+        ],
+        [
+          "ORD-23012-NOTIFY-1",
+          "ORD-23012",
+          "4418-1001-0012",
+          "sent",
+          "2026-11-06 03:07",
+          "U001",
+          "ORD-23012-NOTIFY-1",
+          "NULL"
+        ],
+        [
+          "ORD-24168-NOTIFY-1",
+          "ORD-24168",
+          "4418-2290-0168",
+          "sent",
+          "2026-11-06 03:07",
+          "U001",
+          "ORD-24168-NOTIFY-1",
+          "NULL"
+        ],
+        [
+          "ORD-24165-NOTIFY-1",
+          "ORD-24165",
+          "4418-2290-1106",
+          "failed",
+          "2026-10-01 05:55",
+          "U001",
+          "ORD-24165-NOTIFY-1",
+          "external_unavailable"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "rakuten_stock_sync_states",
+    "title": "ตารางสถานะซิงก์สต๊อกกับ Rakuten (RAKUTEN_STOCK_SYNC_STATES)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "stock_id",
+        "desc": "รายการสต๊อกที่ซิงก์ (เป็นทั้ง PK และ FK)",
+        "type": "text",
+        "key": "PK, FK → stock",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "sync_status",
+        "desc": "สถานะการซิงก์ (pending, synced)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "sync_status IN 'pending', 'synced'"
+      },
+      {
+        "no": 3,
+        "name": "last_synced_qty",
+        "desc": "จำนวนที่ส่งไป Rakuten สำเร็จครั้งล่าสุด",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "",
+        "range": "(last_synced_qty IS NULL) OR (last_synced_qty >= 0)"
+      },
+      {
+        "no": 4,
+        "name": "last_attempt_at",
+        "desc": "วันเวลาที่พยายามซิงก์ล่าสุด",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "last_synced_at",
+        "desc": "วันเวลาที่ซิงก์สำเร็จล่าสุด",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 6,
+        "name": "last_error_code",
+        "desc": "รหัสข้อผิดพลาดล่าสุดตอนซิงก์ (7S)",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      }
+    ],
+    "sample": {
+      "fields": [
+        "stock_id",
+        "sync_status",
+        "last_synced_qty",
+        "last_attempt_at",
+        "last_synced_at",
+        "last_error_code"
+      ],
+      "rows": [
+        [
+          "STK-FSH-MLR-240",
+          "synced",
+          "148",
+          "NULL",
+          "2026-11-06 03:07",
+          "NULL"
+        ],
+        [
+          "STK-YDM-HRB-012",
+          "synced",
+          "118",
+          "NULL",
+          "2026-11-06 03:07",
+          "NULL"
+        ],
+        [
+          "STK-OUT-CHR-003",
+          "synced",
+          "14",
+          "NULL",
+          "2026-11-06 03:07",
+          "NULL"
+        ],
+        [
+          "STK-HOM-STG-045",
+          "synced",
           "1",
-          "order",
-          "ORD-24012",
-          "2026-01-10 00:00",
-          "U001"
+          "NULL",
+          "2026-11-06 03:07",
+          "NULL"
         ],
         [
-          "2",
-          "order",
-          "ORD-24013",
-          "2026-01-10 00:00",
-          "U001"
-        ],
+          "STK-FSH-RDS-180",
+          "synced",
+          "1",
+          "NULL",
+          "2026-11-06 03:07",
+          "NULL"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "stock_adjustment_history",
+    "title": "ตารางประวัติการปรับสต๊อก (STOCK_ADJUSTMENT_HISTORY)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "stock_adjustment_history_id",
+        "desc": "รหัสบันทึก",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "stock_id",
+        "desc": "รายการสต๊อกที่ปรับ",
+        "type": "text",
+        "key": "FK → stock",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "previous_in_house_qty",
+        "desc": "จำนวนในคลังบริษัทก่อนปรับ",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "previous_in_house_qty >= 0"
+      },
+      {
+        "no": 4,
+        "name": "new_in_house_qty",
+        "desc": "จำนวนในคลังบริษัทหลังปรับ",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "new_in_house_qty >= 0"
+      },
+      {
+        "no": 5,
+        "name": "previous_rsl_qty",
+        "desc": "จำนวนในคลัง RSL ก่อนปรับ",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "",
+        "range": "(previous_rsl_qty IS NULL) OR (previous_rsl_qty >= 0)"
+      },
+      {
+        "no": 6,
+        "name": "new_rsl_qty",
+        "desc": "จำนวนในคลัง RSL หลังปรับ",
+        "type": "INTEGER",
+        "key": "",
+        "notnull": "",
+        "range": "(new_rsl_qty IS NULL) OR (new_rsl_qty >= 0)"
+      },
+      {
+        "no": 7,
+        "name": "reason",
+        "desc": "เหตุผลที่ปรับสต๊อก",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 8,
+        "name": "admin_id",
+        "desc": "ผู้ดูแลระบบที่ปรับ",
+        "type": "text",
+        "key": "FK → admins",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 9,
+        "name": "adjusted_at",
+        "desc": "วันเวลาที่ปรับ",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      }
+    ],
+    "sample": {
+      "fields": [
+        "stock_adjustment_history_id",
+        "stock_id",
+        "previous_in_house_qty",
+        "new_in_house_qty",
+        "previous_rsl_qty",
+        "new_rsl_qty",
+        "reason",
+        "admin_id",
+        "adjusted_at"
+      ],
+      "rows": [
         [
-          "3",
-          "cost",
-          "102",
-          "2026-01-10 00:00",
-          "U001"
-        ],
-        [
+          "SAH-0001",
+          "STK-OUT-CHR-003",
           "4",
-          "label",
-          "57",
-          "2026-01-10 00:00",
-          "U003"
+          "6",
+          "8",
+          "8",
+          "นับสต๊อกจริงพบเพิ่ม 2 ตัว",
+          "U001",
+          "2026-10-04 06:00"
         ],
         [
-          "5",
-          "reorder",
-          "PO-0003",
-          "2026-01-10 00:00",
-          "U003"
+          "SAH-0002",
+          "STK-HOM-STG-045",
+          "3",
+          "1",
+          "0",
+          "0",
+          "สินค้าชำรุด 2 ชิ้น",
+          "U001",
+          "2026-10-04 06:10"
+        ],
+        [
+          "SAH-0003",
+          "STK-FSH-MLR-240",
+          "54",
+          "52",
+          "96",
+          "96",
+          "ส่งตัวอย่างให้ลูกค้า 2 ชิ้น",
+          "U001",
+          "2026-10-04 06:20"
+        ],
+        [
+          "SAH-0004",
+          "STK-YDM-HRB-012",
+          "120",
+          "118",
+          "NULL",
+          "NULL",
+          "นับสต๊อกจริงพบขาด 2 ชิ้น",
+          "U001",
+          "2026-10-04 06:30"
+        ],
+        [
+          "SAH-0005",
+          "STK-HOM-KIT-108",
+          "0",
+          "2",
+          "3",
+          "3",
+          "รับคืนสินค้าจากลูกค้า 2 ชิ้น",
+          "U001",
+          "2026-10-04 06:40"
+        ]
+      ]
+    }
+  },
+  {
+    "table": "label_print_history",
+    "title": "ตารางประวัติการพิมพ์ใบปะ (LABEL_PRINT_HISTORY)",
+    "columns": [
+      {
+        "no": 1,
+        "name": "label_print_history_id",
+        "desc": "รหัสบันทึก",
+        "type": "text",
+        "key": "PK",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 2,
+        "name": "print_attempt_id",
+        "desc": "รหัสการสั่งพิมพ์หนึ่งครั้ง (หนึ่งครั้งพิมพ์ได้หลายใบ)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 3,
+        "name": "label_id",
+        "desc": "ใบปะที่พิมพ์",
+        "type": "text",
+        "key": "FK → labels",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 4,
+        "name": "admin_id",
+        "desc": "ผู้ดูแลระบบที่สั่งพิมพ์ (9A)",
+        "type": "text",
+        "key": "FK → admins",
+        "notnull": "Not Null",
+        "range": ""
+      },
+      {
+        "no": 5,
+        "name": "is_reprint",
+        "desc": "เป็นการพิมพ์ซ้ำหรือไม่",
+        "type": "BOOLEAN",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น false"
+      },
+      {
+        "no": 6,
+        "name": "outcome",
+        "desc": "ผลการพิมพ์ (printed, failed)",
+        "type": "text",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "outcome IN 'printed', 'failed'"
+      },
+      {
+        "no": 7,
+        "name": "error_code",
+        "desc": "รหัสข้อผิดพลาดเมื่อพิมพ์ไม่สำเร็จ",
+        "type": "text",
+        "key": "",
+        "notnull": "",
+        "range": ""
+      },
+      {
+        "no": 8,
+        "name": "attempted_at",
+        "desc": "วันเวลาที่สั่งพิมพ์",
+        "type": "TIMESTAMPTZ",
+        "key": "",
+        "notnull": "Not Null",
+        "range": "ค่าเริ่มต้น CURRENT_TIMESTAMP"
+      }
+    ],
+    "sample": {
+      "fields": [
+        "label_print_history_id",
+        "print_attempt_id",
+        "label_id",
+        "admin_id",
+        "is_reprint",
+        "outcome",
+        "error_code",
+        "attempted_at"
+      ],
+      "rows": [
+        [
+          "LPH-0001",
+          "PRINT-0001",
+          "ORD-24178-LABEL-1",
+          "U001",
+          "false",
+          "failed",
+          "external_unavailable",
+          "2026-10-04 01:25"
+        ],
+        [
+          "LPH-0002",
+          "PRINT-0002",
+          "ORD-24178-LABEL-1",
+          "U001",
+          "false",
+          "printed",
+          "NULL",
+          "2026-10-04 01:30"
+        ],
+        [
+          "LPH-0003",
+          "PRINT-0003",
+          "ORD-24177-LABEL-1",
+          "U001",
+          "false",
+          "printed",
+          "NULL",
+          "2026-10-04 01:31"
+        ],
+        [
+          "LPH-0004",
+          "PRINT-0004",
+          "ORD-24177-LABEL-1",
+          "U001",
+          "true",
+          "printed",
+          "NULL",
+          "2026-10-04 01:40"
+        ],
+        [
+          "LPH-0005",
+          "PRINT-0005",
+          "ORD-24173-LABEL-1",
+          "U001",
+          "false",
+          "printed",
+          "NULL",
+          "2026-10-04 01:45"
         ]
       ]
     }

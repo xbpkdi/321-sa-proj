@@ -1,104 +1,137 @@
 %%{init: {'class': {'hideEmptyMembersBox': true}, 'themeVariables': {'fontSize': '15px'}}}%%
 classDiagram
     direction LR
-    class BaseScreen {
-        <<abstract>>
-        #showSuccess()
-        #showError()
-    }
-    class BaseController {
-        <<abstract>>
-        #currentUser: User
-        #validate()
-    }
-    class BaseRepository {
-        <<abstract>>
-        #db: DBConnector
-        #executeQuery(queryId, params)
-    }
     class StockCheckScreen {
-        -controller
-        -messages: string[]
+        <<Screen>>
         +selectProduct()
+        +showError()
+        +showStock()
+        +showSuccess()
+        +submitAdjust()
     }
     class StockCheckController {
-        -orderRepository: OrderRepository
-        -stockRepository: StockRepository
-        +calculateTotalQty()
-        +checkStock()
-        +compareWithReorderThreshold()
-        +proceedToUseCase1S()
-        +proceedToUseCase4S()
+        <<Controller>>
+        +adjustStockAction()
+        +loadAppState()
     }
-    class StockDeductionController {
-        -orderRepository: OrderRepository
-        -stockRepository: StockRepository
-        +calculateAvailableQty()
-        +onTrackingNotified()
-        +skipAlreadyDeducted()
+    class AdjustStockUseCase {
+        -client: PoolClient
+        +adjustStockUseCase()
     }
-    class TrackingNotifyController {
-        -orderRepository: OrderRepository
-        +proceedToUseCase7S()
-        +sendTrackingNotify()
-        +validateTrackingAndCarrierPresent()
+    class CheckStockUseCase {
+        -client: PoolClient
+        +checkStockUseCase()
+        +chooseStockRoute()
     }
-    class OrderRepository {
-        -db: DBConnector
-        -table: string = "orders"
-        +bindSkuRuleAndUpdateStatus()
-        +checkAlreadyPrinted()
-        +checkDuplicate()
-        +checkLabelStatus()
-        +checkStatus()
-        +deleteClosedOrders()
-        +deleteRecords()
-        +getChannelInfo()
-        +getClosedOrders()
-        +getCostAndMarginInfo()
-        +getDeletableRecords()
-        +getOrderDetail()
-        +getOrdersByStatus()
-        +getShippingInfo()
-        +getStatus()
-        +linkOrders()
-        +markPendingSync()
-        +markStockDeductedAndCompleted()
-        +markTrackingNotified()
-        +saveOrder()
-        +saveRslMatch()
-        +setManualReview()
-        +updateDispatched()
-        +updateOrderStatus()
-        +updateStatus()
-        +updateStatusCancelled()
-        +updateStatusIfChanged()
+    class DeductStockUseCase {
+        -client: PoolClient
+        +deductStockUseCase()
     }
-    class StockRepository {
-        -db: DBConnector
-        -table: string = "stock"
-        +deductInHouseStock()
-        +deductRslStock()
-        +getLowStockSkus()
-        +getStockAndOrderInfo()
-        +getStockBySku()
-        +restockInventory()
+    class ExecuteWorkflow {
+        -client: PoolClient
+        +executeWorkflow()
+        +formatLabels()
+        +runAutomation()
+    }
+    class SyncRakutenStockUseCase {
+        -client: PoolClient
+        +syncRakutenStockUseCase()
+    }
+    class AutoErrorLogQueries {
+        <<module>>
+        +Q_AUTO_ERROR_LOG: SQL
+        +insertAutoErrorLog()
+    }
+    class OrderQueries {
+        <<module>>
+        +Q7S_1_RETRY: SQL
+        +listStockDeductRetryOrderIds()
+    }
+    class ShippingQueries {
+        <<module>>
+        +Q8A_1_DELIVERED: SQL
+        +completeDeliveredOrder()
+    }
+    class StockQueries {
+        <<module>>
+        +Q3S_1: SQL
+        +Q3S_1_ADJUST: SQL
+        +Q3S_1_FOR_UPDATE: SQL
+        +Q3S_1_INSERT_HISTORY: SQL
+        +Q3S_1_ORDER: SQL
+        +Q3S_1_RESERVED: SQL
+        +Q3S_1_ROUTE: SQL
+        +Q3S_1_RSL: SQL
+        +Q7S_1: SQL
+        +Q7S_1_MANUAL: SQL
+        +Q7S_2: SQL
+        +Q7S_3: SQL
+        +adjustStock()
+        +deductLockedStock()
+        +getOrderStock()
+        +getReservedQuantity()
+        +getRslQuantity()
+        +insertStockAdjustmentHistory()
+        +listStock()
+        +lockOrderStock()
+        +lockStock()
+        +markDeductionManual()
+        +markItemsDeducted()
+        +saveStockRoute()
+    }
+    class StockSyncQueries {
+        <<module>>
+        +Q7S_4_LOCK_PENDING: SQL
+        +Q7S_4_PENDING: SQL
+        +Q7S_5_ATTEMPT: SQL
+        +Q7S_5_FAILURE: SQL
+        +Q7S_5_SUCCESS: SQL
+        +completeStockSync()
+        +failStockSync()
+        +lockPendingStockSyncs()
+        +markStockSyncPending()
+        +recordStockSyncAttempt()
     }
     class DBConnector {
         -pool: Pool
-        +executeQuery()
+        +query()
     }
-    BaseScreen <|-- StockCheckScreen
-    BaseController <|-- StockCheckController
-    BaseController <|-- StockDeductionController
-    BaseController <|-- TrackingNotifyController
-    BaseRepository <|-- OrderRepository
-    BaseRepository <|-- StockRepository
-    BaseRepository o-- DBConnector : db
-    StockCheckScreen "1" --> "1" StockCheckController : uses
-    StockCheckController ..> OrderRepository
-    StockCheckController ..> StockRepository
-    StockDeductionController ..> OrderRepository
-    StockDeductionController ..> StockRepository
-    TrackingNotifyController ..> OrderRepository
-    TrackingNotifyController ..> StockDeductionController : triggers
+    class RakutenAdapter {
+        <<interface>>
+        +syncStock()
+    }
+    class RslAdapter {
+        <<interface>>
+        +getStock()
+    }
+    class MockAdapters {
+        <<mock.ts>>
+        -faults: FaultFlags
+    }
+    StockCheckScreen "1" --> "1" StockCheckController : calls
+    StockCheckController ..> AdjustStockUseCase
+    StockCheckController ..> StockQueries
+    AdjustStockUseCase ..> ExecuteWorkflow
+    CheckStockUseCase ..> AutoErrorLogQueries
+    CheckStockUseCase ..> RslAdapter
+    CheckStockUseCase ..> StockQueries
+    DeductStockUseCase ..> StockQueries
+    DeductStockUseCase ..> StockSyncQueries
+    ExecuteWorkflow ..> AutoErrorLogQueries
+    ExecuteWorkflow ..> CheckStockUseCase
+    ExecuteWorkflow ..> DeductStockUseCase
+    ExecuteWorkflow ..> OrderQueries
+    ExecuteWorkflow ..> ShippingQueries
+    ExecuteWorkflow ..> StockQueries
+    ExecuteWorkflow ..> SyncRakutenStockUseCase
+    SyncRakutenStockUseCase ..> AutoErrorLogQueries
+    SyncRakutenStockUseCase ..> RakutenAdapter
+    SyncRakutenStockUseCase ..> StockSyncQueries
+    RslAdapter ..> StockQueries
+    AutoErrorLogQueries o-- DBConnector : pool
+    OrderQueries o-- DBConnector : pool
+    ShippingQueries o-- DBConnector : pool
+    StockQueries o-- DBConnector : pool
+    StockSyncQueries o-- DBConnector : pool
+    RakutenAdapter <|.. MockAdapters
+    RslAdapter <|.. MockAdapters

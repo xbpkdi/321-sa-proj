@@ -3,41 +3,65 @@ stateDiagram-v2
     direction TB
     state "Order (order_status)" as Order {
         state "Order.รอตรวจสอบคำสั่งซื้อ" as s1
-        state "Order.รอจับคู่กฎ SKU" as s2
-        state "Order.รอดำเนินการด้วยตนเอง" as s3
-        state "Order.รอตรวจสอบสต๊อก" as s4
-        state "Order.ยังไม่ได้จับคู่" as s5
-        state "Order.รอ Admin ตัดสินใจสั่งซื้อ" as s6
-        state "Order.รอสั่งซื้อจาก Supplier" as s7
-        state "Order.รอยกเลิก Order" as s8
-        state "Order.สั่งซื้อแล้ว" as s9
-        state "Order.ยกเลิกแล้ว" as s10
-        state "Order.รอจัดรูปแบบใบปะสินค้า" as s11
-        state "Order.รอพิมพ์ใบปะสินค้า" as s12
-        state "Order.พิมพ์ใบปะสินค้าแล้ว" as s13
-        state "Order.อยู่ระหว่างจัดส่ง" as s14
-        state "Order.แจ้งเลขติดตามแล้ว" as s15
-        state "Order.จัดส่งสำเร็จ" as s16
-        [*] --> s1 : importOrders / 4A (Q4A.2)
-        s1 --> s2 : [ข้อมูลครบ] confirmOrder / 2A (Q2A.4)
-        s1 --> s3 : [ข้อมูลไม่ครบ] confirmOrder / 2A
-        s2 --> s4 : [พบกฎ SKU] matchSku / 2S (Q2S.2)
-        s2 --> s3 : [ไม่พบกฎ SKU] matchSku / 2S
-        s3 --> s2 : saveSkuRule / 3A
-        s4 --> s5 : [สต๊อกพอ] checkStock / 3S (Q3S.2)
-        s4 --> s6 : [สต๊อกไม่พอ] checkStock / 3S, 4S (Q3S.2)
-        s6 --> s7 : [คุ้มค่า] approve / 5A (Q5A.4)
-        s6 --> s8 : [ไม่คุ้มค่า] reject / 5A (Q5A.5)
-        s7 --> s9 : [ส่งคำสั่งซื้อสำเร็จ] purchase / 6A (Q6A.4)
-        s9 --> s5 : [ได้รับสินค้า] restock / 3S (Q3S.2)
-        s8 --> s10 : confirmCancel / 7A (Q7A.1)
-        s5 --> s11 : [พบสินค้าใน RSL] matchRsl / 1S (Q1S.2)
-        s11 --> s12 : [พบ template] createLabel / 6S (Q6S.3)
-        s12 --> s13 : [พิมพ์สำเร็จ] printLabel / 9A (Q9A.3)
-        s13 --> s14 : [ได้เลขติดตาม] handOver / 8A (Q8A.2)
-        s14 --> s15 : [Rakuten รับเลขติดตาม] sendTracking / 5S (Q5S.2)
-        s15 --> s16 : [ตัดสต๊อกสำเร็จ] deductStock / 7S (Q7S.5)
-        s5 --> s10 : [ยังไม่ส่งมอบ] cancelOrder / 7A (Q7A.1)
-        s16 --> [*] : [เก่ากว่า 12 เดือน] deleteOldData / 10A (Q10A.6)
-        s10 --> [*] : [เก่ากว่า 12 เดือน] deleteOldData / 10A (Q10A.6)
+        state "Order.รอดำเนินการด้วยตนเอง" as s2
+        state "Order.รอจับคู่กฎ SKU" as s3
+        state "Order.ยกเลิกแล้ว" as s4
+        state "Order.รอตรวจสอบสต๊อก" as s5
+        state "Order.ยังไม่ได้จับคู่" as s6
+        state "Order.รอจัดรูปแบบใบปะสินค้า" as s7
+        state "Order.รอ Admin ตัดสินใจสั่งซื้อ" as s8
+        state "Order.รอสั่งซื้อจาก Supplier" as s9
+        state "Order.รอยกเลิก Order" as s10
+        state "Order.รอส่งคำสั่งซื้อ" as s11
+        state "Order.สั่งซื้อแล้ว" as s12
+        state "Order.รอพิมพ์ใบปะสินค้า" as s13
+        state "Order.พิมพ์ใบปะสินค้าแล้ว" as s14
+        state "Order.อยู่ระหว่างจัดส่ง" as s15
+        state "Order.รอส่งมอบ" as s16
+        state "Order.แจ้งเลขติดตามแล้ว" as s17
+        state "Order.รอแจ้งเลขติดตาม" as s18
+        state "Order.จัดส่งไม่สำเร็จ" as s19
+        state "Order.ตีกลับ/คืนสินค้า" as s20
+        state "Order.รอดำเนินการพิเศษ" as s21
+        state "Order.จัดส่งสำเร็จ" as s22
+        [*] --> s1 : [ข้อมูลครบ ไม่ซ้ำ] importOrders / ดึง Order เข้าระบบ (Q4A.5)
+        [*] --> s2 : [ไม่พบ SKU] importOrders / ดึง Order เข้าระบบ (Q4A.5)
+        s1 --> s3 : [ข้อมูลครบ] verifyOrder / ตรวจสอบคำสั่งซื้อ (Q2A.3)
+        s1 --> s2 : [ข้อมูลไม่ครบ] verifyOrder / ตรวจสอบคำสั่งซื้อ (Q2A.3)
+        s1 --> s4 : [ลูกค้ายกเลิกใน Rakuten] verifyOrder / ตรวจสอบคำสั่งซื้อ (Q2A.3)
+        s3 --> s5 : [พบกฎ SKU 1 รายการ] matchSku / จับคู่กฎ SKU (Q2S.3)
+        s3 --> s2 : [ไม่พบหรือพบหลายกฎ] matchSku / จับคู่กฎ SKU (Q2S.3)
+        s2 --> s3 : [บันทึก SKU สำเร็จ] saveProduct / ตั้งกฎ SKU (Q3A.8)
+        s5 --> s6 : [RSL พอ] checkStock / ตรวจสอบของสินค้าใน stock + RSL (Q3S.4)
+        s5 --> s7 : [RSL ไม่พอ คลังบริษัทพอ] checkStock / ตรวจสอบของสินค้าใน stock + RSL (Q3S.4)
+        s5 --> s8 : [ไม่มีแหล่งใดพอ] checkStock / ตรวจสอบของสินค้าใน stock + RSL (Q3S.4)
+        s8 --> s9 : [คุ้มค่า] decideReorder / ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock (Q5A.2)
+        s8 --> s10 : [ไม่คุ้มค่า] decideReorder / ตัดสินใจการสั่งซื้อสินค้าเพิ่มเข้า stock (Q5A.2)
+        s9 --> s11 : purchaseReorder / สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier (Q6A.8)
+        s11 --> s12 : [Supplier รับคำสั่งซื้อ] purchaseReorder / สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier (Q6A.8)
+        s12 --> s5 : [ได้รับสินค้า] receiveReorder / สั่งซื้อสินค้าเพิ่มเข้า stock จาก supplier (Q6A.14)
+        s12 --> s8 : [ยกเลิกคำสั่งซื้อจาก Order อื่น] cancelOrder / ยกเลิก Order (Q7A.5)
+        s11 --> s8 : [ยกเลิกคำสั่งซื้อจาก Order อื่น] cancelOrder / ยกเลิก Order (Q7A.5)
+        s10 --> s4 : cancelOrder / ยกเลิก Order (Q7A.2)
+        s6 --> s7 : [พบเลข RSL] matchRsl / จับคู่ Order กับเลข RSL (Q1S.3)
+        s7 --> s13 : [สร้างใบปะสำเร็จ] formatLabels / จัดรูปแบบใบปะสินค้า (Q6S.5)
+        s7 --> s2 : [ไม่พบ template] formatLabels / จัดรูปแบบใบปะสินค้า (Q6S.3)
+        s7 --> s6 : [จับคู่ RSL ผิด] unmatchRsl / จับคู่ Order กับเลข RSL (Q1S.4)
+        s13 --> s6 : [จับคู่ RSL ผิด] unmatchRsl / จับคู่ Order กับเลข RSL (Q1S.4)
+        s2 --> s6 : [มีเลข RSL และจับคู่ผิด] unmatchRsl / จับคู่ Order กับเลข RSL (Q1S.4)
+        s13 --> s14 : [พิมพ์สำเร็จ] printLabel / พิมพ์ใบปะสินค้า (Q9A.4)
+        s14 --> s15 : [ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.2)
+        s14 --> s16 : [ยังไม่ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.6)
+        s16 --> s15 : [ได้เลขติดตาม] dispatchOrder / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.2)
+        s15 --> s17 : [Rakuten รับเลขติดตาม] notifyTracking / ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace (Q5S.4)
+        s15 --> s18 : [ส่งเลขไม่สำเร็จ] notifyTracking / ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace (Q5S.4)
+        s18 --> s17 : [ส่งซ้ำสำเร็จ] notifyTracking / ส่งเลขติดตามสินค้าของ Delivery ให้ลูกค้าผ่าน Marketplace (Q5S.4)
+        s15 --> s19 : [ขนส่งแจ้ง failed] pollCarrier / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.4)
+        s15 --> s20 : [ขนส่งแจ้ง returned] pollCarrier / จัดส่งสินค้าให้ลูกค้าผ่าน Delivery (Q8A.4)
+        s15 --> s21 : [ขอยกเลิกหลังส่งมอบ] cancelOrder / ยกเลิก Order (Q7A.2)
+        s17 --> s2 : [ตัดสต๊อกไม่ได้] deductStock / ตัดสต๊อกสินค้า (Q7S.3)
+        s17 --> s22 : [delivered และแจ้งเลขแล้ว และตัดสต๊อกครบทุกรายการ] deductStock / ตัดสต๊อกสินค้า (Q7S.7)
+        s6 --> s4 : [ยังไม่ส่งมอบ] cancelOrder / ยกเลิก Order (Q7A.2)
+        s22 --> [*] : deleteOldData / ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Q10A.1)
+        s4 --> [*] : deleteOldData / ลบข้อมูลเก่าที่ไม่ใช้แล้ว (Q10A.1)
     }
