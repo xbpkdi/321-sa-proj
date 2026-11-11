@@ -21,3 +21,6 @@ __pycache__/
 
 # คู่มือ backend ส่วนตัว ไม่ push
 backend-guide/
+
+# ต้นฉบับ สคริปต์ build และรูปทั้งหมด เก็บไว้ในเครื่อง ไม่ push
+_source/

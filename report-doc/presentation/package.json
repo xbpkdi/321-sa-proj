@@ -1,7 +1,0 @@
-{
-  "name": "colorado-presentation",
-  "private": true,
-  "type": "commonjs",
-  "scripts": { "build": "node build_deck.js" },
-  "dependencies": { "pptxgenjs": "^4.0.1" }
-}

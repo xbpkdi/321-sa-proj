@@ -1,4 +1,0 @@
-/* mermaid-cli วาดกรอบ Note ตามขนาดตัวอักษรปกติ ถ้าตัวอักษรใหญ่กว่านั้นข้อความจะล้นกรอบ */
-.noteText, .noteText tspan {
-  font-size: 17px !important;
-}
